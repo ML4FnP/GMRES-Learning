@@ -33,7 +33,7 @@ def GMRES(A, b, x0, e, nmax_iter, restart=None):
         b = np.zeros(nmax_iter + 1)
         b[0] = np.linalg.norm(r)
 
-        result = np.linalg.lstsq(h, b)[0]
+        result = np.linalg.lstsq(h, b, rcond=None)[0]
 
         x.append(np.dot(np.asarray(q).transpose(), result) + x0)
 
