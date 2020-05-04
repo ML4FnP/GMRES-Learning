@@ -5,8 +5,9 @@
 # https://stackoverflow.com/questions/37962271/whats-wrong-with-my-gmres-implementation
 
 
-
 import numpy as np
+
+
 
 def GMRES(A, b, x0, e, nmax_iter, restart=None):
     r = b - np.asarray(np.dot(A, x0)).reshape(-1)
@@ -38,3 +39,11 @@ def GMRES(A, b, x0, e, nmax_iter, restart=None):
         x.append(np.dot(np.asarray(q).transpose(), result) + x0)
 
     return x
+
+
+# define consistent linear math that stick with `np.array` (rather than
+# `np.matrix`) => this will mean that we're sticking with the "minimal" data
+# type for vector data. NOTE: this might cause a performance hit due to
+# changing data types.
+mat_to_a = lambda a    : np.squeeze(np.asarray(a))
+matmul_a = lambda a, b : mat_to_a(np.dot(a, b))
