@@ -13,7 +13,7 @@ from torch.nn       import Linear, ReLU, CrossEntropyLoss, \
                            Module, Softmax, BatchNorm2d, Dropout
 from torch.optim    import Adam, SGD
 
-from nn_collection import TwoLayerNet
+from src_dir.nn_collection import TwoLayerNet
 
 
 
