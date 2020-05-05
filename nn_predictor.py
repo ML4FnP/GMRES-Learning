@@ -54,7 +54,13 @@ class NNPredictor(object):
         self._is_trained = value
 
 
+    @property
+    def counter(self):
+        return self.x.size(0)
+
+
     def retrain(self):
+        self.loss_val = list()  # clear loss val history
         for t in range(self.n_steps):
             # Forward pass: Compute predicted y by passing x to the model
             y_pred = self.model(self.x)
@@ -90,12 +96,12 @@ class NNPredictor(object):
 
 
 # TODO: make the wrapper also keep track of A => the NN depends on A
-def nn_preconditioner(retrain_freq=10):
+def nn_preconditioner(retrain_freq=10, debug=False):
 
     def my_decorator(func):
-        func.predictor = NNPredictor()
-        func.counter = 0;
+        func.predictor    = NNPredictor()
         func.retrain_freq = retrain_freq
+        func.debug        = debug
 
         @functools.wraps(func)
         def speedup_wrapper(*args, **kwargs):
@@ -112,9 +118,10 @@ def nn_preconditioner(retrain_freq=10):
             res = target[-1]
 
             func.predictor.add(b, res)
-            func.counter += 1
 
-            if func.counter%retrain_freq == 0:
+            if func.predictor.counter%retrain_freq == 0:
+                if func.debug:
+                    print("retraining")
                 func.predictor.retrain()
 
             return target
