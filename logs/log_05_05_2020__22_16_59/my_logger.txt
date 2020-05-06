@@ -1,0 +1,1 @@
+2020-05-05 22:16:59 [INFO] <ipython-input-3-8142708d9730> 2 - Run with 80 linear problems and train frequency of 10. Function decorator now takes nn parameters as input.

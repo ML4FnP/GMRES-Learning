@@ -19,10 +19,17 @@ from src_dir.nn_collection import TwoLayerNet
 
 class NNPredictor(object):
 
-    def __init__(self):
+    def __init__(self,D_in,H,D_out):
         # N is batch size; D_in is input dimension;
         # H is hidden dimension; D_out is output dimension.
-        self.N, self.D_in, self.H, self.D_out = 1, 2, 100, 2
+
+        # self.N, self.D_in, self.H, self.D_out = 1, 2, 100, 2
+        self.N=1
+        
+        self.D_in=D_in
+        self.H=H
+        self.D_out=D_out
+
 
         # Construct our model by instantiating the class defined above
         self.model = TwoLayerNet(self.D_in, self.H, self.D_out)
@@ -96,12 +103,17 @@ class NNPredictor(object):
 
 
 # TODO: make the wrapper also keep track of A => the NN depends on A
-def nn_preconditioner(retrain_freq=10, debug=False):
+
+
+def nn_preconditioner(retrain_freq=10, debug=False,InputDim=2,HiddenDim=100,OutputDim=2 ):
 
     def my_decorator(func):
-        func.predictor    = NNPredictor()
+        func.predictor    = NNPredictor(InputDim,HiddenDim,OutputDim)
         func.retrain_freq = retrain_freq
         func.debug        = debug
+        func.InputDim     = InputDim
+        func.HiddenDim    = HiddenDim
+        func.OutputDim    = OutputDim
 
         @functools.wraps(func)
         def speedup_wrapper(*args, **kwargs):
@@ -117,14 +129,14 @@ def nn_preconditioner(retrain_freq=10, debug=False):
 
             res = target[-1]
 
-            IterErr=np.linalg.norm(np.dot(A,np.asarray(target[-2]))-b)  # compute residual of penultimate step
-            if IterErr > 0.5 :  # Adhoc condition on residual of step to avoid overfitting
-                func.predictor.add(b, res)
+            # IterErr=np.linalg.norm(np.dot(A,np.asarray(target[-2]))-b)  # compute residual of penultimate step
+            # if IterErr > 0.1 :  # Adhoc condition on residual of step to avoid overfitting. Approach doesn't seem to do better than this.
+            func.predictor.add(b, res)
 
-                if func.predictor.counter%retrain_freq == 0:
-                    if func.debug:
-                        print("retraining")
-                    func.predictor.retrain()
+            if func.predictor.counter%retrain_freq == 0:
+                if func.debug:
+                    print("retraining")
+                func.predictor.retrain()
 
             return target
 
