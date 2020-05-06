@@ -117,6 +117,7 @@ def nn_preconditioner(retrain_freq=10, debug=False):
 
             res = target[-1]
 
+
             func.predictor.add(b, res)
 
             if func.predictor.counter%retrain_freq == 0:

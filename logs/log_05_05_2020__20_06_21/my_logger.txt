@@ -1,0 +1,1 @@
+2020-05-05 20:06:21 [INFO] <ipython-input-1-a52fdf52aaea> 15 - Run with 25 linear problems and train frequency of 2
