@@ -129,14 +129,14 @@ def nn_preconditioner(retrain_freq=10, debug=False,InputDim=2,HiddenDim=100,Outp
 
             res = target[-1]
 
-            # IterErr=np.linalg.norm(np.dot(A,np.asarray(target[-2]))-b)  # compute residual of penultimate step
-            # if IterErr > 0.1 :  # Adhoc condition on residual of step to avoid overfitting. Approach doesn't seem to do better than this.
-            func.predictor.add(b, res)
+            IterErr=np.linalg.norm(np.dot(A,np.asarray(target[-2]))-b)  # compute residual of penultimate step
+            if IterErr > 0.15 :  # Adhoc condition on residual of step to avoid overfitting. Approach doesn't seem to do better than this.
+                func.predictor.add(b, res)
 
-            if func.predictor.counter%retrain_freq == 0:
-                if func.debug:
-                    print("retraining")
-                func.predictor.retrain()
+                if func.predictor.counter%retrain_freq == 0:
+                    if func.debug:
+                        print("retraining")
+                    func.predictor.retrain()
 
             return target
 
