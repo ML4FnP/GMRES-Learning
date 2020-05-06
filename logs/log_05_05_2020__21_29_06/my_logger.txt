@@ -1,0 +1,2 @@
+2020-05-05 21:29:06 [INFO] <ipython-input-1-f736cc8e9b6c> 15 - Run with 500 linear problems and train frequency of 2 with overfit condition.
+2020-05-05 21:29:36 [INFO] <ipython-input-14-90ab8c3e0a28> 1 - For this run, after 12 learning steps, no other data that would have been added to the training set yielded a residual larger than 0.5 for the second iteration of GMRES. This then led to the learning being 'shut off' for the 478 linear problems due to the adhoc condition for adding data to the training dataset. 
