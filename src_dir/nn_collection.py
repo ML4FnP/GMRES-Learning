@@ -19,9 +19,12 @@ class TwoLayerNet(torch.nn.Module):
         as member variables.
         """
         super(TwoLayerNet, self).__init__()
-        self.linear1 = torch.nn.Linear(D_in, H)
-        self.linear2 = torch.nn.Linear(H, D_out)
+        # self.linear1 = torch.nn.Linear(D_in, H)
+        # self.linear2 = torch.nn.Linear(H, D_out)
 
+        self.linear1 = torch.nn.Linear(D_in, H)
+        self.linear2 = torch.nn.Linear(H, 10)
+        self.linear3 = torch.nn.Linear(10, D_out)
 
     def forward(self, x):
         """
@@ -29,7 +32,12 @@ class TwoLayerNet(torch.nn.Module):
         return a Tensor of output data. We can use Modules defined in the
         constructor as well as arbitrary operators on Tensors.
         """
-        h_relu = self.linear1(x).clamp(min=0)
-        y_pred = self.linear2(h_relu)
+        # h_relu = self.linear1(x).clamp(min=0)
+        # y_pred = self.linear2(h_relu)
+
+        h_relu1 = self.linear1(x).clamp(min=0)
+        h_relu2 = self.linear2(h_relu1).clamp(min=0)
+        y_pred = self.linear3(h_relu2)
+
         return y_pred
 
