@@ -19,20 +19,20 @@ from src_dir.nn_collection import TwoLayerNet
 
 class NNPredictor(object):
 
-    def __init__(self,D_in,H,D_out):
+    def __init__(self,D_in,H,H2,D_out):
         # N is batch size; D_in is input dimension;
-        # H is hidden dimension; D_out is output dimension.
+        # H is hidden dimension; H2 is  second hidden layer dimension. 
+        # D_out is output dimension.
 
-        # self.N, self.D_in, self.H, self.D_out = 1, 2, 100, 2
         self.N=1
-        
         self.D_in=D_in
-        self.H=H
+        self.H=H   
+        self.H2=H2  
         self.D_out=D_out
 
 
         # Construct our model by instantiating the class defined above
-        self.model = TwoLayerNet(self.D_in, self.H, self.D_out)
+        self.model = TwoLayerNet(self.D_in, self.H,self.H2 ,self.D_out)
 
         # Construct our loss function and an Optimizer. The call to model.parameters()
         # in the SGD constructor will contain the learnable parameters of the two
@@ -105,40 +105,37 @@ class NNPredictor(object):
 # TODO: make the wrapper also keep track of A => the NN depends on A
 
 
-def nn_preconditioner(retrain_freq=10, debug=False,InputDim=2,HiddenDim=100,OutputDim=2 ):
+def nn_preconditioner(retrain_freq=10, debug=False,InputDim=2,HiddenDim=100,HiddenDim2=100,OutputDim=2 ):
 
     def my_decorator(func):
-        func.predictor    = NNPredictor(InputDim,HiddenDim,OutputDim)
+        func.predictor    = NNPredictor(InputDim,HiddenDim,HiddenDim2,OutputDim)
         func.retrain_freq = retrain_freq
         func.debug        = debug
         func.InputDim     = InputDim
         func.HiddenDim    = HiddenDim
+        func.HiddenDim2    = HiddenDim2
         func.OutputDim    = OutputDim
 
         @functools.wraps(func)
         def speedup_wrapper(*args, **kwargs):
 
-            A, b, x0, e, nmax_iter, *eargs = args
+            A, b, x0, e, nmax_iter,IterErr0_sum,ProbCount, *eargs = args
 
             if func.predictor.is_trained:
                 pred_x0 = func.predictor.predict(b)
             else:
                 pred_x0 = x0
 
-            target  = func(A, b, pred_x0, e, nmax_iter, *eargs)
+            target  = func(A, b, pred_x0, e, nmax_iter,IterErr0_sum,ProbCount, *eargs)
 
             res = target[-1]
 
-            IterErr0=np.linalg.norm(np.dot(A,np.asarray(target[0]))-b)  # compute residual of penultimate step
-            IterErr1=np.linalg.norm(np.dot(A,np.asarray(target[1]))-b)  # compute residual of penultimate step
-            IterErr2=np.linalg.norm(np.dot(A,np.asarray(target[2]))-b)  # compute residual of penultimate step
-            IterErr3=np.linalg.norm(np.dot(A,np.asarray(target[3]))-b)  # compute residual of penultimate step
-            IterErr4=np.linalg.norm(np.dot(A,np.asarray(target[4]))-b)  # compute residual of penultimate step
-            IterErr5=np.linalg.norm(np.dot(A,np.asarray(target[5]))-b)  # compute residual of penultimate step
+            IterErr0=np.linalg.norm(np.dot(A,np.asarray(target[0]))-b)  # 2-norm of residual for first iteration of GMRES
+            IterErr0_sum=IterErr0_sum+IterErr0
+            IterErr0_AVG=IterErr0_sum/ProbCount
+            
 
-
-
-            if IterErr0 > 3 :  # Adhoc condition on residual of step to avoid overfitting. Approach doesn't seem to do better than this.
+            if IterErr0 > IterErr0_AVG :  # Adhoc condition on residual of step to avoid overfitting. Approach doesn't seem to do better than this.
                 func.predictor.add(b, res)
                 if func.predictor.counter%retrain_freq== 0:
                     if func.debug:
@@ -146,7 +143,7 @@ def nn_preconditioner(retrain_freq=10, debug=False,InputDim=2,HiddenDim=100,Outp
                         print(func.predictor.counter)
                     func.predictor.retrain()
 
-            return target
+            return target,IterErr0_sum
 
         return speedup_wrapper
     return my_decorator
