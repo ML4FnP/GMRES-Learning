@@ -1,0 +1,3 @@
+2020-05-06 17:33:35 [INFO] <ipython-input-3-a861670dd524> 2 - Run with 10000 linear problems and train frequency of 10. One hidden layers, of dim 10. Condiition on adding data is  0.2. 
+2020-05-06 17:34:06 [INFO] <ipython-input-15-8dfa81aeda36> 1 - Further checking overfitting situation. Results look good even with large problem iteration count. 
+2020-05-06 17:35:54 [INFO] <ipython-input-16-9b0ab6732bc6> 1 - Further checking overfitting situation. Results look good even with large problem iteration count. It seems best to train often initially to avoid overfitting, and then filter out potential data if current model prediction is within tolerance. It seems vital to avoid adding repetive data to training set.

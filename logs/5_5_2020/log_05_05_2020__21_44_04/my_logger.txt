@@ -1,0 +1,2 @@
+2020-05-05 21:44:04 [INFO] <ipython-input-1-89354995a981> 15 - Run with 100 linear problems and train frequency of 10.
+2020-05-05 21:44:09 [INFO] <ipython-input-13-b47fe9d56620> 1 - Decreasing learning frquency helps dramatically with overfitting, but it can still be an issue

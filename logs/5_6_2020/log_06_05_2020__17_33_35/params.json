@@ -1,0 +1,24 @@
+{
+    "A": [
+        [
+            1,
+            1
+        ],
+        [
+            3,
+            -4
+        ]
+    ],
+    "HiddenDim": 10,
+    "InputDim": 2,
+    "MinData": 10,
+    "OutputDim": 2,
+    "e": 0,
+    "n_steps": 10000,
+    "nmax_iter": 5,
+    "retrain_freq": 1,
+    "x0": [
+        0,
+        0
+    ]
+}

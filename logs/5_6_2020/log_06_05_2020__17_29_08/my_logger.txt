@@ -1,0 +1,2 @@
+2020-05-06 17:29:08 [INFO] <ipython-input-3-a861670dd524> 2 - Run with 10000 linear problems and train frequency of 10. One hidden layers, of dim 10. Condiition on adding data is  0.2. 
+2020-05-06 17:29:25 [INFO] <ipython-input-15-8dfa81aeda36> 1 - Further checking overfitting situation. Results look good even with large problem iteration count. 
