@@ -14,6 +14,13 @@ from scipy.sparse.sputils import upcast
 from .util import matmul_a, cidx, mrange
 
 
+#
+# EDITOR'S NOTE: In order to better check this against literature, I used the
+# the cidx (turn a 1..N -- fortran-style -- index to a 0..N-1 -- c-style --
+# index), and the `mrange` (math-style range for loops: 1..N instead of 0..N-1)
+#
+
+
 def GMRES(A, b, x0, e, nmax_iter, restart=None, debug=False):
     """
     Quick and dirty GMRES -- TODO: optimize going to larger
@@ -81,6 +88,7 @@ def GMRES(A, b, x0, e, nmax_iter, restart=None, debug=False):
             if (h[cidx(k + 1), cidx(k)] != 0 and k != nmax_iter):
                 q[cidx(k + 1)] = y / h[cidx(k + 1), cidx(k)]
 
+            # Debug-mode tracks inner-loop convergence
             if debug:
                 beta    = np.zeros(nmax_iter + 1)
                 beta[0] = np.linalg.norm(r)
