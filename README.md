@@ -13,6 +13,10 @@
     1. Sophisticated: https://github.com/pyamg/pyamg/blob/master/pyamg/krylov/_gmres_mgs.py
     2. Trimmed down (and I actually don't like this one anymore): https://github.com/pygbe/pygbe/blob/master/pygbe/gmres.py
 4. https://github.com/nikdavis/gmres
+5. Books and literature:
+    1. https://www-users.cs.umn.edu/~saad/books.html
+    2. https://ctk.math.ncsu.edu/
+    3. Collected lit in this repo [(archived here)](literature/gmres)
 
 ### ML
 
