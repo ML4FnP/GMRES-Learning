@@ -100,7 +100,7 @@ def GMRES(A, b, x0, e, nmax_iter, restart=None, debug=False):
         r = b - matmul_a(A, x_sol)
 
         # Break out if the residual is lower than threshold
-        if np.linalg.norm(r)/normb < e*A.shape[0]:
+        if np.linalg.norm(r)/normb < e:
             break
 
  
