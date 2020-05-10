@@ -1,0 +1,1 @@
+2020-05-08 17:07:34 [INFO] <ipython-input-3-e2ba036a6d02> 2 -  Added  computation of cumulative moving average of 2-norm of residual for first GMRES iteration  to decotorator. Using this as the 'data addition critera' is excellent. Errors drop much faster without overfitting. Also, dimension of second hidden layer is now an input into decorator.

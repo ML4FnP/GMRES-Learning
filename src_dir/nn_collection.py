@@ -13,18 +13,19 @@ from torch.optim    import Adam, SGD
 
 class TwoLayerNet(torch.nn.Module):
 
-    def __init__(self, D_in, H, D_out):
+    def __init__(self, D_in, H,H2, D_out):
         """
         In the constructor we instantiate two nn.Linear modules and assign them
         as member variables.
         """
         super(TwoLayerNet, self).__init__()
+
         # self.linear1 = torch.nn.Linear(D_in, H)
         # self.linear2 = torch.nn.Linear(H, D_out)
 
         self.linear1 = torch.nn.Linear(D_in, H)
-        self.linear2 = torch.nn.Linear(H, 10)
-        self.linear3 = torch.nn.Linear(10, D_out)
+        self.linear2 = torch.nn.Linear(H, H2)
+        self.linear3 = torch.nn.Linear(H2, D_out)
 
     def forward(self, x):
         """
