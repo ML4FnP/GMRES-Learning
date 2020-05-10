@@ -26,34 +26,45 @@ midx   = lambda i: i+1  # math-style index from c-style index
 mrange = lambda n: range(1, n + 1)
 
 
-def GMRES(A, b, x0, e, nmax_iter, restart=None):
+def GMRES(A, b, x0, e, nmax_iter, restart=None, debug=False):
     """
     Quick and dirty GMRES -- TODO: optimize going to larger
     systems.
     """
-    
-    # # Get fast access to underlying BLAS routines
-    # # dotc is the conjugate dot, dotu does no conjugation
-    # [lartg] = get_lapack_funcs(['lartg'], [x0])
-    # # real type
-    # [axpy, dotu, dotc, scal] =\
-    #     get_blas_funcs(['axpy', 'dot', 'dot', 'scal'], [x0]) 
 
+    # TODO: you can use this to make the problem agnostic to complex numbers
+    # # Defining xtype as dtype of the problem, to decide which BLAS functions
+    # # import.
+    # xtype = upcast(x0.dtype, b.dtype)
+
+    # Defining dimension
+    dimen = len(x0)
+
+    # TODO: use BLAS functions
+    # # Get fast access to underlying BLAS routines
+    # [lartg] = get_lapack_funcs(['lartg'], [x0] )
+    # if np.iscomplexobj(np.zeros((1,), dtype=xtype)):
+    #     [axpy, dotu, dotc, scal] =\
+    #         get_blas_funcs(['axpy', 'dotu', 'dotc', 'scal'], [x0])
+    # else:
+    #     # real type
+    #     [axpy, dotu, dotc, scal] =\
+    #         get_blas_funcs(['axpy', 'dot', 'dot', 'scal'], [xO])
 
     # TODOs for this function:
     # 1. list -> numpy.array <= better memory access
     # 2. don't append to lists -> prealoc and slice
-    # 3. BLAS functions :P
     # 3. add documentation -- this will probably never happen :P
     
     normb = np.linalg.norm(b)
     if normb == 0.0:
         normb = 1.0
 
-    #TODO: is the old code (commented) faster?
+    # TODO: is the old code (below) faster?
     # r = b - np.asarray(np.dot(A, x0)).reshape(-1)
     r = b - matmul_a(A, x0)
 
+    # Set number of outer loops based on the value of `restart`
     n_outer = 1
     if restart is not None:
         n_outer = int(restart)
@@ -62,14 +73,13 @@ def GMRES(A, b, x0, e, nmax_iter, restart=None):
     x_sol = x0
 
     for l in mrange(n_outer):
-        Q    = []
         q    = [None] * (nmax_iter)
         q[cidx(1)] = r / np.linalg.norm(r)
 
         h = np.zeros((nmax_iter + 1, nmax_iter))
 
-        for k in mrange(min(nmax_iter, A.shape[0] + 1)):
-            #TODO: is the old code (commented) faster?
+        for k in mrange(min(nmax_iter, dimen)):
+            # TODO: is the old code (below) faster?
             # y = np.asarray(np.dot(A, q[k])).reshape(-1)
             y = matmul_a(A, q[cidx(k)])
 
@@ -83,6 +93,14 @@ def GMRES(A, b, x0, e, nmax_iter, restart=None):
             if (h[cidx(k + 1), cidx(k)] != 0 and k != nmax_iter):
                 q[cidx(k + 1)] = y / h[cidx(k + 1), cidx(k)]
 
+            if debug:
+                beta    = np.zeros(nmax_iter + 1)
+                beta[0] = np.linalg.norm(r)
+                y       = np.linalg.lstsq(h, beta, rcond=None)[0]
+                g       = np.dot(np.asarray(q[:cidx(k)]).transpose(), y[:cidx(k)])
+                x.append(x_sol + g)
+
+
         beta    = np.zeros(nmax_iter + 1)
         beta[0] = np.linalg.norm(r)
         y       = np.linalg.lstsq(h, beta, rcond=None)[0]
@@ -91,9 +109,9 @@ def GMRES(A, b, x0, e, nmax_iter, restart=None):
         x_sol   = x_sol + g
         x.append(x_sol)
  
-        r       = b - matmul_a(A, x_sol)
+        r = b - matmul_a(A, x_sol)
 
-        # break out if the residual is lower than threshold
+        # Break out if the residual is lower than threshold
         if np.linalg.norm(r)/normb < e*A.shape[0]:
             break
 
