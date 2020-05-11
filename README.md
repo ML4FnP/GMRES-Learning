@@ -21,3 +21,8 @@
 ### ML
 
 1. https://www.analyticsvidhya.com/blog/2019/10/building-image-classification-models-cnn-pytorch/
+2. DL talks: https://sites.google.com/lbl.gov/dl4sci2019
+
+### GPUS:
+
+1. Docker+NVIDIA: https://github.com/NVIDIA/nvidia-docker
