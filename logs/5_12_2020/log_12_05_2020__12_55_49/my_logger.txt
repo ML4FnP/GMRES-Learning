@@ -1,0 +1,1 @@
+2020-05-12 12:55:49 [INFO] <ipython-input-4-21a5bd66ee3b> 2 - Add git hash to logging and clean up sanbox before benchmarking

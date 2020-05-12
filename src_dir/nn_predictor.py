@@ -15,7 +15,7 @@ from torch.optim    import Adam, SGD
 
 from src_dir.nn_collection import TwoLayerNet
 
-
+from src_dir import resid
 
 class NNPredictor(object):
 
@@ -119,23 +119,28 @@ def nn_preconditioner(retrain_freq=10, debug=False,InputDim=2,HiddenDim=100,Hidd
         @functools.wraps(func)
         def speedup_wrapper(*args, **kwargs):
 
-            A, b, x0, e, nmax_iter,IterErr0_sum,ProbCount, *eargs = args
+            A, b, x0, e, nmax_iter,IterErr0_sum,IterErr0,ProbCount,Add,restart,debug, *eargs = args
 
             if func.predictor.is_trained:
                 pred_x0 = func.predictor.predict(b)
             else:
                 pred_x0 = x0
 
-            target  = func(A, b, pred_x0, e, nmax_iter,IterErr0_sum,ProbCount, *eargs)
+            target  = func(A, b, pred_x0, e, nmax_iter,IterErr0_sum,IterErr0,ProbCount,Add,restart,debug, *eargs)
 
             res = target[-1]
 
-            IterErr0=np.linalg.norm(np.dot(A,np.asarray(target[0]))-b)  # 2-norm of residual for first iteration of GMRES
-            IterErr0_sum=IterErr0_sum+IterErr0
-            IterErr0_AVG=IterErr0_sum/ProbCount
-            
+            if Add==False :
+                IterErr = resid(A, target, b)
+                IterErr0=IterErr[3]
+                IterErr0_sum=IterErr0_sum+IterErr0
+                IterErr0_AVG=IterErr0_sum/ProbCount
+                print(IterErr0,IterErr0_AVG)
 
-            if IterErr0 > IterErr0_AVG :  # Adhoc condition on residual of step to avoid overfitting. Approach doesn't seem to do better than this.
+
+
+            IterErr0_AVG=IterErr0_sum/ProbCount
+            if IterErr0 > IterErr0_AVG and Add==True and ProbCount>20:  # Adhoc condition on residual of step to avoid overfitting. Approach doesn't seem to do better than this.
                 func.predictor.add(b, res)
                 if func.predictor.counter%retrain_freq== 0:
                     if func.debug:
@@ -143,7 +148,7 @@ def nn_preconditioner(retrain_freq=10, debug=False,InputDim=2,HiddenDim=100,Hidd
                         print(func.predictor.counter)
                     func.predictor.retrain()
 
-            return target,IterErr0_sum
+            return target,IterErr0_sum,IterErr0
 
         return speedup_wrapper
     return my_decorator
