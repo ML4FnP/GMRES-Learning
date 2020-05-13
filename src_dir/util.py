@@ -53,3 +53,9 @@ def timer(func):
         return value,run_time
     return wrapper_timer #  no "()" here, we need the object to 
                          #  be returned.
+
+
+
+
+def Gauss_pdf(xArr,loc,sig):
+    return np.exp(-0.5*((xArr-loc)/sig)**2.0)/(sig*np.sqrt(np.pi))

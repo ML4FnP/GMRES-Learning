@@ -164,7 +164,7 @@ def nn_preconditioner(retrain_freq=10, debug=False,InputDim=2,HiddenDim=100,Hidd
                 IterErr0=IterErr[3]
                 IterErr0_sum=IterErr0_sum+IterErr0
                 IterErr0_AVG=IterErr0_sum/ProbCount
-                print(IterErr0,IterErr0_AVG)
+                print(IterErr0, IterErr0_AVG)
 
 
 
@@ -201,17 +201,17 @@ def nn_preconditioner_timed(retrain_freq=10, debug=False,InputDim=2,HiddenDim=10
         @functools.wraps(func)
         def speedup_wrapper(*args, **kwargs):
 
-            A, b, x0, e, nmax_iter,IterErr0_AVG,IterErr0,ProbCount,Add,restart,debug, *eargs = args
+            A, b, x0, e, nmax_iter,IterErr0_AVG,IterErr0,ProbCount,Add,restart,debug,refine, *eargs = args
 
             forwardTime=0.0
             trainTime=0.0
             
-            if func.predictor.is_trained:
+            if func.predictor.is_trained and refine==False:
                 pred_x0,forwardTime = func.predictor.predict_timed(b)
             else:
                 pred_x0 = x0
 
-            target  = func(A, b, pred_x0, e, nmax_iter,IterErr0_AVG,IterErr0,ProbCount,Add,restart,debug, *eargs)
+            target  = func(A, b, pred_x0, e, nmax_iter,IterErr0_AVG,IterErr0,ProbCount,Add,restart,debug,refine, *eargs)
 
             res = target[-1]
 

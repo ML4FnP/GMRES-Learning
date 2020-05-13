@@ -9,3 +9,4 @@
 2020-05-13 00:56:23 [INFO] <ipython-input-11-03901423cea2> 71 - 0.8587160444585606
 2020-05-13 00:56:23 [INFO] <ipython-input-11-03901423cea2> 73 - Runtime of ML GMRES decorator with NO learning is:
 2020-05-13 00:56:24 [INFO] <ipython-input-11-03901423cea2> 74 - 718.713294790592
+2020-05-13 10:53:25 [INFO] <ipython-input-15-ac6c0d00fb29> 2 - Benchmark 100 dim problem
