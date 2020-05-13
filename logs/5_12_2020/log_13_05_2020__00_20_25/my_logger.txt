@@ -1,0 +1,11 @@
+2020-05-13 00:20:25 [INFO] <ipython-input-4-1392fe9a0b97> 2 - Benchmark 50 dim problem
+2020-05-13 00:21:58 [INFO] <ipython-input-11-03901423cea2> 60 - Runtime of Non-decorated version is:
+2020-05-13 00:21:58 [INFO] <ipython-input-11-03901423cea2> 61 - 24.16479288248229
+2020-05-13 00:21:58 [INFO] <ipython-input-11-03901423cea2> 63 - Runtime of MLGMRES decorator is:
+2020-05-13 00:21:58 [INFO] <ipython-input-11-03901423cea2> 64 - 41.951094229967566
+2020-05-13 00:21:58 [INFO] <ipython-input-11-03901423cea2> 67 - Runtime of training (backprop) is:
+2020-05-13 00:21:58 [INFO] <ipython-input-11-03901423cea2> 68 - 15.964765366894426
+2020-05-13 00:21:58 [INFO] <ipython-input-11-03901423cea2> 70 - Runtime of forward function is:
+2020-05-13 00:21:58 [INFO] <ipython-input-11-03901423cea2> 71 - 0.5035889325663447
+2020-05-13 00:21:58 [INFO] <ipython-input-11-03901423cea2> 73 - Runtime of ML GMRES decorator with NO learning is:
+2020-05-13 00:21:58 [INFO] <ipython-input-11-03901423cea2> 74 - 25.92533673750586

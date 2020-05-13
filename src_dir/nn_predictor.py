@@ -17,6 +17,8 @@ from src_dir.nn_collection import TwoLayerNet
 
 from src_dir import resid
 
+from src_dir import timer
+
 class NNPredictor(object):
 
     def __init__(self,D_in,H,H2,D_out):
@@ -65,7 +67,6 @@ class NNPredictor(object):
     def counter(self):
         return self.x.size(0)
 
-
     def retrain(self):
         self.loss_val = list()  # clear loss val history
         for t in range(self.n_steps):
@@ -83,6 +84,27 @@ class NNPredictor(object):
 
         self.is_trained = True
 
+    @timer
+    def retrain_timed(self):
+        self.loss_val = list()  # clear loss val history
+        for t in range(self.n_steps):
+            # Forward pass: Compute predicted y by passing x to the model
+            y_pred = self.model(self.x)
+
+            # Compute and print loss
+            loss = self.criterion(y_pred, self.y)
+            self.loss_val.append(loss.item())
+
+            # Zero gradients, perform a backward pass, and update the weights.
+            self.optimizer.zero_grad()
+            loss.backward()
+            self.optimizer.step()
+
+        self.is_trained = True
+
+
+
+
 
     def add(self, x, y):
         # TODO: don't use `torch.cat` in this incremental mode => will scale poorly
@@ -90,8 +112,16 @@ class NNPredictor(object):
         self.x = torch.cat((self.x, torch.from_numpy(x).unsqueeze_(0).float()), 0)
         self.y = torch.cat((self.y, torch.from_numpy(y).unsqueeze_(0).float()), 0)
 
-
     def predict(self, x):
+        return np.squeeze(
+            self.model.forward(
+                torch.from_numpy(x).unsqueeze_(0).float() # inputs need to be [[x_1, x_2, ...]] as floats
+            ).detach().numpy() # outputs need to be numpy (non-grad => detach)
+        ) # outputs need to be [y_1, y_2, ...]
+
+
+    @timer
+    def predict_timed(self, x):
         return np.squeeze(
             self.model.forward(
                 torch.from_numpy(x).unsqueeze_(0).float() # inputs need to be [[x_1, x_2, ...]] as floats
@@ -103,7 +133,6 @@ class NNPredictor(object):
 
 
 # TODO: make the wrapper also keep track of A => the NN depends on A
-
 
 def nn_preconditioner(retrain_freq=10, debug=False,InputDim=2,HiddenDim=100,HiddenDim2=100,OutputDim=2 ):
 
@@ -119,14 +148,14 @@ def nn_preconditioner(retrain_freq=10, debug=False,InputDim=2,HiddenDim=100,Hidd
         @functools.wraps(func)
         def speedup_wrapper(*args, **kwargs):
 
-            A, b, x0, e, nmax_iter,IterErr0_sum,IterErr0,ProbCount,Add,restart,debug, *eargs = args
+            A, b, x0, e, nmax_iter,IterErr0_sum,IterErr0,ProbCount,Add,restart,debug,refine, *eargs = args
 
-            if func.predictor.is_trained:
+            if func.predictor.is_trained and refine==False :
                 pred_x0 = func.predictor.predict(b)
             else:
                 pred_x0 = x0
 
-            target  = func(A, b, pred_x0, e, nmax_iter,IterErr0_sum,IterErr0,ProbCount,Add,restart,debug, *eargs)
+            target  = func(A, b, pred_x0, e, nmax_iter,IterErr0_sum,IterErr0,ProbCount,Add,restart,debug,refine, *eargs)
 
             res = target[-1]
 
@@ -149,6 +178,60 @@ def nn_preconditioner(retrain_freq=10, debug=False,InputDim=2,HiddenDim=100,Hidd
                     func.predictor.retrain()
 
             return target,IterErr0_sum,IterErr0
+
+        return speedup_wrapper
+    return my_decorator
+
+
+
+
+
+
+
+def nn_preconditioner_timed(retrain_freq=10, debug=False,InputDim=2,HiddenDim=100,HiddenDim2=100,OutputDim=2 ):
+    def my_decorator(func):
+        func.predictor    = NNPredictor(InputDim,HiddenDim,HiddenDim2,OutputDim)
+        func.retrain_freq = retrain_freq
+        func.debug        = debug
+        func.InputDim     = InputDim
+        func.HiddenDim    = HiddenDim
+        func.HiddenDim2    = HiddenDim2
+        func.OutputDim    = OutputDim
+
+        @functools.wraps(func)
+        def speedup_wrapper(*args, **kwargs):
+
+            A, b, x0, e, nmax_iter,IterErr0_AVG,IterErr0,ProbCount,Add,restart,debug, *eargs = args
+
+            forwardTime=0.0
+            trainTime=0.0
+            
+            if func.predictor.is_trained:
+                pred_x0,forwardTime = func.predictor.predict_timed(b)
+            else:
+                pred_x0 = x0
+
+            target  = func(A, b, pred_x0, e, nmax_iter,IterErr0_AVG,IterErr0,ProbCount,Add,restart,debug, *eargs)
+
+            res = target[-1]
+
+            if Add==False and ProbCount>0 :
+                IterErr = resid(A, target, b)
+                IterErr0=IterErr[2]
+                IterErr0_AVG=(IterErr0+(ProbCount-1)*IterErr0_AVG)/ProbCount
+                print(IterErr0,IterErr0_AVG)
+
+            if IterErr0 > IterErr0_AVG and Add==True and ProbCount>0:  # Adhoc condition on residual of step to avoid overfitting. Approach doesn't seem to do better than this.
+                func.predictor.add(b, res)
+                if func.predictor.counter%retrain_freq== 0:
+                    if func.debug:
+                        print("retraining")
+                        print(func.predictor.counter)
+                        # func.predictor.retrain()
+                        timeLoop=func.predictor.retrain_timed()
+                        trainTime=float(timeLoop[-1])
+
+            return target,IterErr0_AVG,IterErr0,trainTime,forwardTime
 
         return speedup_wrapper
     return my_decorator

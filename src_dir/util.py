@@ -2,7 +2,8 @@
 # -*- coding: utf-8 -*-
 
 import numpy as np
-
+import functools
+import time
 
 # define consistent linear math that stick with `np.array` (rather than
 # `np.matrix`) => this will mean that we're sticking with the "minimal" data
@@ -34,3 +35,21 @@ def laplace_1d(N):
         if i < N:
             op[cidx(i), cidx(i+1)] = -1
     return op
+
+
+
+
+
+
+def timer(func):
+    """Print the runtime of the decorated function"""
+    @functools.wraps(func)
+    def wrapper_timer(*args, **kwargs):
+        start_time = time.perf_counter()  # 1
+        value = func(*args, **kwargs)
+        end_time = time.perf_counter()  # 2
+        run_time = end_time - start_time  # 3
+        # print(f"Finished {func.__name__!r} in {run_time:.4f} secs")
+        return value,run_time
+    return wrapper_timer #  no "()" here, we need the object to 
+                         #  be returned.
