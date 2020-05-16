@@ -38,7 +38,7 @@ class NNPredictor(object):
         # in the SGD constructor will contain the learnable parameters of the two
         # nn.Linear modules which are members of the model.
         self.criterion = torch.nn.MSELoss(reduction='sum')
-        self.optimizer = torch.optim.Adam(self.model.parameters(), lr=1e-3)
+        self.optimizer = torch.optim.Adam(self.model.parameters(), lr=1e-4)
 
         self.x = torch.empty(0, self.D_in)
         self.y = torch.empty(0, self.D_out)
@@ -205,7 +205,7 @@ def nn_preconditioner_timed(retrain_freq=10, debug=False,InputDim=2,HiddenDim=10
             forwardTime=0.0
             trainTime=0.0
             IterErr0=0
-            Initial_set=10
+            Initial_set=1
 
             if func.predictor.is_trained and refine==False:
                 pred_x0,forwardTime = func.predictor.predict_timed(b)
@@ -232,7 +232,7 @@ def nn_preconditioner_timed(retrain_freq=10, debug=False,InputDim=2,HiddenDim=10
                     timeLoop=func.predictor.retrain_timed()
                     print('Initial Training')
 
-            if IterErr0_AVG<1e-3:
+            if IterErr0_AVG<0.01 :
                 IterErr0_AVG=0.01
 
 
