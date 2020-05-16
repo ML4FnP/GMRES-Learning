@@ -15,9 +15,7 @@ from torch.optim    import Adam, SGD
 
 from src_dir.nn_collection import TwoLayerNet
 
-from src_dir import resid
-
-from src_dir import timer
+from src_dir import resid,timer,moving_average
 
 class NNPredictor(object):
 
@@ -40,7 +38,7 @@ class NNPredictor(object):
         # in the SGD constructor will contain the learnable parameters of the two
         # nn.Linear modules which are members of the model.
         self.criterion = torch.nn.MSELoss(reduction='sum')
-        self.optimizer = torch.optim.SGD(self.model.parameters(), lr=1e-4)
+        self.optimizer = torch.optim.Adam(self.model.parameters(), lr=1e-3)
 
         self.x = torch.empty(0, self.D_in)
         self.y = torch.empty(0, self.D_out)
@@ -50,7 +48,8 @@ class NNPredictor(object):
         self.loss_val = list()
 
         # Number of training steps
-        self.n_steps = 1000
+        # self.n_steps = 1000
+        self.n_steps = 3000000000
 
 
     @property
@@ -87,8 +86,11 @@ class NNPredictor(object):
     @timer
     def retrain_timed(self):
         self.loss_val = list()  # clear loss val history
-        for t in range(self.n_steps):
+        self.loss_val.append(10.0)
+        t=0
+        while self.loss_val[-1]> 1e-4 and t<self.n_steps:
             # Forward pass: Compute predicted y by passing x to the model
+            # print('shape train input:',self.x.shape)
             y_pred = self.model(self.x)
 
             # Compute and print loss
@@ -99,7 +101,10 @@ class NNPredictor(object):
             self.optimizer.zero_grad()
             loss.backward()
             self.optimizer.step()
+            print('loss:',loss.item(),t)
+            t=t+1
 
+        print('Final loss:',loss.item(),t)
         self.is_trained = True
 
 
@@ -122,20 +127,15 @@ class NNPredictor(object):
 
     @timer
     def predict_timed(self, x):
-        return np.squeeze(
-            self.model.forward(
-                torch.from_numpy(x).unsqueeze_(0).float() # inputs need to be [[x_1, x_2, ...]] as floats
-            ).detach().numpy() # outputs need to be numpy (non-grad => detach)
-        ) # outputs need to be [y_1, y_2, ...]
+        a1=torch.from_numpy(x).unsqueeze_(0).float()
+        a2=np.squeeze(self.model.forward(a1).detach().numpy()) 
+        return a2
+# inputs need to be [[x_1, x_2, ...]] as floats
+ # outputs need to be numpy (non-grad => detach)
+# outputs need to be [y_1, y_2, ...]
 
-
-
-
-
-# TODO: make the wrapper also keep track of A => the NN depends on A
 
 def nn_preconditioner(retrain_freq=10, debug=False,InputDim=2,HiddenDim=100,HiddenDim2=100,OutputDim=2 ):
-
     def my_decorator(func):
         func.predictor    = NNPredictor(InputDim,HiddenDim,HiddenDim2,OutputDim)
         func.retrain_freq = retrain_freq
@@ -148,42 +148,41 @@ def nn_preconditioner(retrain_freq=10, debug=False,InputDim=2,HiddenDim=100,Hidd
         @functools.wraps(func)
         def speedup_wrapper(*args, **kwargs):
 
-            A, b, x0, e, nmax_iter,IterErr0_sum,IterErr0,ProbCount,Add,restart,debug,refine, *eargs = args
+            A, b, x0, e, nmax_iter,IterErrList,IterErr0_AVG,ProbCount,restart,debug,refine, *eargs = args
 
-            if func.predictor.is_trained and refine==False :
+            IterErr0=0
+
+            if func.predictor.is_trained and refine==False:
                 pred_x0 = func.predictor.predict(b)
             else:
                 pred_x0 = x0
 
-            target  = func(A, b, pred_x0, e, nmax_iter,IterErr0_sum,IterErr0,ProbCount,Add,restart,debug,refine, *eargs)
+            target  = func(A, b, pred_x0, e, nmax_iter,IterErrList,IterErr0_AVG,ProbCount,restart,debug,refine, *eargs)
 
             res = target[-1]
 
-            if Add==False :
+
+
+            if refine==False :
                 IterErr = resid(A, target, b)
-                IterErr0=IterErr[3]
-                IterErr0_sum=IterErr0_sum+IterErr0
-                IterErr0_AVG=IterErr0_sum/ProbCount
-                print(IterErr0, IterErr0_AVG)
+                IterErr0=IterErr[2]
+                IterErrList.append(IterErr0)
+                if ProbCount>10 :
+                    IterErr0_AVG=moving_average(np.asarray(IterErrList),ProbCount)
+                    print(IterErr0,IterErr0_AVG)
 
-
-
-            IterErr0_AVG=IterErr0_sum/ProbCount
-            if IterErr0 > IterErr0_AVG and Add==True and ProbCount>20:  # Adhoc condition on residual of step to avoid overfitting. Approach doesn't seem to do better than this.
+            if IterErrList[-1] > IterErr0_AVG and refine==True and ProbCount>10:  # Adhoc condition on residual of step to avoid overfitting. Approach doesn't seem to do better than this.
                 func.predictor.add(b, res)
                 if func.predictor.counter%retrain_freq== 0:
                     if func.debug:
                         print("retraining")
                         print(func.predictor.counter)
-                    func.predictor.retrain()
+                        func.predictor.retrain()
 
-            return target,IterErr0_sum,IterErr0
+            return target,IterErrList,IterErr0_AVG
 
         return speedup_wrapper
     return my_decorator
-
-
-
 
 
 
@@ -201,27 +200,44 @@ def nn_preconditioner_timed(retrain_freq=10, debug=False,InputDim=2,HiddenDim=10
         @functools.wraps(func)
         def speedup_wrapper(*args, **kwargs):
 
-            A, b, x0, e, nmax_iter,IterErr0_AVG,IterErr0,ProbCount,Add,restart,debug,refine, *eargs = args
+            A, b, x0, e, nmax_iter,IterErrList,IterErr0_AVG,ProbCount,restart,debug,refine, *eargs = args
 
             forwardTime=0.0
             trainTime=0.0
-            
+            IterErr0=0
+            Initial_set=10
+
             if func.predictor.is_trained and refine==False:
                 pred_x0,forwardTime = func.predictor.predict_timed(b)
             else:
                 pred_x0 = x0
 
-            target  = func(A, b, pred_x0, e, nmax_iter,IterErr0_AVG,IterErr0,ProbCount,Add,restart,debug,refine, *eargs)
+            target  = func(A, b, pred_x0, e, nmax_iter,IterErrList,IterErr0_AVG,ProbCount,restart,debug,refine, *eargs)
 
             res = target[-1]
 
-            if Add==False and ProbCount>0 :
-                IterErr = resid(A, target, b)
-                IterErr0=IterErr[2]
-                IterErr0_AVG=(IterErr0+(ProbCount-1)*IterErr0_AVG)/ProbCount
-                print(IterErr0,IterErr0_AVG)
 
-            if IterErr0 > IterErr0_AVG and Add==True and ProbCount>0:  # Adhoc condition on residual of step to avoid overfitting. Approach doesn't seem to do better than this.
+
+            if refine==False :
+                IterErr = resid(A, target, b)
+                IterErr0=IterErr[0]
+                IterErrList.append(IterErr0)
+                if ProbCount>Initial_set :
+                    IterErr0_AVG=moving_average(np.asarray(IterErrList),ProbCount)
+                    print(IterErr0,IterErr0_AVG)
+                if ProbCount<=Initial_set:
+                    func.predictor.add(b, res)
+                if ProbCount==Initial_set:
+                    func.predictor.add(b, res)
+                    timeLoop=func.predictor.retrain_timed()
+                    print('Initial Training')
+
+            if IterErr0_AVG<1e-3:
+                IterErr0_AVG=0.01
+
+
+
+            if IterErrList[-1] > IterErr0_AVG and refine==True and ProbCount>Initial_set:  # Adhoc condition on residual of step to avoid overfitting. Approach doesn't seem to do better than this.
                 func.predictor.add(b, res)
                 if func.predictor.counter%retrain_freq== 0:
                     if func.debug:
@@ -231,7 +247,7 @@ def nn_preconditioner_timed(retrain_freq=10, debug=False,InputDim=2,HiddenDim=10
                         timeLoop=func.predictor.retrain_timed()
                         trainTime=float(timeLoop[-1])
 
-            return target,IterErr0_AVG,IterErr0,trainTime,forwardTime
+            return target,IterErrList,IterErr0_AVG,trainTime,forwardTime
 
         return speedup_wrapper
     return my_decorator

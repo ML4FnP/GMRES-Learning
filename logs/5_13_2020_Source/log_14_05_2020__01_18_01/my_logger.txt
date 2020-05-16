@@ -1,0 +1,9 @@
+2020-05-14 01:18:01 [INFO] <ipython-input-4-8346eacfa279> 2 - Benchmark 150 dim problem with Source. Updated moving average approach
+2020-05-14 01:53:43 [INFO] <ipython-input-11-9c8b18ae5440> 56 - Runtime of Non-decorated version is:
+2020-05-14 01:53:43 [INFO] <ipython-input-11-9c8b18ae5440> 57 - 1329.2590354206623
+2020-05-14 01:53:43 [INFO] <ipython-input-11-9c8b18ae5440> 59 - Runtime of MLGMRES decorator is:
+2020-05-14 01:53:43 [INFO] <ipython-input-11-9c8b18ae5440> 60 - 811.0841724792263
+2020-05-14 01:53:43 [INFO] <ipython-input-11-9c8b18ae5440> 63 - Runtime of training (backprop) is:
+2020-05-14 01:53:43 [INFO] <ipython-input-11-9c8b18ae5440> 64 - 325.6073183969711
+2020-05-14 01:53:43 [INFO] <ipython-input-11-9c8b18ae5440> 66 - Runtime of forward function is:
+2020-05-14 01:53:43 [INFO] <ipython-input-11-9c8b18ae5440> 67 - 0.5700690690719057

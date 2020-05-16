@@ -1,0 +1,1 @@
+2020-05-16 01:32:59 [INFO] <ipython-input-4-19e07d14ba94> 2 - Using 1 Conv. layer with InputDim channels and InputDim sized kernel. The source is a narrow gaussian that depends on the integer 'time' in a nonlinear way. The gaussian is on the interval [-5,5], and constrained to move on [-4,4]. 
