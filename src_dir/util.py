@@ -62,6 +62,5 @@ def Gauss_pdf(xArr,loc,sig):
 
 
 def moving_average(a, n) :
-    # Window=int(0.8*n)
-    Window=10
+    Window=int(0.8*n)
     return np.sum(a[-Window-1:-1])/Window

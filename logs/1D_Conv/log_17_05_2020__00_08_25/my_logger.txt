@@ -1,0 +1,9 @@
+2020-05-17 00:08:25 [INFO] <ipython-input-4-2eb3e108337c> 2 - Benchmark 300 dim problem. 2 Layer linear Conv Net. The network is set up so we start with 1 channel, then go to 'dim' number of channels with 1-dim out put. This is then flattned and used as the linear output. Relu activation 
+2020-05-17 01:13:32 [INFO] <ipython-input-11-597284c4c1e2> 56 - Runtime of Non-decorated version is:
+2020-05-17 01:13:32 [INFO] <ipython-input-11-597284c4c1e2> 57 - 1803.1524700579612
+2020-05-17 01:13:32 [INFO] <ipython-input-11-597284c4c1e2> 59 - Runtime of MLGMRES decorator is:
+2020-05-17 01:13:32 [INFO] <ipython-input-11-597284c4c1e2> 60 - 2099.4029991419375
+2020-05-17 01:13:32 [INFO] <ipython-input-11-597284c4c1e2> 63 - Runtime of training (backprop) is:
+2020-05-17 01:13:32 [INFO] <ipython-input-11-597284c4c1e2> 64 - 625.5164566060339
+2020-05-17 01:13:32 [INFO] <ipython-input-11-597284c4c1e2> 66 - Runtime of forward function is:
+2020-05-17 01:13:32 [INFO] <ipython-input-11-597284c4c1e2> 67 - 0.4963400599081069

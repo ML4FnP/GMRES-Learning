@@ -38,7 +38,7 @@ class NNPredictor(object):
         # in the SGD constructor will contain the learnable parameters of the two
         # nn.Linear modules which are members of the model.
         self.criterion = torch.nn.MSELoss(reduction='sum')
-        self.optimizer = torch.optim.Adam(self.model.parameters(), lr=1e-4)
+        self.optimizer = torch.optim.Adam(self.model.parameters(), lr=1e-3)
 
         self.x = torch.empty(0, self.D_in)
         self.y = torch.empty(0, self.D_out)
@@ -85,16 +85,18 @@ class NNPredictor(object):
 
     @timer
     def retrain_timed(self):
+        device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+        self.model.to(device)
         self.loss_val = list()  # clear loss val history
         self.loss_val.append(10.0)
         t=0
-        while self.loss_val[-1]> 1e-4 and t<self.n_steps:
+        while self.loss_val[-1]> 5e-3 and t<self.n_steps:
             # Forward pass: Compute predicted y by passing x to the model
             # print('shape train input:',self.x.shape)
-            y_pred = self.model(self.x)
+            y_pred = self.model(self.x.to(device))
 
             # Compute and print loss
-            loss = self.criterion(y_pred, self.y)
+            loss = self.criterion(y_pred, self.y.to(device))
             self.loss_val.append(loss.item())
 
             # Zero gradients, perform a backward pass, and update the weights.
@@ -128,7 +130,8 @@ class NNPredictor(object):
     @timer
     def predict_timed(self, x):
         a1=torch.from_numpy(x).unsqueeze_(0).float()
-        a2=np.squeeze(self.model.forward(a1).detach().numpy()) 
+        a2=np.squeeze(self.model.forward(a1).detach().cpu().numpy()) 
+        #a2=np.squeeze(self.model.forward(a1).detach().numpy())     # cpu version, above line may work for cpu only... not sure. 
         return a2
 # inputs need to be [[x_1, x_2, ...]] as floats
  # outputs need to be numpy (non-grad => detach)
@@ -205,7 +208,7 @@ def nn_preconditioner_timed(retrain_freq=10, debug=False,InputDim=2,HiddenDim=10
             forwardTime=0.0
             trainTime=0.0
             IterErr0=0
-            Initial_set=1
+            Initial_set=3
 
             if func.predictor.is_trained and refine==False:
                 pred_x0,forwardTime = func.predictor.predict_timed(b)
@@ -220,7 +223,7 @@ def nn_preconditioner_timed(retrain_freq=10, debug=False,InputDim=2,HiddenDim=10
 
             if refine==False :
                 IterErr = resid(A, target, b)
-                IterErr0=IterErr[0]
+                IterErr0=IterErr[5]
                 IterErrList.append(IterErr0)
                 if ProbCount>Initial_set :
                     IterErr0_AVG=moving_average(np.asarray(IterErrList),ProbCount)

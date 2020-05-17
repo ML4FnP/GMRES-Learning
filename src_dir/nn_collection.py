@@ -47,10 +47,18 @@ class TwoLayerNet(torch.nn.Module):
         # self.linear2 = torch.nn.Linear(D_in, D_in)
         # self.linear3 = torch.nn.Linear(D_in, D_out)
 
-        self.linear1 = torch.nn.Linear(D_in, H)
-        self.linear2 = torch.nn.Linear(H, D_out)
 
 
+        # device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+        # self.linear1 = torch.nn.Linear(D_in, H).to(device)
+        # self.linear2 = torch.nn.Linear(H, D_out).to(device)
+
+
+        device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+        self.Conv1   = torch.nn.Conv1d(1,D_in,D_in, stride=1, padding=0, dilation=1, groups=1, bias=True, padding_mode='zeros').to(device)
+        self.Conv2   = torch.nn.Conv1d(D_in,D_in,1, stride=1, padding=0, dilation=1, groups=1, bias=True, padding_mode='zeros').to(device)
+        self.relu   = torch.nn.ReLU().to(device)
+        self.linear1 = torch.nn.Linear(D_in, D_out).to(device)
 
     def forward(self, x):
         """
@@ -88,9 +96,20 @@ class TwoLayerNet(torch.nn.Module):
         # ConvOutFlat = ConvOut.view(Current_batchsize, -1)
         # y_pred=self.linear1(ConvOutFlat)
 
-        out1=self.linear1(x).clamp(min=0)
-        y_pred=self.linear2(out1)
 
-        
+        # device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+        # out1=self.linear1( x.to(device)).clamp(min=0)
+        # y_pred=self.linear2(out1)
+
+
+
+        Current_batchsize=int(x.shape[0])  # N in pytorch docs
+        device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+        x2=x.unsqueeze(1)  # Add channel dimension (C) to input 
+        ConvOut1=self.relu(self.Conv1(x2.to(device)))
+        ConvOut2=self.Conv2(ConvOut1) 
+        y_pred = ConvOut2.view(Current_batchsize, -1)
+
+
         return y_pred
 
