@@ -107,6 +107,7 @@ class TwoLayerNet(torch.nn.Module):
         device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
         x2=x.unsqueeze(1)  # Add channel dimension (C) to input 
         ConvOut1=self.relu(self.Conv1(x2.to(device)))
+        # ConvOut1=self.Conv1(x2.to(device))
         ConvOut2=self.Conv2(ConvOut1) 
         y_pred = ConvOut2.view(Current_batchsize, -1)
 

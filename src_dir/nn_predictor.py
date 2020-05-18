@@ -38,7 +38,7 @@ class NNPredictor(object):
         # in the SGD constructor will contain the learnable parameters of the two
         # nn.Linear modules which are members of the model.
         self.criterion = torch.nn.MSELoss(reduction='sum')
-        self.optimizer = torch.optim.Adam(self.model.parameters(), lr=1e-3)
+        self.optimizer = torch.optim.Adam(self.model.parameters(), lr=1e-4)
 
         self.x = torch.empty(0, self.D_in)
         self.y = torch.empty(0, self.D_out)
@@ -90,7 +90,7 @@ class NNPredictor(object):
         self.loss_val = list()  # clear loss val history
         self.loss_val.append(10.0)
         t=0
-        while self.loss_val[-1]> 5e-3 and t<self.n_steps:
+        while self.loss_val[-1]> 1e-2 and t<self.n_steps:
             # Forward pass: Compute predicted y by passing x to the model
             # print('shape train input:',self.x.shape)
             y_pred = self.model(self.x.to(device))
@@ -168,7 +168,7 @@ def nn_preconditioner(retrain_freq=10, debug=False,InputDim=2,HiddenDim=100,Hidd
 
             if refine==False :
                 IterErr = resid(A, target, b)
-                IterErr0=IterErr[2]
+                IterErr0=IterErr[0]
                 IterErrList.append(IterErr0)
                 if ProbCount>10 :
                     IterErr0_AVG=moving_average(np.asarray(IterErrList),ProbCount)
@@ -223,7 +223,7 @@ def nn_preconditioner_timed(retrain_freq=10, debug=False,InputDim=2,HiddenDim=10
 
             if refine==False :
                 IterErr = resid(A, target, b)
-                IterErr0=IterErr[5]
+                IterErr0=IterErr[25]
                 IterErrList.append(IterErr0)
                 if ProbCount>Initial_set :
                     IterErr0_AVG=moving_average(np.asarray(IterErrList),ProbCount)
@@ -239,8 +239,8 @@ def nn_preconditioner_timed(retrain_freq=10, debug=False,InputDim=2,HiddenDim=10
                 IterErr0_AVG=0.01
 
 
-
-            if IterErrList[-1] > IterErr0_AVG and refine==True and ProbCount>Initial_set:  # Adhoc condition on residual of step to avoid overfitting. Approach doesn't seem to do better than this.
+            ranNum=np.random.uniform(0.0,1.0)
+            if IterErrList[-1] > IterErr0_AVG and refine==True and ProbCount>Initial_set and ranNum<0.5:  # Adhoc condition on residual of step to avoid overfitting. Approach doesn't seem to do better than this.
                 func.predictor.add(b, res)
                 if func.predictor.counter%retrain_freq== 0:
                     if func.debug:
