@@ -55,10 +55,9 @@ class TwoLayerNet(torch.nn.Module):
 
 
         device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-        self.Conv1   = torch.nn.Conv1d(1,D_in,D_in, stride=1, padding=0, dilation=1, groups=1, bias=True, padding_mode='zeros').to(device)
-        self.Conv2   = torch.nn.Conv1d(D_in,D_in,1, stride=1, padding=0, dilation=1, groups=1, bias=True, padding_mode='zeros').to(device)
-        self.relu   = torch.nn.ReLU().to(device)
-        self.linear1 = torch.nn.Linear(D_in, D_out).to(device)
+        self.Conv1   = torch.nn.Conv1d(1,int(H),D_in, stride=1, padding=0, dilation=1, groups=1, bias=False, padding_mode='zeros').to(device)
+        self.Conv2   = torch.nn.Conv1d(int(H),D_in,1, stride=1, padding=0, dilation=1, groups=1, bias=False, padding_mode='zeros').to(device)
+        self.relu   = torch.nn.LeakyReLU().to(device)
 
     def forward(self, x):
         """
@@ -107,7 +106,6 @@ class TwoLayerNet(torch.nn.Module):
         device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
         x2=x.unsqueeze(1)  # Add channel dimension (C) to input 
         ConvOut1=self.relu(self.Conv1(x2.to(device)))
-        # ConvOut1=self.Conv1(x2.to(device))
         ConvOut2=self.Conv2(ConvOut1) 
         y_pred = ConvOut2.view(Current_batchsize, -1)
 

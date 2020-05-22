@@ -4,6 +4,7 @@
 import numpy as np
 import functools
 import time
+import math
 
 # define consistent linear math that stick with `np.array` (rather than
 # `np.matrix`) => this will mean that we're sticking with the "minimal" data
@@ -58,9 +59,9 @@ def timer(func):
 
 
 def Gauss_pdf(xArr,loc,sig):
-    return np.exp(-0.5*((xArr-loc)/sig)**2.0)/(sig*np.sqrt(np.pi))
+    return np.exp(-0.5*((xArr-loc)/sig)**2.0)/(2*sig*np.sqrt(np.pi))
 
 
 def moving_average(a, n) :
-    Window=int(0.8*n)
+    Window=int(math.ceil(0.9*n))
     return np.sum(a[-Window-1:-1])/Window
