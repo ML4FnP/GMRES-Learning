@@ -1,0 +1,9 @@
+2020-05-26 15:15:53 [INFO] <ipython-input-5-9fc530baaeb3> 2 - Benchmark 600 dim problem. 2 Layer linear Conv Net.
+2020-05-26 16:24:33 [INFO] <ipython-input-7-35dc5463f972> 72 - Runtime of Non-decorated version is:
+2020-05-26 16:24:33 [INFO] <ipython-input-7-35dc5463f972> 73 - 1867.5640594629112
+2020-05-26 16:24:33 [INFO] <ipython-input-7-35dc5463f972> 75 - Runtime of MLGMRES decorator is:
+2020-05-26 16:24:33 [INFO] <ipython-input-7-35dc5463f972> 76 - 2108.1528673220455
+2020-05-26 16:24:33 [INFO] <ipython-input-7-35dc5463f972> 79 - Runtime of training (backprop) is:
+2020-05-26 16:24:33 [INFO] <ipython-input-7-35dc5463f972> 80 - 539.5782323010098
+2020-05-26 16:24:33 [INFO] <ipython-input-7-35dc5463f972> 82 - Runtime of forward function is:
+2020-05-26 16:24:33 [INFO] <ipython-input-7-35dc5463f972> 83 - 0.3510032719532319
