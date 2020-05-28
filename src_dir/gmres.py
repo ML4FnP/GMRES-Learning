@@ -14,6 +14,7 @@ from scipy.sparse.sputils import upcast
 from .util import matmul_a, cidx, mrange
 
 
+
 #
 # EDITOR'S NOTE: In order to better check this against literature, I used the
 # the cidx (turn a 1..N -- fortran-style -- index to a 0..N-1 -- c-style --
@@ -21,7 +22,19 @@ from .util import matmul_a, cidx, mrange
 #
 
 
-def GMRES(A, b, x0, e, nmax_iter, restart=None, debug=False):
+
+def GMRES(A, *args, **kwargs):
+    if isinstance(A, np.matrix):
+        # construct closure  => linear operator
+        lin_op = lambda x: matmul_a(A, x)
+        return GMRES_op(lin_op, *args, **kwargs)
+    else:
+        return GMRES_op(A, *args, **kwargs)
+
+
+
+
+def GMRES_op(A, b, x0, e, nmax_iter, restart=None, debug=False):
     """
     Quick and dirty GMRES -- TODO: optimize going to larger
     systems.
@@ -57,7 +70,8 @@ def GMRES(A, b, x0, e, nmax_iter, restart=None, debug=False):
 
     # TODO: is the old code (below) faster?
     # r = b - np.asarray(np.dot(A, x0)).reshape(-1)
-    r = b - matmul_a(A, x0)
+    # r = b - matmul_a(A, x0)
+    r = b - A(x0)
 
     # Set number of outer loops based on the value of `restart`
     n_outer = 1
@@ -76,7 +90,8 @@ def GMRES(A, b, x0, e, nmax_iter, restart=None, debug=False):
         for k in mrange(min(nmax_iter, dimen)):
             # TODO: is the old code (below) faster?
             # y = np.asarray(np.dot(A, q[k])).reshape(-1)
-            y = matmul_a(A, q[cidx(k)])
+            # y = matmul_a(A, q[cidx(k)])
+            y = A(q[cidx(k)])
 
             # Modified Grahm-Schmidt
             for j in range(1, k+1):
@@ -105,7 +120,8 @@ def GMRES(A, b, x0, e, nmax_iter, restart=None, debug=False):
         x_sol   = x_sol + g
         x.append(x_sol)
  
-        r = b - matmul_a(A, x_sol)
+        # r = b - matmul_a(A, x_sol)
+        r = b - A(x_sol)
 
         # Break out if the residual is lower than threshold
         if np.linalg.norm(r)/normb < e:
@@ -113,6 +129,7 @@ def GMRES(A, b, x0, e, nmax_iter, restart=None, debug=False):
 
  
     return x
+
 
 
 def apply_givens(Q, v, k):

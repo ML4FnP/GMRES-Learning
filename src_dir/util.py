@@ -14,31 +14,26 @@ mat_to_a = lambda a    : np.squeeze(np.asarray(a))
 matmul_a = lambda a, b : mat_to_a(np.dot(a, b))
 
 
-def resid(A, x, b):
+def resid(A, *args, **kwargs):
+    if isinstance(A, np.matrix):
+        A_op = lambda x: matmul_a(A, x)
+        return resid_kernel(A_op, *args, **kwargs)
+    else:
+        return resid_kernel(A, *args, **kwargs)
+
+
+
+def resid_kernel(A, x, b):
     return np.array(
-        [np.linalg.norm(matmul_a(A, xi)-b) for xi in x]
+        [np.linalg.norm(A(xi)-b) for xi in x]
     )
+
 
 
 # mathematical indices for python
 cidx   = lambda i: i-1  # c-style index from math-style index
 midx   = lambda i: i+1  # math-style index from c-style index
 mrange = lambda n: range(1, n + 1)
-
-
-# 1D sclar laplace operator
-def laplace_1d(N):
-    op = np.matrix(np.zeros((N, N)))
-    for i in mrange(N):
-        if i > 1:
-            op[cidx(i), cidx(i-1)] = -1
-        op[cidx(i), cidx(i)] = 2
-        if i < N:
-            op[cidx(i), cidx(i+1)] = -1
-    return op
-
-
-
 
 
 
