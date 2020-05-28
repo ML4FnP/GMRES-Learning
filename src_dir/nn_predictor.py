@@ -40,7 +40,7 @@ class NNPredictor(object):
         # in the SGD constructor will contain the learnable parameters of the two
         # nn.Linear modules which are members of the model.
         self.criterion = torch.nn.MSELoss(reduction='sum')
-        self.optimizer = torch.optim.Adam(self.model.parameters(), lr=1e-2)
+        self.optimizer = torch.optim.Adagrad(self.model.parameters(), lr=1e-2)
 
         self.x = torch.empty(0, self.D_in)
         self.y = torch.empty(0, self.D_out)
@@ -51,7 +51,7 @@ class NNPredictor(object):
 
         # Number of training steps
         # self.n_steps = 1000
-        self.n_steps = 3000000000
+        self.n_steps = 250*10
 
 
     @property
