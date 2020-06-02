@@ -1,0 +1,19 @@
+{
+    "AType": "1D Laplacian",
+    "DomainL": -5.0,
+    "DomainR": 5.0,
+    "HiddenDim": 500,
+    "InputDim": 500,
+    "OutputDim": 500,
+    "dim": 500,
+    "e1": 0.001,
+    "e2": 1e-10,
+    "git_branch": "master",
+    "git_commit_short_hash": "15321f9",
+    "n_steps": 500,
+    "nmax_iter": 50,
+    "restart": 64,
+    "retrain_freq": 1,
+    "sigma": 0.02,
+    "x0Type": "Zero Vector"
+}
