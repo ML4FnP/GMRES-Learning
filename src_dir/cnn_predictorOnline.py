@@ -161,7 +161,7 @@ def cnn_preconditionerOnline_timed(retrain_freq=10, debug=False,InputDim=2,Hidde
         @functools.wraps(func)
         def speedup_wrapper(*args, **kwargs):
 
-            A, b, x0, e, nmax_iter,ML_GMRES_Time_list,ProbCount,restart,debug,refine,blist,reslist,Err_list,GmresRunTime, *eargs = args
+            A, b, x0, e, nmax_iter,ML_GMRES_Time_list,ProbCount,restart,debug,refine,blist,reslist,Err_list, *eargs = args
 
             trainTime=0.0
             IterTime=0
