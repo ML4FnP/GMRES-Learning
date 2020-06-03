@@ -138,8 +138,7 @@ class CNNPredictorOnline(object):
         self.y = torch.cat((self.y, torch.from_numpy(y).unsqueeze_(0).float()), 0)
 
 
-    @timer
-    def predict_timed(self, x):
+    def predict(self, x):
         a1=torch.from_numpy(x).unsqueeze_(0).float()
         a2=np.squeeze(self.model.forward(a1).detach().cpu().numpy()) 
         #a2=np.squeeze(self.model.forward(a1).detach().numpy())     # cpu version, above line may work for cpu only... not sure. 
@@ -162,9 +161,8 @@ def cnn_preconditionerOnline_timed(retrain_freq=10, debug=False,InputDim=2,Hidde
         @functools.wraps(func)
         def speedup_wrapper(*args, **kwargs):
 
-            A, b, x0, e, nmax_iter,IterErrList,ProbCount,restart,debug,refine,blist,reslist,IterErrList10,GmresRunTime, *eargs = args
+            A, b, x0, e, nmax_iter,ML_GMRES_Time_list,ProbCount,restart,debug,refine,blist,reslist,Err_list,GmresRunTime, *eargs = args
 
-            forwardTime=0.0
             trainTime=0.0
             IterTime=0
             
@@ -172,18 +170,16 @@ def cnn_preconditionerOnline_timed(retrain_freq=10, debug=False,InputDim=2,Hidde
             Initial_set=2
 
             IterTime_AVG=0.0
-            IterErr10_AVG=0.0
-            IterErrRatio=0.0
 
             
             # Check if we are in first GMRES e1 tolerance run. If so, we compute prediction, and check the prediction is "good" before moving forward. 
             if func.predictor.is_trained and refine==False:
-                pred_x0,forwardTime = func.predictor.predict_timed(b)
-                target_test  = func(A, b, pred_x0, e, nmax_iter,IterErrList,ProbCount,1,debug,refine,blist,reslist,IterErrList10,GmresRunTime, *eargs)
+                pred_x0 = func.predictor.predict(b)
+                target_test  = func(A, b, pred_x0, e, nmax_iter,ML_GMRES_Time_list,ProbCount,1,debug,refine,blist,reslist,Err_list, *eargs)
                 IterErr_test = resid(A, target_test, b)
                 print('size',len(IterErr_test))
-                print(IterErr_test[10],max(IterErrList10))
-                if (IterErr_test[10]>max(IterErrList10)): 
+                print(IterErr_test[10],max(Err_list))
+                if (IterErr_test[10]>max(Err_list)): 
                     print('poor prediction,using initial x0')
                     pred_x0 = x0
             else:
@@ -192,7 +188,7 @@ def cnn_preconditionerOnline_timed(retrain_freq=10, debug=False,InputDim=2,Hidde
 
             #Time GMRES function 
             tic = time.perf_counter()
-            target  = func(A, b, pred_x0, e, nmax_iter,IterErrList,ProbCount,restart,debug,refine,blist,reslist,IterErrList10,GmresRunTime, *eargs)
+            target  = func(A, b, pred_x0, e, nmax_iter,ML_GMRES_Time_list,ProbCount,restart,debug,refine,blist,reslist,Err_list, *eargs)
             toc = time.perf_counter()
 
             res = target[-1]
@@ -203,8 +199,8 @@ def cnn_preconditionerOnline_timed(retrain_freq=10, debug=False,InputDim=2,Hidde
                 IterErr = resid(A, target, b)
                 IterTime=(toc-tic)
                 IterErr10=IterErr[10]
-                IterErrList.append(IterTime)
-                IterErrList10.append(IterErr10)  
+                ML_GMRES_Time_list.append(IterTime)
+                Err_list.append(IterErr10)  
                 if ProbCount<=Initial_set:
                     func.predictor.add_init(b, res)
                 if ProbCount==Initial_set:
@@ -215,14 +211,14 @@ def cnn_preconditionerOnline_timed(retrain_freq=10, debug=False,InputDim=2,Hidde
 
             # Compute moving averages used to filter data
             if ProbCount>Initial_set:
-                IterTime_AVG=moving_average(np.asarray(IterErrList),ProbCount)
-                IterErr10_AVG=moving_average(np.asarray(IterErrList10),ProbCount)
-                print(IterErrList[-1],IterTime_AVG,IterErrList10[-1],IterErr10_AVG)
+                IterTime_AVG=moving_average(np.asarray(ML_GMRES_Time_list),ProbCount)
+                IterErr10_AVG=moving_average(np.asarray(Err_list),ProbCount)
+                print(ML_GMRES_Time_list[-1],IterTime_AVG,Err_list[-1],IterErr10_AVG)
 
 
             # Filter for data to be added to training set
-            # IterErrList10[-1]>IterErr10_AVG and
-            if (IterErrList[-1]>IterTime_AVG) and  refine==True and ProbCount>Initial_set   : 
+            # Err_list[-1]>IterErr10_AVG and
+            if (ML_GMRES_Time_list[-1]>IterTime_AVG) and  refine==True and ProbCount>Initial_set   : 
                 blist.append(b)
                 reslist.append(res)
                 
@@ -257,7 +253,7 @@ def cnn_preconditionerOnline_timed(retrain_freq=10, debug=False,InputDim=2,Hidde
                             trainTime=float(timeLoop[-1])
                             blist=[]
                             reslist=[]
-            return target,IterErrList,IterTime_AVG,trainTime,forwardTime,blist,reslist,IterErrList10,GmresRunTime
+            return target,ML_GMRES_Time_list,trainTime,blist,reslist,Err_list
 
         return speedup_wrapper
     return my_decorator
