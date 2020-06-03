@@ -238,15 +238,15 @@ def cnn_preconditionerOnline_timed(retrain_freq=10, debug=False,InputDim=2,Hidde
                     cutoff=0.8
                     
                     # Picking out sufficiently orthogonal subset of 3 solutions gathered
-                    if InnerProd[0,1] and InnerProd[0,2]<cutoff :
-                        if InnerProd[1,2]<cutoff :
+                    if np.abs(InnerProd[0,1]) and np.abs(InnerProd[0,2])<cutoff :
+                        if np.abs(InnerProd[1,2])<cutoff :
                             func.predictor.add(np.asarray(blist)[1], np.asarray(reslist)[1])
                             func.predictor.add(np.asarray(blist)[2], np.asarray(reslist)[2])
-                        elif InnerProd[1,2]>=cutoff: 
+                        elif np.abs(InnerProd[1,2])>=cutoff: 
                             func.predictor.add(np.asarray(blist)[1], np.asarray(reslist)[1])
-                    elif InnerProd[0,1]<cutoff :
+                    elif np.abs(InnerProd[0,1])<cutoff :
                         func.predictor.add(np.asarray(blist)[1], np.asarray(reslist)[1])
-                    elif InnerProd[0,2]<cutoff :
+                    elif np.abs(InnerProd[0,2])<cutoff :
                         func.predictor.add(np.asarray(blist)[2], np.asarray(reslist)[2])
                     
                     if func.predictor.counter>=retrain_freq:
