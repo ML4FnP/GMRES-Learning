@@ -22,6 +22,13 @@ from .util import matmul_a, cidx, mrange
 #
 
 
+def update_solution(x, y, q):
+    g = np.zeros_like(x)
+    for i, iy in enumerate(y):
+        g += q[i]*iy
+    return g
+
+
 
 def GMRES(A, *args, **kwargs):
     if isinstance(A, np.matrix):
@@ -30,7 +37,6 @@ def GMRES(A, *args, **kwargs):
         return GMRES_op(lin_op, *args, **kwargs)
     else:
         return GMRES_op(A, *args, **kwargs)
-
 
 
 
@@ -82,7 +88,7 @@ def GMRES_op(A, b, x0, e, nmax_iter, restart=None, debug=False):
     x_sol = x0
 
     for l in mrange(n_outer):
-        q    = [None] * (nmax_iter)
+        q    = [np.zeros_like(x0)] * (nmax_iter)
         q[cidx(1)] = r / np.linalg.norm(r)
 
         h = np.zeros((nmax_iter + 1, nmax_iter))
@@ -95,7 +101,8 @@ def GMRES_op(A, b, x0, e, nmax_iter, restart=None, debug=False):
 
             # Modified Grahm-Schmidt
             for j in range(1, k+1):
-                h[cidx(j), cidx(k)] = np.dot(q[cidx(j)], y)
+                # use flatten -> enable N-D dot product
+                h[cidx(j), cidx(k)] = np.dot(q[cidx(j)].flatten(), y.flatten())
                 y = y - h[cidx(j), cidx(k)] * q[cidx(j)]
 
             h[cidx(k + 1), cidx(k)] = np.linalg.norm(y)
@@ -108,14 +115,16 @@ def GMRES_op(A, b, x0, e, nmax_iter, restart=None, debug=False):
                 beta    = np.zeros(nmax_iter + 1)
                 beta[0] = np.linalg.norm(r)
                 y       = np.linalg.lstsq(h, beta, rcond=None)[0]
-                g       = np.dot(np.asarray(q[:cidx(k)]).transpose(), y[:cidx(k)])
+                # g     = np.dot(np.asarray(q[:cidx(k)]).transpose(), y[:cidx(k)])
+                g       = update_solution(x_sol, y[:cidx(k)], q[:cidx(k)])
                 x.append(x_sol + g)
 
 
         beta    = np.zeros(nmax_iter + 1)
         beta[0] = np.linalg.norm(r)
         y       = np.linalg.lstsq(h, beta, rcond=None)[0]
-        g       = np.dot(np.asarray(q).transpose(), y)
+        # g     = np.dot(np.asarray(q).transpose(), y)
+        g       = update_solution(x_sol, y, q)
         
         x_sol   = x_sol + g
         x.append(x_sol)
