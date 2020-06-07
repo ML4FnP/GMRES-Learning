@@ -13,20 +13,24 @@ from torch.autograd import Variable
 from torch.nn       import Linear, ReLU, CrossEntropyLoss, \
                            Sequential, Conv2d, MaxPool2d,  \
                            Module, Softmax, BatchNorm2d, Dropout
+
 from torch.optim    import Adam, SGD
 
 from src_dir.cnn_collectionOnline import CnnOnline
 
 from src_dir import resid,timer,moving_average
 
+
+
+
+
 class CNNPredictorOnline(object):
 
     def __init__(self,D_in,H,D_out):
+        
         # N is batch size; D_in is input dimension;
         # H is hidden dimension; H2 is  second hidden layer dimension. 
         # D_out is output dimension.
-
-        self.N=1
         self.D_in=D_in
         self.H=H   
         self.D_out=D_out
@@ -37,13 +41,17 @@ class CNNPredictorOnline(object):
 
         # Construct our loss function and an Optimizer. The call to model.parameters()
         # in the SGD constructor will contain the learnable parameters of the two
-        # nn.Linear modules which are members of the model.
+        # nn.Conv1d modules which are members of the model.
         self.criterion = torch.nn.MSELoss(reduction='sum')
         self.optimizer = torch.optim.Adagrad(self.model.parameters(), lr=1e-2)
 
+        # x will hold entire training set b data
+        # y will hold entire training set solution data
         self.x = torch.empty(0, self.D_in)
         self.y = torch.empty(0, self.D_out)
 
+        # xNew holds new b additions to training set at the current time
+        # yNew holds new solution (x) additions to training set at the current time
         self.xNew = torch.empty(0, self.D_in)
         self.yNew = torch.empty(0, self.D_out)
 
@@ -65,22 +73,22 @@ class CNNPredictorOnline(object):
 
     @property
     def counter(self):
+        # Counter is based off of the data set to be added to training set 
         return self.xNew.size(0)
 
 
     @timer
     def retrain_timed(self):
-
         device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
         self.model.to(device)
         self.loss_val = list()  # clear loss val history
         self.loss_val.append(10.0)
 
-        batch_size=50
-        # numEpochs=int(10*150/batch_size)
+        batch_size=64
         numEpochs=2000
         e1=1e-3
         epoch=0
+        
         while self.loss_val[-1]> e1 and epoch<numEpochs:
             permutation = torch.randperm(self.x.size()[0])
             for t in range(0,self.x.size()[0],batch_size):
@@ -89,7 +97,9 @@ class CNNPredictorOnline(object):
 
                 batch_x, batch_y = self.x[indices],self.y[indices]
 
-                batch_xMix=torch.cat((batch_x,self.xNew))
+                # Adding new data to each batch
+                # Note: only adding at most 3 data points to each batch
+                batch_xMix=torch.cat((batch_x,self.xNew)) 
                 batch_yMix=torch.cat((batch_y,self.yNew))
 
                 # Forward pass: Compute predicted y by passing x to the model
@@ -104,26 +114,16 @@ class CNNPredictorOnline(object):
                 loss.backward()
                 self.optimizer.step()
                 epoch=epoch+1
-
-                #print diagnostic data
-                # print('loss:',loss.item())
-                # print('epoch:',epoch)
+                
         print('Final loss:',loss.item())
         self.x=torch.cat((self.x,self.xNew))
         self.y=torch.cat((self.y,self.yNew))
         self.xNew = torch.empty(0, self.D_in)
         self.yNew = torch.empty(0, self.D_out)
-        # numparams=sum(p.numel() for p in self.model.parameters() if p.requires_grad)
-        # print('parameters',numparams)
+        numparams=sum(p.numel() for p in self.model.parameters() if p.requires_grad)
+        print('parameters',numparams)
         self.is_trained = True
 
-
-
-    # def add(self, x, y):
-    #     # TODO: don't use `torch.cat` in this incremental mode => will scale poorly
-    #     # instead: use batched buffers
-    #     self.x = torch.cat((self.x, torch.from_numpy(x).unsqueeze_(0).float()), 0)
-    #     self.y = torch.cat((self.y, torch.from_numpy(y).unsqueeze_(0).float()), 0)
 
 
 
@@ -134,21 +134,18 @@ class CNNPredictorOnline(object):
         self.yNew = torch.cat((self.yNew, torch.from_numpy(y).unsqueeze_(0).float()), 0)
 
     def add_init(self, x, y):
-        # TODO: don't use `torch.cat` in this incremental mode => will scale poorly
-        # instead: use batched buffers
         self.x = torch.cat((self.x, torch.from_numpy(x).unsqueeze_(0).float()), 0)
         self.y = torch.cat((self.y, torch.from_numpy(y).unsqueeze_(0).float()), 0)
 
 
-    @timer
-    def predict_timed(self, x):
+    def predict(self, x):
         a1=torch.from_numpy(x).unsqueeze_(0).float()
         a2=np.squeeze(self.model.forward(a1).detach().cpu().numpy()) 
         #a2=np.squeeze(self.model.forward(a1).detach().numpy())     # cpu version, above line may work for cpu only... not sure. 
         return a2
-# inputs need to be [[x_1, x_2, ...]] as floats
- # outputs need to be numpy (non-grad => detach)
-# outputs need to be [y_1, y_2, ...]
+        # inputs need to be [[x_1, x_2, ...]] as floats
+        # outputs need to be numpy (non-grad => detach)
+        # outputs need to be [y_1, y_2, ...]
 
 
 
@@ -164,47 +161,46 @@ def cnn_preconditionerOnline_timed(retrain_freq=10, debug=False,InputDim=2,Hidde
         @functools.wraps(func)
         def speedup_wrapper(*args, **kwargs):
 
-            A, b, x0, e, nmax_iter,IterErrList,ProbCount,restart,debug,refine,blist,reslist,IterErrList10,GmresRunTime, *eargs = args
+            A, b, x0, e, nmax_iter,ML_GMRES_Time_list,ProbCount,restart,debug,refine,blist,reslist,Err_list, *eargs = args
 
-            forwardTime=0.0
             trainTime=0.0
             IterTime=0
+            
+            
             Initial_set=2
 
             IterTime_AVG=0.0
-            IterErr10_AVG=0.0
-            IterErrRatio=0.0
 
+            
+            # Check if we are in first GMRES e1 tolerance run. If so, we compute prediction, and check the prediction is "good" before moving forward. 
             if func.predictor.is_trained and refine==False:
-                pred_x0,forwardTime = func.predictor.predict_timed(b)
-                target_test  = func(A, b, pred_x0, e, nmax_iter,IterErrList,ProbCount,1,debug,refine,blist,reslist,IterErrList10,GmresRunTime, *eargs)
+                pred_x0 = func.predictor.predict(b)
+                target_test  = func(A, b, pred_x0, e, nmax_iter,ML_GMRES_Time_list,ProbCount,1,debug,refine,blist,reslist,Err_list, *eargs)
                 IterErr_test = resid(A, target_test, b)
-                print(IterErr_test[10],max(IterErrList10))
-                if (IterErr_test[10]>max(IterErrList10)): 
+                print('size',len(IterErr_test))
+                print(IterErr_test[10],max(Err_list))
+                if (IterErr_test[10]>max(Err_list)): 
                     print('poor prediction,using initial x0')
                     pred_x0 = x0
             else:
                 pred_x0 = x0
 
 
+            #Time GMRES function 
             tic = time.perf_counter()
-            target  = func(A, b, pred_x0, e, nmax_iter,IterErrList,ProbCount,restart,debug,refine,blist,reslist,IterErrList10,GmresRunTime, *eargs)
+            target  = func(A, b, pred_x0, e, nmax_iter,ML_GMRES_Time_list,ProbCount,restart,debug,refine,blist,reslist,Err_list, *eargs)
             toc = time.perf_counter()
 
             res = target[-1]
 
 
-
+            # Check if we are in first e tolerance loop
             if refine==False :
                 IterErr = resid(A, target, b)
                 IterTime=(toc-tic)
                 IterErr10=IterErr[10]
-                IterErrList.append(IterTime)
-                IterErrList10.append(IterErr10)
-                if ProbCount>Initial_set :
-                    IterTime_AVG=moving_average(np.asarray(IterErrList),ProbCount)
-                    IterErr10_AVG=moving_average(np.asarray(IterErrList10),ProbCount)
-                    print(IterTime,IterTime_AVG,IterErr[10],IterErr10_AVG)
+                ML_GMRES_Time_list.append(IterTime)
+                Err_list.append(IterErr10)  
                 if ProbCount<=Initial_set:
                     func.predictor.add_init(b, res)
                 if ProbCount==Initial_set:
@@ -213,15 +209,20 @@ def cnn_preconditionerOnline_timed(retrain_freq=10, debug=False,InputDim=2,Hidde
                     print('Initial Training')
 
 
+            # Compute moving averages used to filter data
             if ProbCount>Initial_set:
-                IterTime_AVG=moving_average(np.asarray(IterErrList),ProbCount)
-                IterErr10_AVG=moving_average(np.asarray(IterErrList10),ProbCount)
+                IterTime_AVG=moving_average(np.asarray(ML_GMRES_Time_list),ProbCount)
+                IterErr10_AVG=moving_average(np.asarray(Err_list),ProbCount)
+                print(ML_GMRES_Time_list[-1],IterTime_AVG,Err_list[-1],IterErr10_AVG)
 
 
-
-            if (IterErrList10[-1] > IterErr10_AVG and IterErrList[-1]>IterTime_AVG) and  refine==True and ProbCount>Initial_set   :  # Adhoc condition on residual of step to avoid overfitting. Approach doesn't seem to do better than this.
+            # Filter for data to be added to training set
+            # Err_list[-1]>IterErr10_AVG and
+            if (ML_GMRES_Time_list[-1]>IterTime_AVG) and  refine==True and ProbCount>Initial_set   : 
                 blist.append(b)
                 reslist.append(res)
+                
+                # check orthogonality of 3 solutions that met training set critera
                 if   len(blist)==3 :
                     resMat=np.asarray(reslist)
                     resMat_square=resMat**2
@@ -231,27 +232,28 @@ def cnn_preconditionerOnline_timed(retrain_freq=10, debug=False,InputDim=2,Hidde
                     print('InnerProd',InnerProd)
                     func.predictor.add(np.asarray(blist)[0], np.asarray(reslist)[0])
                     cutoff=0.8
-                    if InnerProd[0,1] and InnerProd[0,2]<cutoff :
-                        if InnerProd[1,2]<cutoff :
+                    
+                    # Picking out sufficiently orthogonal subset of 3 solutions gathered
+                    if np.abs(InnerProd[0,1]) and np.abs(InnerProd[0,2])<cutoff :
+                        if np.abs(InnerProd[1,2])<cutoff :
                             func.predictor.add(np.asarray(blist)[1], np.asarray(reslist)[1])
                             func.predictor.add(np.asarray(blist)[2], np.asarray(reslist)[2])
-                        elif InnerProd[1,2]>=cutoff: 
+                        elif np.abs(InnerProd[1,2])>=cutoff: 
                             func.predictor.add(np.asarray(blist)[1], np.asarray(reslist)[1])
-                    elif InnerProd[0,1]<cutoff :
+                    elif np.abs(InnerProd[0,1])<cutoff :
                         func.predictor.add(np.asarray(blist)[1], np.asarray(reslist)[1])
-                    elif InnerProd[0,2]<cutoff :
+                    elif np.abs(InnerProd[0,2])<cutoff :
                         func.predictor.add(np.asarray(blist)[2], np.asarray(reslist)[2])
                     
                     if func.predictor.counter>=retrain_freq:
                         if func.debug:
                             print("retraining")
                             print(func.predictor.counter)
-                            # func.predictor.retrain()
                             timeLoop=func.predictor.retrain_timed()
                             trainTime=float(timeLoop[-1])
                             blist=[]
                             reslist=[]
-            return target,IterErrList,IterTime_AVG,trainTime,forwardTime,blist,reslist,IterErrList10,GmresRunTime
+            return target,ML_GMRES_Time_list,trainTime,blist,reslist,Err_list
 
         return speedup_wrapper
     return my_decorator

@@ -1,0 +1,9 @@
+2020-05-29 16:30:46 [INFO] <ipython-input-4-a105921174f5> 2 - Benchmark 500 dim problem.
+2020-05-29 18:14:14 [INFO] <ipython-input-6-47d32c120560> 76 - Runtime of Non-decorated version is:
+2020-05-29 18:14:14 [INFO] <ipython-input-6-47d32c120560> 77 - 3156.691518193955
+2020-05-29 18:14:14 [INFO] <ipython-input-6-47d32c120560> 79 - Runtime of MLGMRES decorator is:
+2020-05-29 18:14:14 [INFO] <ipython-input-6-47d32c120560> 80 - 2851.2524518018035
+2020-05-29 18:14:14 [INFO] <ipython-input-6-47d32c120560> 83 - Runtime of training (backprop) is:
+2020-05-29 18:14:14 [INFO] <ipython-input-6-47d32c120560> 84 - 114.28496759895643
+2020-05-29 18:14:14 [INFO] <ipython-input-6-47d32c120560> 86 - Runtime of forward function is:
+2020-05-29 18:14:14 [INFO] <ipython-input-6-47d32c120560> 87 - 0.508568729259423
