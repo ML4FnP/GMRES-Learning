@@ -1,0 +1,7 @@
+2020-06-07 14:53:19 [INFO] <ipython-input-4-7b7779196d49> 2 - Benchmark 150 dim problem. Linear gradient RHS.  Conv+Fc. Multiple conv to compress first. 
+2020-06-07 16:25:35 [INFO] <ipython-input-6-ae968d5b6654> 69 - Runtime of Non-decorated version is:
+2020-06-07 16:25:35 [INFO] <ipython-input-6-ae968d5b6654> 70 - 1944.7455325283372
+2020-06-07 16:25:35 [INFO] <ipython-input-6-ae968d5b6654> 72 - Runtime of MLGMRES decorator is:
+2020-06-07 16:25:35 [INFO] <ipython-input-6-ae968d5b6654> 73 - 3544.1073506496177
+2020-06-07 16:25:35 [INFO] <ipython-input-6-ae968d5b6654> 76 - Runtime of training (backprop) is:
+2020-06-07 16:25:35 [INFO] <ipython-input-6-ae968d5b6654> 77 - 2166.928317130878

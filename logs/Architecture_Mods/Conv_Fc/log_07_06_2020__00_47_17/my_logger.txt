@@ -1,0 +1,8 @@
+2020-06-07 00:47:17 [INFO] <ipython-input-4-c58439f9f7e7> 2 - Benchmark 150 dim problem. Linear gradient RHS. 2 Conv+ 3 FC network (15 with overlap).
+2020-06-07 01:44:44 [INFO] <ipython-input-6-ae968d5b6654> 69 - Runtime of Non-decorated version is:
+2020-06-07 01:44:44 [INFO] <ipython-input-6-ae968d5b6654> 70 - 1517.4592864011356
+2020-06-07 01:44:44 [INFO] <ipython-input-6-ae968d5b6654> 72 - Runtime of MLGMRES decorator is:
+2020-06-07 01:44:44 [INFO] <ipython-input-6-ae968d5b6654> 73 - 1895.1630778560138
+2020-06-07 01:44:44 [INFO] <ipython-input-6-ae968d5b6654> 76 - Runtime of training (backprop) is:
+2020-06-07 01:44:44 [INFO] <ipython-input-6-ae968d5b6654> 77 - 992.7469354468922
+2020-06-07 01:58:40 [INFO] <ipython-input-15-80bfff1fdca7> 2 - Benchmark 150 dim problem. Linear gradient RHS.  Operator Conv. 
