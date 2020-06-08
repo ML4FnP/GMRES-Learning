@@ -1,0 +1,7 @@
+2020-06-03 20:23:39 [INFO] <ipython-input-4-7b98ddfcd908> 2 - Benchmark 225 dim problem. Source RHS.
+2020-06-03 22:51:19 [INFO] <ipython-input-6-ae968d5b6654> 69 - Runtime of Non-decorated version is:
+2020-06-03 22:51:19 [INFO] <ipython-input-6-ae968d5b6654> 70 - 5628.9957195445895
+2020-06-03 22:51:19 [INFO] <ipython-input-6-ae968d5b6654> 72 - Runtime of MLGMRES decorator is:
+2020-06-03 22:51:19 [INFO] <ipython-input-6-ae968d5b6654> 73 - 3112.0571487043053
+2020-06-03 22:51:19 [INFO] <ipython-input-6-ae968d5b6654> 76 - Runtime of training (backprop) is:
+2020-06-03 22:51:19 [INFO] <ipython-input-6-ae968d5b6654> 77 - 478.0746917363722
