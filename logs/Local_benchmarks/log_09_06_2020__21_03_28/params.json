@@ -9,7 +9,7 @@
     "e1": 0.0001,
     "e2": 1e-07,
     "git_branch": "master",
-    "git_commit_short_hash": "2aa2973",
+    "git_commit_short_hash": "ba6d5ea",
     "n_steps": 500,
     "nmax_iter": 50,
     "restart": 64,

@@ -1,1 +1,0 @@
-2020-06-09 19:29:20 [INFO] <ipython-input-4-6ec73637bfb3> 2 - Benchmark 12 dim problem using op func. 
