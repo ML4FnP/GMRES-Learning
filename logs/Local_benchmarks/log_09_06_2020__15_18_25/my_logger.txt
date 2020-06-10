@@ -1,0 +1,7 @@
+2020-06-09 15:18:26 [INFO] <ipython-input-4-ed8fa524ace8> 2 - Benchmark 100 dim problem. Linear gradient RHS.
+2020-06-09 15:48:05 [INFO] <ipython-input-6-2f30786647b7> 82 - Runtime of Non-decorated version is:
+2020-06-09 15:48:05 [INFO] <ipython-input-6-2f30786647b7> 83 - 870.3205585275427
+2020-06-09 15:48:05 [INFO] <ipython-input-6-2f30786647b7> 85 - Runtime of MLGMRES decorator is:
+2020-06-09 15:48:05 [INFO] <ipython-input-6-2f30786647b7> 86 - 891.6120502579724
+2020-06-09 15:48:05 [INFO] <ipython-input-6-2f30786647b7> 89 - Runtime of training (backprop) is:
+2020-06-09 15:48:05 [INFO] <ipython-input-6-2f30786647b7> 90 - 172.23627976811258

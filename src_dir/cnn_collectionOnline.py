@@ -77,6 +77,13 @@ class CnnOnline(torch.nn.Module):
         # self.Conv2   = torch.nn.Conv1d(int(H),D_out,1, stride=1, padding=0, dilation=1, groups=1, bias=False, padding_mode='zeros').to(device)
         # self.relu   = torch.nn.LeakyReLU().to(device)
 
+        # self.Conv1   = torch.nn.Conv1d(1,int(H),D_in, stride=1, padding=0, dilation=1, groups=1, bias=False, padding_mode='zeros').to(device)
+        # self.Conv2   = torch.nn.Conv1d(int(H),D_out,1, stride=1, padding=0, dilation=1, groups=1, bias=False, padding_mode='zeros').to(device)
+        # self.Conv3   = torch.nn.Conv1d(int(H),D_out,1, stride=1, padding=0, dilation=1, groups=1, bias=False, padding_mode='zeros').to(device)
+        # self.relu   = torch.nn.LeakyReLU().to(device)
+
+
+
     def forward(self, x):
         """
         In the forward function we accept a Tensor of input data and we must
@@ -144,9 +151,10 @@ class CnnOnline(torch.nn.Module):
         # Current_batchsize=int(x.shape[0])  # N in pytorch docs
         # device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
         # x2=x.unsqueeze(1)  # Add channel dimension (C) to input 
-        # ConvOut1=self.Conv1(x2.to(device)) 
-        # y_pred = ConvOut1.view(Current_batchsize, -1) #flatten channel dimension to be 1 and get array of  dimension (batch dim,input dim)
+        # ConvOut1=self.relu(self.Conv1(x2.to(device)))
+        # ConvOut2=self.relu(self.Conv2(ConvOut1))
+        # ConvOut3=self.Conv2(ConvOut2) 
+        # y_pred = ConvOut3.view(Current_batchsize, -1) #flatten ch
 
-        
         return y_pred
 
