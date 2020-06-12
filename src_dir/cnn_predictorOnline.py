@@ -161,14 +161,14 @@ def cnn_preconditionerOnline_timed(retrain_freq=10, debug=False,InputDim=2,Hidde
         @functools.wraps(func)
         def speedup_wrapper(*args, **kwargs):
 
-            A, b, x0, e, nmax_iter,ML_GMRES_Time_list,ProbCount,restart,debug,blist,reslist,Err_list,refine, *eargs = args
+            A, b, x0, e, nmax_iter,ML_GMRES_Time_list,ProbCount,restart,debug,refine,blist,reslist,Err_list, *eargs = args
 
             trainTime=0.0
             IterTime=0
             
             
             Initial_set=2
-            SpeedCutOff=0.9 #only add data is solution takes longer than 0.11 for coarse run
+            SpeedCutOff=0.11 #only add data is solution takes longer than 0.11 for coarse run
 
             IterTime_AVG=0.0
             IterErr10_AVG=0.0
@@ -176,7 +176,7 @@ def cnn_preconditionerOnline_timed(retrain_freq=10, debug=False,InputDim=2,Hidde
             # Check if we are in first GMRES e1 tolerance run. If so, we compute prediction, and check the prediction is "good" before moving forward. 
             if func.predictor.is_trained and refine==False:
                 pred_x0 = func.predictor.predict(b)
-                target_test  = func(A, b, pred_x0, e, nmax_iter,ML_GMRES_Time_list,ProbCount,1,debug,blist,reslist,Err_list,refine, *eargs)
+                target_test  = func(A, b, pred_x0, e, nmax_iter,ML_GMRES_Time_list,ProbCount,1,debug,refine,blist,reslist,Err_list, *eargs)
                 IterErr_test = resid(A, target_test, b)
                 print('size',len(IterErr_test))
                 print(IterErr_test[50],max(Err_list))
@@ -189,7 +189,7 @@ def cnn_preconditionerOnline_timed(retrain_freq=10, debug=False,InputDim=2,Hidde
 
             #Time GMRES function 
             tic = time.perf_counter()
-            target  = func(A, b, pred_x0, e, nmax_iter,ML_GMRES_Time_list,ProbCount,restart,debug,blist,reslist,Err_list,refine, *eargs)
+            target  = func(A, b, pred_x0, e, nmax_iter,ML_GMRES_Time_list,ProbCount,restart,debug,refine,blist,reslist,Err_list, *eargs)
             toc = time.perf_counter()
 
             res = target[-1]

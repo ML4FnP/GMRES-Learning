@@ -1,7 +1,0 @@
-2020-06-11 19:07:04 [INFO] <ipython-input-4-f8644901a075> 2 - Benchmark 125 dim problem using op func. 
-2020-06-11 19:09:28 [INFO] <ipython-input-6-f3713112f158> 82 - Runtime of Non-decorated version is:
-2020-06-11 19:09:28 [INFO] <ipython-input-6-f3713112f158> 83 - 64.1999235850817
-2020-06-11 19:09:28 [INFO] <ipython-input-6-f3713112f158> 85 - Runtime of MLGMRES decorator is:
-2020-06-11 19:09:28 [INFO] <ipython-input-6-f3713112f158> 86 - 63.43245490998379
-2020-06-11 19:09:28 [INFO] <ipython-input-6-f3713112f158> 89 - Runtime of training (backprop) is:
-2020-06-11 19:09:28 [INFO] <ipython-input-6-f3713112f158> 90 - 0.0
