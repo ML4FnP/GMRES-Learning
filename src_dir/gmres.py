@@ -92,6 +92,7 @@ def GMRES_op(A, b, x0, e, nmax_iter, restart=None, debug=False):
 
     for l in mrange(n_outer):
         q    = [np.zeros_like(x0)] * (nmax_iter)
+        #q    = [np.zeros_like(x0)] * (nmax_iter)
         q[cidx(1)] = r / np.linalg.norm(r)
 
         h = np.zeros((nmax_iter + 1, nmax_iter))
@@ -104,8 +105,9 @@ def GMRES_op(A, b, x0, e, nmax_iter, restart=None, debug=False):
 
             # Modified Grahm-Schmidt
             for j in range(1, k+1):
+                h[cidx(j), cidx(k)] = np.dot(q[cidx(j)], y)
                 # use flatten -> enable N-D dot product
-                h[cidx(j), cidx(k)] = np.dot(q[cidx(j)].flatten(), y.flatten())
+                #h[cidx(j), cidx(k)] = np.dot(q[cidx(j)].flatten(), y.flatten())
                 y = y - h[cidx(j), cidx(k)] * q[cidx(j)]
 
             h[cidx(k + 1), cidx(k)] = np.linalg.norm(y)
