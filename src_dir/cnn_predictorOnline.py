@@ -165,40 +165,41 @@ def cnn_preconditionerOnline_timed(retrain_freq=10, debug=False,InputDim=2,Hidde
 
             trainTime=0.0
             IterTime=0
-            pred_x0=x0
+            
             
             Initial_set=2
-            IterTime_AVG=0.0
+            SpeedCutOff=0.9 #only add data is solution takes longer than 0.11 for coarse run
 
+            IterTime_AVG=0.0
+            IterErr10_AVG=0.0
             
             # Check if we are in first GMRES e1 tolerance run. If so, we compute prediction, and check the prediction is "good" before moving forward. 
-            if refine==False:   
-                if func.predictor.is_trained:
-                    pred_x0 = func.predictor.predict(b)
-                    target_test  = func(A, b, pred_x0, e, nmax_iter,ML_GMRES_Time_list,ProbCount,1,debug,blist,reslist,Err_list,refine,*eargs)
-                    IterErr_test = resid(A, target_test, b)
-                    print('size',len(IterErr_test))
-                    print(IterErr_test[10],max(Err_list))
-                    if (IterErr_test[10]>max(Err_list)): 
-                        print('poor prediction,using initial x0')
-                        pred_x0 = x0
-                else:
+            if func.predictor.is_trained and refine==False:
+                pred_x0 = func.predictor.predict(b)
+                target_test  = func(A, b, pred_x0, e, nmax_iter,ML_GMRES_Time_list,ProbCount,1,debug,blist,reslist,Err_list,refine, *eargs)
+                IterErr_test = resid(A, target_test, b)
+                print('size',len(IterErr_test))
+                print(IterErr_test[50],max(Err_list))
+                if (IterErr_test[50]>max(Err_list)): 
+                    print('poor prediction,using initial x0')
                     pred_x0 = x0
+            else:
+                pred_x0 = x0
 
 
             #Time GMRES function 
             tic = time.perf_counter()
-            target  = func(A, b, pred_x0, e, nmax_iter,ML_GMRES_Time_list,ProbCount,restart,debug,blist,reslist,Err_list,refine,*eargs)
+            target  = func(A, b, pred_x0, e, nmax_iter,ML_GMRES_Time_list,ProbCount,restart,debug,blist,reslist,Err_list,refine, *eargs)
             toc = time.perf_counter()
 
             res = target[-1]
 
 
             # Check if we are in first e tolerance loop
-            if refine==False:
+            if refine==False :
                 IterErr = resid(A, target, b)
                 IterTime=(toc-tic)
-                IterErr10=IterErr[10]
+                IterErr10=IterErr[50]
                 ML_GMRES_Time_list.append(IterTime)
                 Err_list.append(IterErr10)  
                 if ProbCount<=Initial_set:
@@ -218,43 +219,41 @@ def cnn_preconditionerOnline_timed(retrain_freq=10, debug=False,InputDim=2,Hidde
 
             # Filter for data to be added to training set
             # Err_list[-1]>IterErr10_AVG and
-            if refine==True :
-                if (ML_GMRES_Time_list[-1]>IterTime_AVG) and  ProbCount>Initial_set and ML_GMRES_Time_list[-1]>0.09  : 
-                    blist.append(b)
-                    reslist.append(res)
+            if (ML_GMRES_Time_list[-1]>IterTime_AVG and Err_list[-1]>IterErr10_AVG  ) and  refine==True and ProbCount>Initial_set and ML_GMRES_Time_list[-1]>SpeedCutOff  : 
+                blist.append(b)
+                reslist.append(res)
+                
+                # check orthogonality of 3 solutions that met training set critera
+                if   len(blist)==3 :
+                    resMat=np.asarray(reslist)
+                    resMat_square=resMat**2
+                    row_sums = resMat_square.sum(axis=1,keepdims=True)
+                    resMat= resMat/np.sqrt(row_sums)
+                    InnerProd=np.dot(resMat,resMat.T)
+                    print('InnerProd',InnerProd)
+                    func.predictor.add(np.asarray(blist)[0], np.asarray(reslist)[0])
+                    cutoff=0.8
                     
-                    # check orthogonality of 3 solutions that met training set critera
-                    if   len(blist)==3 :
-                        resMat=np.asarray(reslist)
-                        resMat_square=resMat**2
-                        row_sums = resMat_square.sum(axis=1,keepdims=True)
-                        resMat= resMat/np.sqrt(row_sums)
-                        InnerProd=np.dot(resMat,resMat.T)
-                        print('InnerProd',InnerProd)
-                        func.predictor.add(np.asarray(blist)[0], np.asarray(reslist)[0])
-                        cutoff=0.8
-                        
-                        # Picking out sufficiently orthogonal subset of 3 solutions gathered
-                        if np.abs(InnerProd[0,1]) and np.abs(InnerProd[0,2])<cutoff :
-                            if np.abs(InnerProd[1,2])<cutoff :
-                                func.predictor.add(np.asarray(blist)[1], np.asarray(reslist)[1])
-                                func.predictor.add(np.asarray(blist)[2], np.asarray(reslist)[2])
-                            elif np.abs(InnerProd[1,2])>=cutoff: 
-                                func.predictor.add(np.asarray(blist)[1], np.asarray(reslist)[1])
-                        elif np.abs(InnerProd[0,1])<cutoff :
+                    # Picking out sufficiently orthogonal subset of 3 solutions gathered
+                    if np.abs(InnerProd[0,1]) and np.abs(InnerProd[0,2])<cutoff :
+                        if np.abs(InnerProd[1,2])<cutoff :
                             func.predictor.add(np.asarray(blist)[1], np.asarray(reslist)[1])
-                        elif np.abs(InnerProd[0,2])<cutoff :
                             func.predictor.add(np.asarray(blist)[2], np.asarray(reslist)[2])
-                        
-                        if func.predictor.counter>=retrain_freq:
-                            if func.debug:
-                                print("retraining")
-                                print(func.predictor.counter)
-                                timeLoop=func.predictor.retrain_timed()
-                                trainTime=float(timeLoop[-1])
-                                blist=[]
-                                reslist=[]
-
+                        elif np.abs(InnerProd[1,2])>=cutoff: 
+                            func.predictor.add(np.asarray(blist)[1], np.asarray(reslist)[1])
+                    elif np.abs(InnerProd[0,1])<cutoff :
+                        func.predictor.add(np.asarray(blist)[1], np.asarray(reslist)[1])
+                    elif np.abs(InnerProd[0,2])<cutoff :
+                        func.predictor.add(np.asarray(blist)[2], np.asarray(reslist)[2])
+                    
+                    if func.predictor.counter>=retrain_freq:
+                        if func.debug:
+                            print("retraining")
+                            print(func.predictor.counter)
+                            timeLoop=func.predictor.retrain_timed()
+                            trainTime=float(timeLoop[-1])
+                            blist=[]
+                            reslist=[]
             return target,ML_GMRES_Time_list,trainTime,blist,reslist,Err_list
 
         return speedup_wrapper
