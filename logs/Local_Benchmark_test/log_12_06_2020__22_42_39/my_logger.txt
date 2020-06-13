@@ -1,0 +1,7 @@
+2020-06-12 22:42:40 [INFO] <ipython-input-4-52562db688bf> 2 - Benchmark 125 dim problem. Linear gradient RHS. Test 1D linop. Benchmark on Kevin's PC. Test bug fix. Set time cutoff to 0.05. Try PRELU
+2020-06-12 23:54:51 [INFO] <ipython-input-6-601cd50eec3f> 78 - Runtime of Non-decorated version is:
+2020-06-12 23:54:51 [INFO] <ipython-input-6-601cd50eec3f> 79 - 2208.4762055832543
+2020-06-12 23:54:51 [INFO] <ipython-input-6-601cd50eec3f> 81 - Runtime of MLGMRES decorator is:
+2020-06-12 23:54:51 [INFO] <ipython-input-6-601cd50eec3f> 82 - 1611.84850377182
+2020-06-12 23:54:51 [INFO] <ipython-input-6-601cd50eec3f> 85 - Runtime of training (backprop) is:
+2020-06-12 23:54:51 [INFO] <ipython-input-6-601cd50eec3f> 86 - 275.46992533566663

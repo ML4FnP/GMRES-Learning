@@ -1,0 +1,7 @@
+2020-06-11 23:40:02 [INFO] <ipython-input-4-0221f2bea309> 2 - Benchmark 125 dim problem. Linear gradient RHS. Test 1D linop. Benchmark on Kevin's PC. Comment out all GMRES changes
+2020-06-12 00:46:58 [INFO] <ipython-input-6-2b87f21d2b0d> 79 - Runtime of Non-decorated version is:
+2020-06-12 00:46:58 [INFO] <ipython-input-6-2b87f21d2b0d> 80 - 2017.6258980808489
+2020-06-12 00:46:58 [INFO] <ipython-input-6-2b87f21d2b0d> 82 - Runtime of MLGMRES decorator is:
+2020-06-12 00:46:58 [INFO] <ipython-input-6-2b87f21d2b0d> 83 - 1476.5931385292788
+2020-06-12 00:46:58 [INFO] <ipython-input-6-2b87f21d2b0d> 86 - Runtime of training (backprop) is:
+2020-06-12 00:46:58 [INFO] <ipython-input-6-2b87f21d2b0d> 87 - 175.79697366792243

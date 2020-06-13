@@ -168,7 +168,7 @@ def cnn_preconditionerOnline_timed(retrain_freq=10, debug=False,InputDim=2,Hidde
             
             
             Initial_set=2
-            SpeedCutOff=0.11 #only add data is solution takes longer than 0.11 for coarse run
+            SpeedCutOff=0.05 #only add data is solution takes longer than 0.11 for coarse run
 
             IterTime_AVG=0.0
             IterErr10_AVG=0.0

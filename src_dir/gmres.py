@@ -24,11 +24,14 @@ from .util import matmul_a, cidx, mrange
 
 def update_solution(x, y, q):
     g = np.zeros_like(x)
+
     q2=np.asarray(q)
-    g=np.dot(q2.transpose(),y)
-    del q2
-    # for i, iy in enumerate(y):
-    #     g += q[i]*iy
+    g2=np.dot(q2.transpose(),y)
+
+
+    for i, iy in enumerate(y):
+        # g += q[i]*iy  # This line causes a reduction in precision when x0 input of GMRES comes from the NN. 
+        g    = g + q[i]*iy
     return g
 
 
@@ -92,7 +95,6 @@ def GMRES_op(A, b, x0, e, nmax_iter, restart=None, debug=False):
 
     for l in mrange(n_outer):
         q    = [np.zeros_like(x0)] * (nmax_iter)
-        #q    = [np.zeros_like(x0)] * (nmax_iter)
         q[cidx(1)] = r / np.linalg.norm(r)
 
         h = np.zeros((nmax_iter + 1, nmax_iter))
@@ -105,9 +107,8 @@ def GMRES_op(A, b, x0, e, nmax_iter, restart=None, debug=False):
 
             # Modified Grahm-Schmidt
             for j in range(1, k+1):
-                h[cidx(j), cidx(k)] = np.dot(q[cidx(j)], y)
                 # use flatten -> enable N-D dot product
-                #h[cidx(j), cidx(k)] = np.dot(q[cidx(j)].flatten(), y.flatten())
+                h[cidx(j), cidx(k)] = np.dot(q[cidx(j)].flatten(), y.flatten())
                 y = y - h[cidx(j), cidx(k)] * q[cidx(j)]
 
             h[cidx(k + 1), cidx(k)] = np.linalg.norm(y)
@@ -120,16 +121,16 @@ def GMRES_op(A, b, x0, e, nmax_iter, restart=None, debug=False):
                 beta    = np.zeros(nmax_iter + 1)
                 beta[0] = np.linalg.norm(r)
                 y       = np.linalg.lstsq(h, beta, rcond=None)[0]
-                g     = np.dot(np.asarray(q[:cidx(k)]).transpose(), y[:cidx(k)])
-                # g       = update_solution(x_sol, y[:cidx(k)], q[:cidx(k)])
+#                 g     = np.dot(np.asarray(q[:cidx(k)]).transpose(), y[:cidx(k)])
+                g       = update_solution(x_sol, y[:cidx(k)], q[:cidx(k)])
                 x.append(x_sol + g)
 
 
         beta    = np.zeros(nmax_iter + 1)
         beta[0] = np.linalg.norm(r)
         y       = np.linalg.lstsq(h, beta, rcond=None)[0]
-        g     = np.dot(np.asarray(q).transpose(), y)
-        # g       = update_solution(x_sol, y, q)
+#         g     = np.dot(np.asarray(q).transpose(), y)
+        g       = update_solution(x_sol, y, q)
         
         x_sol   = x_sol + g
         x.append(x_sol)
@@ -141,7 +142,6 @@ def GMRES_op(A, b, x0, e, nmax_iter, restart=None, debug=False):
         if np.linalg.norm(r)/normb < e:
             break
 
- 
     return x
 
 

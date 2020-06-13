@@ -25,8 +25,8 @@ class CnnOnline(torch.nn.Module):
         # Assuming D_in=D_out=H
         self.Conv1   = torch.nn.Conv1d(1,int(H),D_in, stride=1, padding=0, dilation=1, groups=1, bias=False, padding_mode='zeros').to(device)
         self.Conv2   = torch.nn.Conv1d(int(H),D_out,1, stride=1, padding=0, dilation=1, groups=1, bias=False, padding_mode='zeros').to(device)
-        self.relu   = torch.nn.LeakyReLU().to(device)
-        # self.relu   = torch.nn.PReLU(num_parameters=int(H)).to(device)
+        # self.relu   = torch.nn.LeakyReLU().to(device)
+        self.relu   = torch.nn.PReLU(num_parameters=int(H)).to(device)
 
         # self.Conv1   = torch.nn.Conv1d(1,1,int(D_in/10), stride=int(D_in/10), padding=0, dilation=1, groups=1, bias=False, padding_mode='zeros').to(device)
         # self.Conv2   = torch.nn.Conv1d(1,10,10, stride=1, padding=0, dilation=1, groups=1, bias=False, padding_mode='zeros').to(device)
