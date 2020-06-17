@@ -16,7 +16,7 @@ from torch.nn       import Linear, ReLU, CrossEntropyLoss, \
 
 from torch.optim    import Adam, SGD
 
-from src_dir.cnn_collectionOnline import CnnOnline
+from src_dir.cnn_collectionOnline2D import CnnOnline_2D
 
 from src_dir import resid,timer,moving_average
 
@@ -24,7 +24,7 @@ from src_dir import resid,timer,moving_average
 
 
 
-class CNNPredictorOnline(object):
+class CNNPredictorOnline_2D(object):
 
     def __init__(self,D_in,H,D_out):
         
@@ -38,7 +38,7 @@ class CNNPredictorOnline(object):
 
         # Construct our model by instantiating the class defined above
         device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-        self.model = CnnOnline(self.D_in, self.H,self.D_out).to(device)
+        self.model = CnnOnline_2D(self.D_in, self.H,self.D_out).to(device)
 
         # Construct our loss function and an Optimizer. The call to model.parameters()
         # in the SGD constructor will contain the learnable parameters of the two
@@ -48,15 +48,15 @@ class CNNPredictorOnline(object):
 
         # x will hold entire training set b data
         # y will hold entire training set solution data
-        self.x = torch.empty(0, self.D_in).to(device)
-        self.y = torch.empty(0, self.D_out).to(device)
+        self.x = torch.empty(0, self.D_in,self.D_in).to(device)
+        self.y = torch.empty(0, self.D_out,self.D_out).to(device)
 
 
 
         # xNew holds new b additions to training set at the current time
         # yNew holds new solution (x) additions to training set at the current time
-        self.xNew = torch.empty(0, self.D_in)
-        self.yNew = torch.empty(0, self.D_out)
+        self.xNew = torch.empty(0, self.D_in,self.D_in)
+        self.yNew = torch.empty(0, self.D_out,self.D_out)
 
 
         self._is_trained = False
@@ -90,7 +90,7 @@ class CNNPredictorOnline(object):
         self.loss_val = list()  # clear loss val history
         self.loss_val.append(10.0)
 
-        batch_size=128
+        batch_size=32
         numEpochs=2000
         e1=1e-3
         epoch=0
@@ -126,8 +126,8 @@ class CNNPredictorOnline(object):
 
         self.x=torch.cat((self.x,self.xNew))
         self.y=torch.cat((self.y,self.yNew))
-        self.xNew = torch.empty(0, self.D_in)
-        self.yNew = torch.empty(0, self.D_out)
+        self.xNew = torch.empty(0, self.D_in,self.D_in)
+        self.yNew = torch.empty(0, self.D_out,self.D_out)
 
         numparams=sum(p.numel() for p in self.model.parameters() if p.requires_grad)
         print('parameters',numparams)
@@ -161,9 +161,9 @@ class CNNPredictorOnline(object):
 
 
 
-def cnn_preconditionerOnline_timed(retrain_freq=10, debug=False,InputDim=2,HiddenDim=100,OutputDim=2 ):
+def cnn_preconditionerOnline_timed_2D(retrain_freq=10, debug=False,InputDim=2,HiddenDim=100,OutputDim=2 ):
     def my_decorator(func):
-        func.predictor    = CNNPredictorOnline(InputDim,HiddenDim,OutputDim)
+        func.predictor    = CNNPredictorOnline_2D(InputDim,HiddenDim,OutputDim)
         func.retrain_freq = retrain_freq
         func.debug        = debug
         func.InputDim     = InputDim
@@ -173,7 +173,7 @@ def cnn_preconditionerOnline_timed(retrain_freq=10, debug=False,InputDim=2,Hidde
         @functools.wraps(func)
         def speedup_wrapper(*args, **kwargs):
 
-            A, b, x0, e, nmax_iter,ML_GMRES_Time_list,ProbCount,restart,debug,refine,blist,reslist,Err_list, *eargs = args
+            A, b, x0, e, nmax_iter,ML_GMRES_Time_list,ProbCount,restart,debug,refine,blist,reslist,Err_list,reslist_flat, *eargs = args
 
             trainTime=0.0
             IterTime=0
@@ -188,11 +188,11 @@ def cnn_preconditionerOnline_timed(retrain_freq=10, debug=False,InputDim=2,Hidde
             # Check if we are in first GMRES e1 tolerance run. If so, we compute prediction, and check the prediction is "good" before moving forward. 
             if func.predictor.is_trained and refine==False:
                 pred_x0 = func.predictor.predict(b)
-                target_test  = func(A, b, pred_x0, e, nmax_iter,ML_GMRES_Time_list,ProbCount,1,debug,refine,blist,reslist,Err_list, *eargs)
+                target_test  = func(A, b, pred_x0, e, nmax_iter,ML_GMRES_Time_list,ProbCount,1,debug,refine,blist,reslist,Err_list,reslist_flat, *eargs)
                 IterErr_test = resid(A, target_test, b)
                 print('size',len(IterErr_test))
-                print(IterErr_test[50],max(Err_list))
-                if (IterErr_test[50]>max(Err_list)): 
+                print(IterErr_test[10],max(Err_list))
+                if (IterErr_test[10]>max(Err_list)): 
                     print('poor prediction,using initial x0')
                     pred_x0 = x0
             else:
@@ -201,7 +201,7 @@ def cnn_preconditionerOnline_timed(retrain_freq=10, debug=False,InputDim=2,Hidde
 
             #Time GMRES function 
             tic = time.perf_counter()
-            target  = func(A, b, pred_x0, e, nmax_iter,ML_GMRES_Time_list,ProbCount,restart,debug,refine,blist,reslist,Err_list, *eargs)
+            target  = func(A, b, pred_x0, e, nmax_iter,ML_GMRES_Time_list,ProbCount,restart,debug,refine,blist,reslist,Err_list,reslist_flat, *eargs)
             toc = time.perf_counter()
 
             res = target[-1]
@@ -211,13 +211,13 @@ def cnn_preconditionerOnline_timed(retrain_freq=10, debug=False,InputDim=2,Hidde
             if refine==False :
                 IterErr = resid(A, target, b)
                 IterTime=(toc-tic)
-                IterErr10=IterErr[50]
+                IterErr10=IterErr[10]
                 ML_GMRES_Time_list.append(IterTime)
                 Err_list.append(IterErr10)  
+
                 if ProbCount<=Initial_set:
                     func.predictor.add_init(b, res)
                 if ProbCount==Initial_set:
-                    func.predictor.add_init(b, res)
                     timeLoop=func.predictor.retrain_timed()
                     print('Initial Training')
 
@@ -232,12 +232,14 @@ def cnn_preconditionerOnline_timed(retrain_freq=10, debug=False,InputDim=2,Hidde
             # Filter for data to be added to training set
             # Err_list[-1]>IterErr10_AVG and
             if (ML_GMRES_Time_list[-1]>IterTime_AVG and Err_list[-1]>IterErr10_AVG  ) and  refine==True and ProbCount>Initial_set and ML_GMRES_Time_list[-1]>SpeedCutOff  : 
+                
                 blist.append(b)
                 reslist.append(res)
+                reslist_flat.append(np.reshape(res,(1,-1),order='C').squeeze(0))
                 
                 # check orthogonality of 3 solutions that met training set critera
                 if   len(blist)==3 :
-                    resMat=np.asarray(reslist)
+                    resMat=np.asarray(reslist_flat)
                     resMat_square=resMat**2
                     row_sums = resMat_square.sum(axis=1,keepdims=True)
                     resMat= resMat/np.sqrt(row_sums)
@@ -266,7 +268,8 @@ def cnn_preconditionerOnline_timed(retrain_freq=10, debug=False,InputDim=2,Hidde
                             trainTime=float(timeLoop[-1])
                             blist=[]
                             reslist=[]
-            return target,ML_GMRES_Time_list,trainTime,blist,reslist,Err_list
+                            reslist_flat=[]
+            return target,ML_GMRES_Time_list,trainTime,blist,reslist,Err_list,reslist_flat
 
         return speedup_wrapper
     return my_decorator
