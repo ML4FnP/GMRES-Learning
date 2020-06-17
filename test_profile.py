@@ -37,35 +37,35 @@ def test_logger(n):
 @log
 def test_inplace_logger(n):
 
-    start("sleep({n})")
+    start(f"sleep({n})")
     sleep(n)  # sleep for n seconds
-    stop("sleep")
+    stop(f"sleep({n})")
 
 
 
 if __name__ == "__main__":
 
-    e1, e2 = test_timers(1)
-    print("Testing event timers:")
-    print(f"e1 = {e1.label}@{e1.timestamp}\ne2 = {e2.label}@{e2.timestamp}")
+    # e1, e2 = test_timers(1)
+    # print("Testing event timers:")
+    # print(f"e1 = {e1.label}@{e1.timestamp}\ne2 = {e2.label}@{e2.timestamp}")
 
 
-    # clear logger between tests
-    EventLogger().clear()
+    # # clear logger between tests
+    # EventLogger().clear()
 
-    test_logger(1)
-    print("Testing event logger:")
-    logger = EventLogger()
-    for i, (l, ts) in enumerate(zip(logger.labels, logger.timestamps)):
-        print(f"e{i+1} = {l}@{ts}")
+    # test_logger(1)
+    # print("Testing event logger:")
+    # logger = EventLogger()
+    # for i, (l, ts) in enumerate(zip(logger.labels, logger.timestamps)):
+    #     print(f"e{i+1} = {l}@{ts}")
 
 
-    # clear logger between tests
-    EventLogger().clear()
+    # # clear logger between tests
+    # EventLogger().clear()
 
-    event_here("start", "    ")
+    # event_here("start", "    ")
     test_inplace_logger(1)
-    event_here("inplace_test", "done")
+    # event_here("inplace_test", "done")
 
     print("Testing inplace event logger:")
     for entry in event_log():
