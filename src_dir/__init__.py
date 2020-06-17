@@ -8,3 +8,4 @@ from .nn_collection        import TwoLayerNet
 from .nn_predictor         import nn_preconditioner,nn_preconditioner_timed
 from .cnn_predictorOnline  import cnn_preconditionerOnline_timed
 from .cnn_collectionOnline import CnnOnline
+from .benchmarking         import *
