@@ -173,7 +173,7 @@ def cnn_preconditionerOnline_timed_2DFlat(retrain_freq=10, debug=False,InputDim=
         @functools.wraps(func)
         def speedup_wrapper(*args, **kwargs):
 
-            A, b, x0, e, nmax_iter,ML_GMRES_Time_list,ProbCount,restart,debug,refine,blist,reslist,Err_list, *eargs = args
+            A, b, b_flat,x0, e, nmax_iter,ML_GMRES_Time_list,ProbCount,restart,debug,refine,blist,reslist,Err_list, *eargs = args
 
             trainTime=0.0
             IterTime=0
@@ -188,12 +188,11 @@ def cnn_preconditionerOnline_timed_2DFlat(retrain_freq=10, debug=False,InputDim=
             # Check if we are in first GMRES e1 tolerance run. If so, we compute prediction, and check the prediction is "good" before moving forward. 
             if func.predictor.is_trained and refine==False:
 
-                b_flat=np.reshape(b,(1,-1),order='F').squeeze(0)
                 pred_x0 = func.predictor.predict(b_flat)
                 pred_x0=np.reshape(pred_x0,(x0.shape[0],x0.shape[1]),order='F')
-
                 # pred_x0 = func.predictor.predict(b)
-                target_test  = func(A, b, pred_x0, e, nmax_iter,ML_GMRES_Time_list,ProbCount,1,debug,refine,blist,reslist,Err_list, *eargs)
+
+                target_test  = func(A, b,b_flat ,pred_x0, e, nmax_iter,ML_GMRES_Time_list,ProbCount,1,debug,refine,blist,reslist,Err_list, *eargs)
                 IterErr_test = resid(A, target_test, b)
                 print('size',len(IterErr_test))
                 print(IterErr_test[10],max(Err_list))
@@ -206,10 +205,11 @@ def cnn_preconditionerOnline_timed_2DFlat(retrain_freq=10, debug=False,InputDim=
 
             #Time GMRES function 
             tic = time.perf_counter()
-            target  = func(A, b, pred_x0, e, nmax_iter,ML_GMRES_Time_list,ProbCount,restart,debug,refine,blist,reslist,Err_list, *eargs)
+            target  = func(A, b,b_flat, pred_x0, e, nmax_iter,ML_GMRES_Time_list,ProbCount,restart,debug,refine,blist,reslist,Err_list, *eargs)
             toc = time.perf_counter()
 
             res = target[-1]
+            res_flat=np.reshape(res.T,(1,-1),order='C').squeeze(0)
 
 
             # Check if we are in first e tolerance loop
@@ -219,9 +219,6 @@ def cnn_preconditionerOnline_timed_2DFlat(retrain_freq=10, debug=False,InputDim=
                 IterErr10=IterErr[10]
                 ML_GMRES_Time_list.append(IterTime)
                 Err_list.append(IterErr10)  
-                b_flat=np.reshape(b,(1,-1),order='F').squeeze(0)
-                res_flat=np.reshape(res,(1,-1),order='F').squeeze(0)
-
                 if ProbCount<=Initial_set:
                     func.predictor.add_init(b_flat, res_flat)
                     # func.predictor.add_init(b, res)
@@ -242,11 +239,9 @@ def cnn_preconditionerOnline_timed_2DFlat(retrain_freq=10, debug=False,InputDim=
             # Err_list[-1]>IterErr10_AVG and
             if (ML_GMRES_Time_list[-1]>IterTime_AVG and Err_list[-1]>IterErr10_AVG  ) and  refine==True and ProbCount>Initial_set and ML_GMRES_Time_list[-1]>SpeedCutOff  : 
                 
-                b_flat=np.reshape(b,(1,-1),order='F').squeeze(0)
-                res_flat=np.reshape(res,(1,-1),order='F').squeeze(0)
+
                 blist.append(b_flat)
                 reslist.append(res_flat)
-
                 # blist.append(b)
                 # reslist.append(res)
                 
