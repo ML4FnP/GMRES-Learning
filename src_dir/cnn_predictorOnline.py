@@ -37,7 +37,8 @@ class CNNPredictorOnline(object):
 
 
         # Construct our model by instantiating the class defined above
-        self.model = CnnOnline(self.D_in, self.H,self.D_out)
+        device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+        self.model = CnnOnline(self.D_in, self.H,self.D_out).to(device)
 
         # Construct our loss function and an Optimizer. The call to model.parameters()
         # in the SGD constructor will contain the learnable parameters of the two
@@ -47,8 +48,10 @@ class CNNPredictorOnline(object):
 
         # x will hold entire training set b data
         # y will hold entire training set solution data
-        self.x = torch.empty(0, self.D_in)
-        self.y = torch.empty(0, self.D_out)
+        self.x = torch.empty(0, self.D_in).to(device)
+        self.y = torch.empty(0, self.D_out).to(device)
+
+
 
         # xNew holds new b additions to training set at the current time
         # yNew holds new solution (x) additions to training set at the current time
@@ -79,12 +82,15 @@ class CNNPredictorOnline(object):
 
     @timer
     def retrain_timed(self):
+
         device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-        self.model.to(device)
+        self.xNew = self.xNew.to(device)
+        self.yNew = self.yNew.to(device)
+
         self.loss_val = list()  # clear loss val history
         self.loss_val.append(10.0)
 
-        batch_size=64
+        batch_size=128
         numEpochs=2000
         e1=1e-3
         epoch=0
@@ -103,10 +109,10 @@ class CNNPredictorOnline(object):
                 batch_yMix=torch.cat((batch_y,self.yNew))
 
                 # Forward pass: Compute predicted y by passing x to the model
-                y_pred = self.model(batch_xMix.to(device))
+                y_pred = self.model(batch_xMix)
 
                 # Compute and print loss
-                loss = self.criterion(y_pred, batch_yMix.to(device))
+                loss = self.criterion(y_pred, batch_yMix)
                 self.loss_val.append(loss.item())
 
                 # Zero gradients, perform a backward pass, and update the weights.
@@ -116,12 +122,16 @@ class CNNPredictorOnline(object):
                 epoch=epoch+1
                 
         print('Final loss:',loss.item())
+        self.loss_val.append(loss.item())
+
         self.x=torch.cat((self.x,self.xNew))
         self.y=torch.cat((self.y,self.yNew))
         self.xNew = torch.empty(0, self.D_in)
         self.yNew = torch.empty(0, self.D_out)
+
         numparams=sum(p.numel() for p in self.model.parameters() if p.requires_grad)
         print('parameters',numparams)
+
         self.is_trained = True
 
 
@@ -134,12 +144,14 @@ class CNNPredictorOnline(object):
         self.yNew = torch.cat((self.yNew, torch.from_numpy(y).unsqueeze_(0).float()), 0)
 
     def add_init(self, x, y):
-        self.x = torch.cat((self.x, torch.from_numpy(x).unsqueeze_(0).float()), 0)
-        self.y = torch.cat((self.y, torch.from_numpy(y).unsqueeze_(0).float()), 0)
+        device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+        self.x = torch.cat((self.x, torch.from_numpy(x).unsqueeze_(0).float().to(device)), 0)
+        self.y = torch.cat((self.y, torch.from_numpy(y).unsqueeze_(0).float().to(device)), 0)
 
 
     def predict(self, x):
-        a1=torch.from_numpy(x).unsqueeze_(0).float()
+        device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+        a1=torch.from_numpy(x).unsqueeze_(0).float().to(device)
         a2=np.squeeze(self.model.forward(a1).detach().cpu().numpy()) 
         #a2=np.squeeze(self.model.forward(a1).detach().numpy())     # cpu version, above line may work for cpu only... not sure. 
         return a2
@@ -168,7 +180,7 @@ def cnn_preconditionerOnline_timed(retrain_freq=10, debug=False,InputDim=2,Hidde
             
             
             Initial_set=2
-            SpeedCutOff=0.05 #only add data is solution takes longer than 0.11 for coarse run
+            SpeedCutOff=0.00 #only add data is solution takes longer than 0.11 for coarse run
 
             IterTime_AVG=0.0
             IterErr10_AVG=0.0

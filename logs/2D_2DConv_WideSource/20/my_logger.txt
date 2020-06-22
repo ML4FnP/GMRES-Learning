@@ -1,0 +1,9 @@
+2020-06-21 14:18:03 [INFO] <ipython-input-6-7b60c23ab88e> 2 - Test 2D problem using 2DConv +1 Fc. Dim 20. Wide source (sig-0.2).  
+2020-06-21 15:21:52 [INFO] <ipython-input-8-6d08e8103c59> 90 - Runtime of Non-decorated version is:
+2020-06-21 15:21:52 [INFO] <ipython-input-8-6d08e8103c59> 91 - 1807.8470706930384
+2020-06-21 15:21:52 [INFO] <ipython-input-8-6d08e8103c59> 93 - Runtime of MLGMRES decorator is:
+2020-06-21 15:21:52 [INFO] <ipython-input-8-6d08e8103c59> 94 - 1266.0665499831084
+2020-06-21 15:21:52 [INFO] <ipython-input-8-6d08e8103c59> 96 - Runtime of MLGMRES (only GMRES time) is:
+2020-06-21 15:21:52 [INFO] <ipython-input-8-6d08e8103c59> 97 - 1010.2332158426289
+2020-06-21 15:21:52 [INFO] <ipython-input-8-6d08e8103c59> 100 - Runtime of training (backprop) is:
+2020-06-21 15:21:52 [INFO] <ipython-input-8-6d08e8103c59> 101 - 89.36278201290406

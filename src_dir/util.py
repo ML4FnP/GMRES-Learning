@@ -56,6 +56,9 @@ def timer(func):
 def Gauss_pdf(xArr,loc,sig):
     return np.exp(-0.5*((xArr-loc)/sig)**2.0)/(2*sig*np.sqrt(np.pi))
 
+def Gauss_pdf_2D(xGrid,yGrid,xloc,yloc,sig):
+    return np.exp(-0.5*(  ((xGrid-xloc)/sig)**2.0 +((yGrid-yloc)/sig)**2.0 ))/(2*np.pi*sig**2.0)
+
 
 def moving_average(a, n) :
     if n<25 :

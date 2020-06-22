@@ -1,0 +1,9 @@
+2020-06-15 16:54:09 [INFO] <ipython-input-4-3f38537dd2d1> 2 - Benchmark 125 dim problem. Linear gradient RHS. Test 1D linop. Benchmark on Kevin's PC. Set time cutoff to 0.05. PRELU. Batch 128. Set e1=10-3. Set epochs to 2000. Set e2=10-5
+2020-06-15 17:40:40 [INFO] <ipython-input-6-601cd50eec3f> 78 - Runtime of Non-decorated version is:
+2020-06-15 17:40:40 [INFO] <ipython-input-6-601cd50eec3f> 79 - 1483.8827539401973
+2020-06-15 17:40:40 [INFO] <ipython-input-6-601cd50eec3f> 81 - Runtime of MLGMRES decorator is:
+2020-06-15 17:40:40 [INFO] <ipython-input-6-601cd50eec3f> 82 - 950.099609500423
+2020-06-15 17:40:40 [INFO] <ipython-input-6-601cd50eec3f> 85 - Runtime of training (backprop) is:
+2020-06-15 17:40:40 [INFO] <ipython-input-6-601cd50eec3f> 86 - 273.72130851304973
+2020-06-15 23:07:59 [INFO] <ipython-input-28-3f38537dd2d1> 2 - Benchmark 125 dim problem. Linear gradient RHS. Test 1D linop. Benchmark on Kevin's PC. Set time cutoff to 0.05. PRELU. Batch 128. Set e1=10-3. Set epochs to 2000. Set e2=10-5
+2020-06-15 23:44:56 [INFO] <ipython-input-73-04ad96fd4839> 2 - Test 2D problem using AX=b form. 
