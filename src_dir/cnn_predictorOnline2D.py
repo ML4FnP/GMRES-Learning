@@ -18,7 +18,7 @@ from torch.optim    import Adam, SGD
 
 from src_dir.cnn_collectionOnline2D import CnnOnline_2D
 
-from src_dir import resid,timer,moving_average
+from src_dir import resid,timer,moving_average,GMRES
 
 
 
@@ -91,7 +91,7 @@ class CNNPredictorOnline_2D(object):
         self.loss_val.append(10.0)
 
         batch_size=32
-        numEpochs=2000
+        numEpochs=500
         e1=1e-3
         epoch=0
         
@@ -173,7 +173,7 @@ def cnn_preconditionerOnline_timed_2D(retrain_freq=10, debug=False,InputDim=2,Hi
         @functools.wraps(func)
         def speedup_wrapper(*args, **kwargs):
 
-            A, b, x0, e, nmax_iter,ML_GMRES_Time_list,ProbCount,restart,debug,refine,blist,reslist,Err_list,reslist_flat, *eargs = args
+            A, b, x0, e, nmax_iter,ML_GMRES_Time_list,ProbCount,restart,debug,refine,blist,reslist,Err_list,reslist_flat,ML_GMRES_Time_list2, *eargs = args
 
             trainTime=0.0
             IterTime=0
@@ -188,11 +188,12 @@ def cnn_preconditionerOnline_timed_2D(retrain_freq=10, debug=False,InputDim=2,Hi
             # Check if we are in first GMRES e1 tolerance run. If so, we compute prediction, and check the prediction is "good" before moving forward. 
             if func.predictor.is_trained and refine==False:
                 pred_x0 = func.predictor.predict(b)
-                target_test  = func(A, b, pred_x0, e, nmax_iter,ML_GMRES_Time_list,ProbCount,1,debug,refine,blist,reslist,Err_list,reslist_flat, *eargs)
+                # target_test  = func(A, b, pred_x0, e, nmax_iter,ML_GMRES_Time_list,ProbCount,1,debug,refine,blist,reslist,Err_list,reslist_flat, *eargs)
+                target_test=GMRES(A, b, x0, e, 1,1, False)
                 IterErr_test = resid(A, target_test, b)
                 print('size',len(IterErr_test))
-                print(IterErr_test[10],max(Err_list))
-                if (IterErr_test[10]>max(Err_list)): 
+                print(IterErr_test[-1],max(Err_list))
+                if (IterErr_test[-1]>max(Err_list)): 
                     print('poor prediction,using initial x0')
                     pred_x0 = x0
             else:
@@ -201,7 +202,7 @@ def cnn_preconditionerOnline_timed_2D(retrain_freq=10, debug=False,InputDim=2,Hi
 
             #Time GMRES function 
             tic = time.perf_counter()
-            target  = func(A, b, pred_x0, e, nmax_iter,ML_GMRES_Time_list,ProbCount,restart,debug,refine,blist,reslist,Err_list,reslist_flat, *eargs)
+            target  = func(A, b, pred_x0, e, nmax_iter,ML_GMRES_Time_list,ProbCount,restart,debug,refine,blist,reslist,Err_list,reslist_flat,ML_GMRES_Time_list2, *eargs)
             toc = time.perf_counter()
 
             res = target[-1]
@@ -211,7 +212,7 @@ def cnn_preconditionerOnline_timed_2D(retrain_freq=10, debug=False,InputDim=2,Hi
             if refine==False :
                 IterErr = resid(A, target, b)
                 IterTime=(toc-tic)
-                IterErr10=IterErr[10]
+                IterErr10=IterErr[2]
                 ML_GMRES_Time_list.append(IterTime)
                 Err_list.append(IterErr10)  
 
@@ -220,7 +221,8 @@ def cnn_preconditionerOnline_timed_2D(retrain_freq=10, debug=False,InputDim=2,Hi
                 if ProbCount==Initial_set:
                     timeLoop=func.predictor.retrain_timed()
                     print('Initial Training')
-
+            else :
+                ML_GMRES_Time_list2.append((toc-tic))
 
             # Compute moving averages used to filter data
             if ProbCount>Initial_set:
@@ -269,7 +271,7 @@ def cnn_preconditionerOnline_timed_2D(retrain_freq=10, debug=False,InputDim=2,Hi
                             blist=[]
                             reslist=[]
                             reslist_flat=[]
-            return target,ML_GMRES_Time_list,trainTime,blist,reslist,Err_list,reslist_flat
+            return target,ML_GMRES_Time_list,trainTime,blist,reslist,Err_list,reslist_flat,ML_GMRES_Time_list2
 
         return speedup_wrapper
     return my_decorator

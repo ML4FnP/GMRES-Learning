@@ -1,0 +1,9 @@
+2020-06-21 12:06:41 [INFO] <ipython-input-6-b2a40c8020c4> 2 - Test 2D problem using 2DConv +1 Fc. Dim 25. Linear gradient problem.  
+2020-06-21 14:02:03 [INFO] <ipython-input-8-0b7506cc868e> 90 - Runtime of Non-decorated version is:
+2020-06-21 14:02:03 [INFO] <ipython-input-8-0b7506cc868e> 91 - 3413.6306391088874
+2020-06-21 14:02:03 [INFO] <ipython-input-8-0b7506cc868e> 93 - Runtime of MLGMRES decorator is:
+2020-06-21 14:02:03 [INFO] <ipython-input-8-0b7506cc868e> 94 - 2000.381837159337
+2020-06-21 14:02:03 [INFO] <ipython-input-8-0b7506cc868e> 96 - Runtime of MLGMRES (only GMRES time) is:
+2020-06-21 14:02:03 [INFO] <ipython-input-8-0b7506cc868e> 97 - 1634.8032698830357
+2020-06-21 14:02:03 [INFO] <ipython-input-8-0b7506cc868e> 100 - Runtime of training (backprop) is:
+2020-06-21 14:02:03 [INFO] <ipython-input-8-0b7506cc868e> 101 - 147.60929391515674

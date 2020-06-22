@@ -1,0 +1,9 @@
+2020-06-20 18:05:51 [INFO] <ipython-input-6-fbb0f0df4874> 2 - Test 2D problem using 2DConv +1 Fc. Dim 20. Point souce constrained on rose k=6.  
+2020-06-20 19:03:06 [INFO] <ipython-input-8-b59bb8bf4da4> 94 - Runtime of Non-decorated version is:
+2020-06-20 19:03:06 [INFO] <ipython-input-8-b59bb8bf4da4> 95 - 1671.529565888166
+2020-06-20 19:03:06 [INFO] <ipython-input-8-b59bb8bf4da4> 97 - Runtime of MLGMRES decorator is:
+2020-06-20 19:03:06 [INFO] <ipython-input-8-b59bb8bf4da4> 98 - 1163.7844157649088
+2020-06-20 19:03:06 [INFO] <ipython-input-8-b59bb8bf4da4> 100 - Runtime of MLGMRES (only GMRES time) is:
+2020-06-20 19:03:06 [INFO] <ipython-input-8-b59bb8bf4da4> 101 - 934.6011594526935
+2020-06-20 19:03:06 [INFO] <ipython-input-8-b59bb8bf4da4> 104 - Runtime of training (backprop) is:
+2020-06-20 19:03:06 [INFO] <ipython-input-8-b59bb8bf4da4> 105 - 71.56800934544299
