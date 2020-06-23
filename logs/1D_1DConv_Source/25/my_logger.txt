@@ -1,9 +1,9 @@
-2020-06-21 01:15:35 [INFO] <ipython-input-6-ab918c2ad954> 2 - Test 2D-Flat problem using 1DConv +1 Conv as FC. Dim 25. Point souce constrained on rose k=6.  
-2020-06-21 03:06:53 [INFO] <ipython-input-8-7ecf5ee8a18c> 87 - Runtime of Non-decorated version is:
-2020-06-21 03:06:53 [INFO] <ipython-input-8-7ecf5ee8a18c> 88 - 3034.072348332964
-2020-06-21 03:06:53 [INFO] <ipython-input-8-7ecf5ee8a18c> 90 - Runtime of MLGMRES decorator is:
-2020-06-21 03:06:53 [INFO] <ipython-input-8-7ecf5ee8a18c> 91 - 2566.084331045102
-2020-06-21 03:06:53 [INFO] <ipython-input-8-7ecf5ee8a18c> 93 - Runtime of MLGMRES (only GMRES time) is:
-2020-06-21 03:06:53 [INFO] <ipython-input-8-7ecf5ee8a18c> 94 - 1842.7763655454037
-2020-06-21 03:06:53 [INFO] <ipython-input-8-7ecf5ee8a18c> 96 - Runtime of training (backprop) is:
-2020-06-21 03:06:53 [INFO] <ipython-input-8-7ecf5ee8a18c> 97 - 375.4719047130202
+2020-06-22 18:38:43 [INFO] <ipython-input-6-ab918c2ad954> 2 - Test 2D-Flat problem using 1DConv +1 Conv as FC. Dim 25. Point souce constrained on rose k=6.  
+2020-06-22 20:28:26 [INFO] <ipython-input-8-8a4b323e0c59> 87 - Runtime of Non-decorated version is:
+2020-06-22 20:28:26 [INFO] <ipython-input-8-8a4b323e0c59> 88 - 2952.5080891384787
+2020-06-22 20:28:26 [INFO] <ipython-input-8-8a4b323e0c59> 90 - Runtime of MLGMRES decorator is:
+2020-06-22 20:28:26 [INFO] <ipython-input-8-8a4b323e0c59> 91 - 2581.230336853114
+2020-06-22 20:28:26 [INFO] <ipython-input-8-8a4b323e0c59> 93 - Runtime of MLGMRES (only GMRES time) is:
+2020-06-22 20:28:26 [INFO] <ipython-input-8-8a4b323e0c59> 94 - 1861.285421736662
+2020-06-22 20:28:26 [INFO] <ipython-input-8-8a4b323e0c59> 96 - Runtime of training (backprop) is:
+2020-06-22 20:28:26 [INFO] <ipython-input-8-8a4b323e0c59> 97 - 344.2547831789707

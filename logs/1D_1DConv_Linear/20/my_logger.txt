@@ -1,0 +1,9 @@
+2020-06-22 22:09:44 [INFO] <ipython-input-6-03b715d48e37> 2 - Test 2D-Flat problem using 1DConv +1 FC. Dim 20. Linear  Grad RHS.  
+2020-06-22 23:10:40 [INFO] <ipython-input-8-b2c9e92e6461> 87 - Runtime of Non-decorated version is:
+2020-06-22 23:10:40 [INFO] <ipython-input-8-b2c9e92e6461> 88 - 1908.4996497637912
+2020-06-22 23:10:40 [INFO] <ipython-input-8-b2c9e92e6461> 90 - Runtime of MLGMRES decorator is:
+2020-06-22 23:10:40 [INFO] <ipython-input-8-b2c9e92e6461> 91 - 908.3402376761514
+2020-06-22 23:10:40 [INFO] <ipython-input-8-b2c9e92e6461> 93 - Runtime of MLGMRES (only GMRES time) is:
+2020-06-22 23:10:40 [INFO] <ipython-input-8-b2c9e92e6461> 94 - 750.3975294371921
+2020-06-22 23:10:40 [INFO] <ipython-input-8-b2c9e92e6461> 96 - Runtime of training (backprop) is:
+2020-06-22 23:10:40 [INFO] <ipython-input-8-b2c9e92e6461> 97 - 70.3466679789999

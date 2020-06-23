@@ -14,6 +14,6 @@
     "nmax_iter": 5,
     "restart": 64,
     "retrain_freq": 1,
-    "sigma": 0.02,
+    "sigma": 0.2,
     "x0Type": "Zero Solution 2D"
 }

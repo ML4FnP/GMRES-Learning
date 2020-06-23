@@ -186,7 +186,7 @@ def cnn_preconditionerOnline_timed_2DFlat(retrain_freq=10, debug=False,InputDim=
             # Check if we are in first GMRES e1 tolerance run. If so, we compute prediction, and check the prediction is "good" before moving forward. 
             if func.predictor.is_trained and refine==False:
                 pred_x0 = func.predictor.predict(b_flat)
-                target_test=GMRES(A, b, x0, e, 1,1, False)
+                target_test=GMRES(A, b, x0, e, 2,1, False)
                 IterErr_test = resid(A, target_test, b)
                 print('size',len(IterErr_test))
                 print(IterErr_test[-1],max(Err_list))
