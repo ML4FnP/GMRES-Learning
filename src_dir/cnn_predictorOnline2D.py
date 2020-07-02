@@ -84,18 +84,22 @@ class CNNPredictorOnline_2D(object):
     def retrain_timed(self):
 
         device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+
         self.xNew = self.xNew.to(device)
         self.yNew = self.yNew.to(device)
+
+        self.x=torch.cat((self.x,self.xNew))
+        self.y=torch.cat((self.y,self.yNew))
 
         self.loss_val = list()  # clear loss val history
         self.loss_val.append(10.0)
 
         batch_size=32
-        numEpochs=500
-        e1=1e-3
+        numEpochs=1000
+        e1=1e-5
         epoch=0
         
-        while self.loss_val[-1]> e1 and epoch<numEpochs:
+        while self.loss_val[-1]> e1 and epoch<numEpochs-1:
             permutation = torch.randperm(self.x.size()[0])
             for t in range(0,self.x.size()[0],batch_size):
                 
@@ -103,16 +107,11 @@ class CNNPredictorOnline_2D(object):
 
                 batch_x, batch_y = self.x[indices],self.y[indices]
 
-                # Adding new data to each batch
-                # Note: only adding at most 3 data points to each batch
-                batch_xMix=torch.cat((batch_x,self.xNew)) 
-                batch_yMix=torch.cat((batch_y,self.yNew))
-
                 # Forward pass: Compute predicted y by passing x to the model
-                y_pred = self.model(batch_xMix)
+                y_pred = self.model(batch_x)
 
                 # Compute and print loss
-                loss = self.criterion(y_pred, batch_yMix)
+                loss = self.criterion(y_pred, batch_y)
                 self.loss_val.append(loss.item())
 
                 # Zero gradients, perform a backward pass, and update the weights.
@@ -120,12 +119,26 @@ class CNNPredictorOnline_2D(object):
                 loss.backward()
                 self.optimizer.step()
                 epoch=epoch+1
+
+        permutation = torch.randperm(self.x.size()[0])
+        indices = permutation[0:0+batch_size]
+        batch_x, batch_y = self.x[indices],self.y[indices]
+        # Adding new data to each batch
+        # Note: only adding at most 3 data points to each batch
+        batch_xMix=torch.cat((batch_x,self.xNew)) 
+        batch_yMix=torch.cat((batch_y,self.yNew))
+        # Forward pass: Compute predicted y by passing x to the model
+        y_pred = self.model(batch_xMix)
+        # Compute and print loss
+        loss = self.criterion(y_pred, batch_yMix)
+        self.loss_val.append(loss.item())
+        # Zero gradients, perform a backward pass, and update the weights.
+        self.optimizer.zero_grad()
+        loss.backward()
+        self.optimizer.step()
                 
         print('Final loss:',loss.item())
         self.loss_val.append(loss.item())
-
-        self.x=torch.cat((self.x,self.xNew))
-        self.y=torch.cat((self.y,self.yNew))
         self.xNew = torch.empty(0, self.D_in,self.D_in)
         self.yNew = torch.empty(0, self.D_out,self.D_out)
 
@@ -189,11 +202,11 @@ def cnn_preconditionerOnline_timed_2D(retrain_freq=10, debug=False,InputDim=2,Hi
             if func.predictor.is_trained and refine==False:
                 pred_x0 = func.predictor.predict(b)
                 # target_test  = func(A, b, pred_x0, e, nmax_iter,ML_GMRES_Time_list,ProbCount,1,debug,refine,blist,reslist,Err_list,reslist_flat, *eargs)
-                target_test=GMRES(A, b, x0, e, 1,1, False)
+                target_test=GMRES(A, b, x0, e, 6,1, True)
                 IterErr_test = resid(A, target_test, b)
                 print('size',len(IterErr_test))
-                print(IterErr_test[-1],max(Err_list))
-                if (IterErr_test[-1]>max(Err_list)): 
+                print(IterErr_test[5],max(Err_list))
+                if (IterErr_test[5]>max(Err_list)): 
                     print('poor prediction,using initial x0')
                     pred_x0 = x0
             else:
@@ -212,7 +225,7 @@ def cnn_preconditionerOnline_timed_2D(retrain_freq=10, debug=False,InputDim=2,Hi
             if refine==False :
                 IterErr = resid(A, target, b)
                 IterTime=(toc-tic)
-                IterErr10=IterErr[2]
+                IterErr10=IterErr[5]
                 ML_GMRES_Time_list.append(IterTime)
                 Err_list.append(IterErr10)  
 
@@ -232,7 +245,6 @@ def cnn_preconditionerOnline_timed_2D(retrain_freq=10, debug=False,InputDim=2,Hi
 
 
             # Filter for data to be added to training set
-            # Err_list[-1]>IterErr10_AVG and
             if (ML_GMRES_Time_list[-1]>IterTime_AVG and Err_list[-1]>IterErr10_AVG  ) and  refine==True and ProbCount>Initial_set and ML_GMRES_Time_list[-1]>SpeedCutOff  : 
                 
                 blist.append(b)
@@ -261,7 +273,31 @@ def cnn_preconditionerOnline_timed_2D(retrain_freq=10, debug=False,InputDim=2,Hi
                         func.predictor.add(np.asarray(blist)[1], np.asarray(reslist)[1])
                     elif np.abs(InnerProd[0,2])<cutoff :
                         func.predictor.add(np.asarray(blist)[2], np.asarray(reslist)[2])
+
+
+
+
+
+
+                # #  check orthogonality of 2 solutions that met training set critera
+                # if   len(blist)==2 :
+                #     resMat=np.asarray(reslist_flat)
+                #     resMat_square=resMat**2
+                #     row_sums = resMat_square.sum(axis=1,keepdims=True)
+                #     resMat= resMat/np.sqrt(row_sums)
+                #     InnerProd=np.dot(resMat,resMat.T)
+                #     print('InnerProd',InnerProd)
+                #     func.predictor.add(np.asarray(blist)[0], np.asarray(reslist)[0])
+                #     cutoff=0.8
                     
+                #     # Picking out sufficiently orthogonal subset of 3 solutions gathered
+                #     if np.abs(InnerProd[0,1]) <cutoff :
+                #         func.predictor.add(np.asarray(blist)[1], np.asarray(reslist)[1])
+                    
+
+
+
+
                     if func.predictor.counter>=retrain_freq:
                         if func.debug:
                             print("retraining")

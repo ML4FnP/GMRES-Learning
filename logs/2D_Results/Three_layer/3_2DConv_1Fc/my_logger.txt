@@ -1,0 +1,9 @@
+2020-06-30 00:59:17 [INFO] <ipython-input-6-34f328d293cd> 2 - Test 2D problem using 3 2DConv (Kernel is 5x5) +FC. Dim 20. Wide source (sig-0.2). e1=10^{-5}. 'Standard network parameters' 
+2020-06-30 02:17:59 [INFO] <ipython-input-8-56107ddc9c2d> 90 - Runtime of Non-decorated version is:
+2020-06-30 02:17:59 [INFO] <ipython-input-8-56107ddc9c2d> 91 - 1699.5679129620148
+2020-06-30 02:17:59 [INFO] <ipython-input-8-56107ddc9c2d> 93 - Runtime of MLGMRES decorator is:
+2020-06-30 02:17:59 [INFO] <ipython-input-8-56107ddc9c2d> 94 - 1709.1291280990008
+2020-06-30 02:17:59 [INFO] <ipython-input-8-56107ddc9c2d> 96 - Runtime of MLGMRES (only GMRES time) is:
+2020-06-30 02:17:59 [INFO] <ipython-input-8-56107ddc9c2d> 97 - 903.9398543580828
+2020-06-30 02:17:59 [INFO] <ipython-input-8-56107ddc9c2d> 100 - Runtime of training (backprop) is:
+2020-06-30 02:17:59 [INFO] <ipython-input-8-56107ddc9c2d> 101 - 172.68653995098794

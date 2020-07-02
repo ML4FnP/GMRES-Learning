@@ -45,6 +45,9 @@ class CNNPredictorOnline_2DFlat(object):
         # nn.Conv1d modules which are members of the model.
         self.criterion = torch.nn.MSELoss(reduction='sum')
         self.optimizer = torch.optim.Adagrad(self.model.parameters(), lr=1e-2)
+        # self.optimizer = torch.optim.Adam(self.model.parameters(), lr=1e-3)
+        # self.optimizer = torch.optim.SGD(self.model.parameters(), lr=1e-4)
+        # self.optimizer = torch.optim.ASGD(self.model.parameters(), lr=1e-2)
 
         # x will hold entire training set b data
         # y will hold entire training set solution data
@@ -91,7 +94,7 @@ class CNNPredictorOnline_2DFlat(object):
         self.loss_val.append(10.0)
 
         batch_size=32
-        numEpochs=500
+        numEpochs=2000
         e1=1e-5
         epoch=0
         

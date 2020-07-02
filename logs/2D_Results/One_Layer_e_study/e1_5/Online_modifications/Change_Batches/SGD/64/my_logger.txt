@@ -1,0 +1,9 @@
+2020-06-26 19:09:54 [INFO] <ipython-input-6-b5883c4a489f> 2 - Test 2D-Flat problem using 1DConv +1 FC. Dim 20. Wide point source constrained on rose k=6.  e1=10^{-5}. Use SGD. Use Bigger Batch (64)
+2020-06-26 20:28:13 [INFO] <ipython-input-8-8a4b323e0c59> 87 - Runtime of Non-decorated version is:
+2020-06-26 20:28:13 [INFO] <ipython-input-8-8a4b323e0c59> 88 - 1730.4600822323555
+2020-06-26 20:28:13 [INFO] <ipython-input-8-8a4b323e0c59> 90 - Runtime of MLGMRES decorator is:
+2020-06-26 20:28:13 [INFO] <ipython-input-8-8a4b323e0c59> 91 - 1645.1544092058757
+2020-06-26 20:28:13 [INFO] <ipython-input-8-8a4b323e0c59> 93 - Runtime of MLGMRES (only GMRES time) is:
+2020-06-26 20:28:13 [INFO] <ipython-input-8-8a4b323e0c59> 94 - 956.4879122801794
+2020-06-26 20:28:13 [INFO] <ipython-input-8-8a4b323e0c59> 96 - Runtime of training (backprop) is:
+2020-06-26 20:28:13 [INFO] <ipython-input-8-8a4b323e0c59> 97 - 51.43293919794087

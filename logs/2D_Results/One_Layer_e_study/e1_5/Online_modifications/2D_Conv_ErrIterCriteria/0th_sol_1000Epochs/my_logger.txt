@@ -1,0 +1,9 @@
+2020-06-28 23:39:04 [INFO] <ipython-input-6-e61e6ae9aa74> 2 - Test 2D problem using 2DConv  +1 FC. Dim 20. Wide source (sig-0.2). e1=10^{-5}. 1000 Epochs. Set network e1 to 10{-5}. Change online training scheme( Train on new data throughout). Use zeroth iteration error.
+2020-06-29 00:57:24 [INFO] <ipython-input-8-be1191786a88> 90 - Runtime of Non-decorated version is:
+2020-06-29 00:57:24 [INFO] <ipython-input-8-be1191786a88> 91 - 1710.8865349276457
+2020-06-29 00:57:24 [INFO] <ipython-input-8-be1191786a88> 93 - Runtime of MLGMRES decorator is:
+2020-06-29 00:57:24 [INFO] <ipython-input-8-be1191786a88> 94 - 1671.882428797835
+2020-06-29 00:57:24 [INFO] <ipython-input-8-be1191786a88> 96 - Runtime of MLGMRES (only GMRES time) is:
+2020-06-29 00:57:24 [INFO] <ipython-input-8-be1191786a88> 97 - 929.558174148493
+2020-06-29 00:57:24 [INFO] <ipython-input-8-be1191786a88> 100 - Runtime of training (backprop) is:
+2020-06-29 00:57:24 [INFO] <ipython-input-8-be1191786a88> 101 - 133.3007389208069

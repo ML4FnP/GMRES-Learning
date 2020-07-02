@@ -21,11 +21,18 @@ class CnnOnline_2D(torch.nn.Module):
         super(CnnOnline_2D, self).__init__()
         
         # Assuming D_in=D_out=H
-        self.Conv1   = torch.nn.Conv2d(1,1,D_in, stride=1, padding=int((D_in-1)/2), dilation=1, groups=1, bias=False, padding_mode='zeros') #odd dim
         # self.Conv1   = torch.nn.Conv2d(1,1,D_in-1, stride=1, padding=int((D_in-1)/2), dilation=1, groups=1, bias=False, padding_mode='zeros')#even dim
+        # self.Conv2   = torch.nn.Conv2d(1,1,D_in-1, stride=1, padding=int((D_in-1)/2), dilation=1, groups=1, bias=False, padding_mode='zeros')#even dim
+        # self.lin1 = torch.nn.Linear(int(D_in**2.0),int(D_out**2.0))
+        # self.relu   = torch.nn.LeakyReLU()
+
+        self.Conv1   = torch.nn.Conv2d(1,1,(9,9), stride=1, padding=(4,4), dilation=1, groups=1, bias=False, padding_mode='zeros')#even dim
+        self.Conv2   = torch.nn.Conv2d(1,1,(9,9), stride=1, padding=(4,4), dilation=1, groups=1, bias=False, padding_mode='zeros')#even dim
+        # self.Conv3   = torch.nn.Conv2d(1,1,(11,11), stride=1, padding=(5,5), dilation=1, groups=1, bias=False, padding_mode='zeros')#even dim
+        # self.Conv4   = torch.nn.Conv2d(1,1,(11,11), stride=1, padding=(5,5), dilation=1, groups=1, bias=False, padding_mode='zeros')#even dim
         self.lin1 = torch.nn.Linear(int(D_in**2.0),int(D_out**2.0))
+        # self.lin2 = torch.nn.Linear(int(D_in**2.0),int(D_out**2.0))
         self.relu   = torch.nn.LeakyReLU()
-        # self.relu   = torch.nn.PReLU()
 
 
 
@@ -38,14 +45,61 @@ class CnnOnline_2D(torch.nn.Module):
 
 
 
+        # Current_batchsize=int(x.shape[0])  # N in pytorch docs
+        # device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+        # x2=x.unsqueeze(1)  # Add channel dimension (C) to input 
+        # ConvOut1=self.relu(self.Conv1(x2.to(device)))
+        # ConvOut1_squeeze = ConvOut1.squeeze(1) #Remove channel dimension
+        # ConvOut1Flat=ConvOut1_squeeze.view(Current_batchsize,1,-1)
+        # y_predFlat=self.lin1(ConvOut1Flat)
+        # y_pred=y_predFlat.view(Current_batchsize,20,20)
+
         Current_batchsize=int(x.shape[0])  # N in pytorch docs
         device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
         x2=x.unsqueeze(1)  # Add channel dimension (C) to input 
         ConvOut1=self.relu(self.Conv1(x2.to(device)))
-        ConvOut1_squeeze = ConvOut1.squeeze(1) #Remove channel dimension
-        ConvOut1Flat=ConvOut1_squeeze.view(Current_batchsize,1,-1)
-        y_predFlat=self.lin1(ConvOut1Flat)
-        y_pred=y_predFlat.view(Current_batchsize,25,25)
+        ConvOut2=self.relu(self.Conv2(ConvOut1))
+        ConvOut2_squeeze = ConvOut2.squeeze(1) #Remove channel dimension
+        ConvOut2Flat=ConvOut2_squeeze.view(Current_batchsize,1,-1)
+        y_predFlat=self.lin1(ConvOut2Flat)
+        y_pred=y_predFlat.view(Current_batchsize,20,20)
+
+        # Current_batchsize=int(x.shape[0])  # N in pytorch docs
+        # device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+        # x2=x.unsqueeze(1)  # Add channel dimension (C) to input 
+        # ConvOut1=self.relu(self.Conv1(x2.to(device)))
+        # ConvOut2=self.relu(self.Conv2(ConvOut1))
+        # ConvOut3=self.relu(self.Conv3(ConvOut2))
+        # ConvOut3_squeeze = ConvOut3.squeeze(1) #Remove channel dimension
+        # ConvOut3Flat=ConvOut3_squeeze.view(Current_batchsize,1,-1)
+        # y_predFlat=self.lin1(ConvOut3Flat)
+        # y_pred=y_predFlat.view(Current_batchsize,20,20)
+
+        # Current_batchsize=int(x.shape[0])  # N in pytorch docs
+        # device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+        # x2=x.unsqueeze(1)  # Add channel dimension (C) to input 
+        # ConvOut1=self.relu(self.Conv1(x2.to(device)))
+        # ConvOut2=self.relu(self.Conv2(ConvOut1))
+        # ConvOut3=self.relu(self.Conv3(ConvOut2))
+        # ConvOut4=self.relu(self.Conv4(ConvOut3))
+        # ConvOut4_squeeze = ConvOut4.squeeze(1) #Remove channel dimension
+        # ConvOut4Flat=ConvOut4_squeeze.view(Current_batchsize,1,-1)
+        # y_predFlat=self.lin1(ConvOut4Flat)
+        # y_pred=y_predFlat.view(Current_batchsize,20,20)
+
+        # Current_batchsize=int(x.shape[0])  # N in pytorch docs
+        # device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+        # x2=x.unsqueeze(1)  # Add channel dimension (C) to input 
+        # ConvOut1=self.relu(self.Conv1(x2.to(device)))
+        # ConvOut2=self.relu(self.Conv2(ConvOut1))
+        # ConvOut2_squeeze = ConvOut2.squeeze(1) #Remove channel dimension
+        # ConvOut2Flat=ConvOut2_squeeze.view(Current_batchsize,1,-1)
+        # linout1=self.relu(self.lin1(ConvOut2Flat))
+        # y_predFlat=self.relu(self.lin2(linout1))
+        # y_pred=y_predFlat.view(Current_batchsize,20,20)
+
+
+
 
         return y_pred
 
