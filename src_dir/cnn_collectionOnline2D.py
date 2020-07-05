@@ -26,8 +26,8 @@ class CnnOnline_2D(torch.nn.Module):
         # self.lin1 = torch.nn.Linear(int(D_in**2.0),int(D_out**2.0))
         # self.relu   = torch.nn.LeakyReLU()
 
-        self.Conv1   = torch.nn.Conv2d(1,1,(9,9), stride=1, padding=(4,4), dilation=1, groups=1, bias=False, padding_mode='zeros')#even dim
-        self.Conv2   = torch.nn.Conv2d(1,1,(9,9), stride=1, padding=(4,4), dilation=1, groups=1, bias=False, padding_mode='zeros')#even dim
+        self.Conv1   = torch.nn.Conv2d(1,1,(15,15), stride=1, padding=(7,7), dilation=1, groups=1, bias=False, padding_mode='zeros')#even dim
+        self.Conv2   = torch.nn.Conv2d(1,1,(13,13), stride=1, padding=(6,6), dilation=1, groups=1, bias=False, padding_mode='zeros')#even dim
         # self.Conv3   = torch.nn.Conv2d(1,1,(11,11), stride=1, padding=(5,5), dilation=1, groups=1, bias=False, padding_mode='zeros')#even dim
         # self.Conv4   = torch.nn.Conv2d(1,1,(11,11), stride=1, padding=(5,5), dilation=1, groups=1, bias=False, padding_mode='zeros')#even dim
         self.lin1 = torch.nn.Linear(int(D_in**2.0),int(D_out**2.0))
@@ -62,7 +62,7 @@ class CnnOnline_2D(torch.nn.Module):
         ConvOut2_squeeze = ConvOut2.squeeze(1) #Remove channel dimension
         ConvOut2Flat=ConvOut2_squeeze.view(Current_batchsize,1,-1)
         y_predFlat=self.lin1(ConvOut2Flat)
-        y_pred=y_predFlat.view(Current_batchsize,20,20)
+        y_pred=y_predFlat.view(Current_batchsize,30,30)
 
         # Current_batchsize=int(x.shape[0])  # N in pytorch docs
         # device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")

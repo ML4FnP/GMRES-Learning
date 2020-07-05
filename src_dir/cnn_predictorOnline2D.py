@@ -45,6 +45,9 @@ class CNNPredictorOnline_2D(object):
         # nn.Conv1d modules which are members of the model.
         self.criterion = torch.nn.MSELoss(reduction='sum')
         self.optimizer = torch.optim.Adagrad(self.model.parameters(), lr=1e-2)
+        # self.optimizer = torch.optim.Adam(self.model.parameters(), lr=1e-3)
+
+
 
         # x will hold entire training set b data
         # y will hold entire training set solution data

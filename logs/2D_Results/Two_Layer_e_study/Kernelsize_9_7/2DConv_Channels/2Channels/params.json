@@ -1,0 +1,19 @@
+{
+    "AType": "2D Laplacian",
+    "DomainL": -1.0,
+    "DomainR": 1.0,
+    "HiddenDim": 20,
+    "InputDim": 20,
+    "OutputDim": 20,
+    "dim": 20,
+    "e1": 1e-05,
+    "e2": 1e-06,
+    "git_branch": "master",
+    "git_commit_short_hash": "5674ab1",
+    "n_steps": 2000,
+    "nmax_iter": 4,
+    "restart": 64,
+    "retrain_freq": 1,
+    "sigma": 0.2,
+    "x0Type": "Zero Solution 2D"
+}
