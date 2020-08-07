@@ -30,7 +30,7 @@ class CnnOnline_2D(torch.nn.Module):
         self.Conv2   = torch.nn.Conv2d(1,1,(13,13), stride=1, padding=(6,6), dilation=1, groups=1, bias=False, padding_mode='zeros')#even dim
         # self.Conv3   = torch.nn.Conv2d(1,1,(11,11), stride=1, padding=(5,5), dilation=1, groups=1, bias=False, padding_mode='zeros')#even dim
         # self.Conv4   = torch.nn.Conv2d(1,1,(11,11), stride=1, padding=(5,5), dilation=1, groups=1, bias=False, padding_mode='zeros')#even dim
-        self.lin1 = torch.nn.Linear(int(D_in**2.0),int(D_out**2.0))
+        self.lin1 = torch.nn.Linear(int(D_in**2.0),int(D_out**2.0),bias=False)
         # self.lin2 = torch.nn.Linear(int(D_in**2.0),int(D_out**2.0))
         self.relu   = torch.nn.LeakyReLU()
 
@@ -54,15 +54,15 @@ class CnnOnline_2D(torch.nn.Module):
         # y_predFlat=self.lin1(ConvOut1Flat)
         # y_pred=y_predFlat.view(Current_batchsize,20,20)
 
-        Current_batchsize=int(x.shape[0])  # N in pytorch docs
-        device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-        x2=x.unsqueeze(1)  # Add channel dimension (C) to input 
-        ConvOut1=self.relu(self.Conv1(x2.to(device)))
-        ConvOut2=self.relu(self.Conv2(ConvOut1))
-        ConvOut2_squeeze = ConvOut2.squeeze(1) #Remove channel dimension
-        ConvOut2Flat=ConvOut2_squeeze.view(Current_batchsize,1,-1)
-        y_predFlat=self.lin1(ConvOut2Flat)
-        y_pred=y_predFlat.view(Current_batchsize,30,30)
+        # Current_batchsize=int(x.shape[0])  # N in pytorch docs
+        # device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+        # x2=x.unsqueeze(1)  # Add channel dimension (C) to input 
+        # ConvOut1=self.relu(self.Conv1(x2.to(device)))
+        # ConvOut2=self.relu(self.Conv2(ConvOut1))
+        # ConvOut2_squeeze = ConvOut2.squeeze(1) #Remove channel dimension
+        # ConvOut2Flat=ConvOut2_squeeze.view(Current_batchsize,1,-1)
+        # y_predFlat=self.lin1(ConvOut2Flat)
+        # y_pred=y_predFlat.view(Current_batchsize,30,30)
 
         # Current_batchsize=int(x.shape[0])  # N in pytorch docs
         # device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
@@ -98,6 +98,12 @@ class CnnOnline_2D(torch.nn.Module):
         # y_predFlat=self.relu(self.lin2(linout1))
         # y_pred=y_predFlat.view(Current_batchsize,20,20)
 
+
+        Current_batchsize=int(x.shape[0])  # N in pytorch docs
+        device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+        xFlat=x.view(Current_batchsize,1,-1)
+        y_predFlat=self.lin1(xFlat)
+        y_pred=y_predFlat.view(Current_batchsize,30,30)
 
 
 

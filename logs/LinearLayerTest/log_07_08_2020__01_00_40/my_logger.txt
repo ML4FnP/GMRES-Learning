@@ -1,0 +1,9 @@
+2020-08-07 01:00:41 [INFO] <ipython-input-6-3dbfefd04fd5> 2 - Single layer NN of (dim,dim) size. No nonlinear activation. Dim 30.
+2020-08-07 09:14:42 [INFO] <ipython-input-8-327660cdaaf7> 94 - Runtime of Non-decorated version is:
+2020-08-07 09:14:42 [INFO] <ipython-input-8-327660cdaaf7> 95 - 12822.570288902178
+2020-08-07 09:14:42 [INFO] <ipython-input-8-327660cdaaf7> 97 - Runtime of MLGMRES decorator is:
+2020-08-07 09:14:42 [INFO] <ipython-input-8-327660cdaaf7> 98 - 6839.06486776119
+2020-08-07 09:14:42 [INFO] <ipython-input-8-327660cdaaf7> 100 - Runtime of MLGMRES (only GMRES time) is:
+2020-08-07 09:14:42 [INFO] <ipython-input-8-327660cdaaf7> 101 - 4061.864158982149
+2020-08-07 09:14:42 [INFO] <ipython-input-8-327660cdaaf7> 104 - Runtime of training (backprop) is:
+2020-08-07 09:14:42 [INFO] <ipython-input-8-327660cdaaf7> 105 - 340.36692646889423

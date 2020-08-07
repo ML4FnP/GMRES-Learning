@@ -189,7 +189,7 @@ def cnn_preconditionerOnline_timed_2D(retrain_freq=10, debug=False,InputDim=2,Hi
         @functools.wraps(func)
         def speedup_wrapper(*args, **kwargs):
 
-            A, b, x0, e, nmax_iter,ML_GMRES_Time_list,ProbCount,restart,debug,refine,blist,reslist,Err_list,reslist_flat,ML_GMRES_Time_list2, *eargs = args
+            A, b, x0, e, nmax_iter,ML_GMRES_Time_list,ProbCount,restart,debug,refine,blist,reslist,Err_list,reslist_flat,ML_GMRES_Time_list2,solIndx, *eargs = args
 
             trainTime=0.0
             IterTime=0
@@ -218,7 +218,7 @@ def cnn_preconditionerOnline_timed_2D(retrain_freq=10, debug=False,InputDim=2,Hi
 
             #Time GMRES function 
             tic = time.perf_counter()
-            target  = func(A, b, pred_x0, e, nmax_iter,ML_GMRES_Time_list,ProbCount,restart,debug,refine,blist,reslist,Err_list,reslist_flat,ML_GMRES_Time_list2, *eargs)
+            target  = func(A, b, pred_x0, e, nmax_iter,ML_GMRES_Time_list,ProbCount,restart,debug,refine,blist,reslist,Err_list,reslist_flat,ML_GMRES_Time_list2,solIndx, *eargs)
             toc = time.perf_counter()
 
             res = target[-1]
@@ -253,6 +253,11 @@ def cnn_preconditionerOnline_timed_2D(retrain_freq=10, debug=False,InputDim=2,Hi
                 blist.append(b)
                 reslist.append(res)
                 reslist_flat.append(np.reshape(res,(1,-1),order='C').squeeze(0))
+
+                fnameb='DataOuput/bdata/b'+str(solIndx).zfill(4)+'.dat'
+                fnamesol='DataOuput/soldata/res'+str(solIndx).zfill(4)+'.dat'
+                np.savetxt(fnameb,b)
+                np.savetxt(fnamesol,res)
                 
                 # check orthogonality of 3 solutions that met training set critera
                 if   len(blist)==3 :
@@ -262,24 +267,57 @@ def cnn_preconditionerOnline_timed_2D(retrain_freq=10, debug=False,InputDim=2,Hi
                     resMat= resMat/np.sqrt(row_sums)
                     InnerProd=np.dot(resMat,resMat.T)
                     print('InnerProd',InnerProd)
+
                     func.predictor.add(np.asarray(blist)[0], np.asarray(reslist)[0])
+                    solIndx=solIndx+1
+                    fnameb='DataOuput/bdata/b'+str(solIndx).zfill(4)+'.dat'
+                    fnamesol='DataOuput/soldata/res'+str(solIndx).zfill(4)+'.dat'
+                    np.savetxt(fnameb,blist[0])
+                    np.savetxt(fnamesol,reslist[0])
+
+
                     cutoff=0.8
-                    
                     # Picking out sufficiently orthogonal subset of 3 solutions gathered
                     if np.abs(InnerProd[0,1]) and np.abs(InnerProd[0,2])<cutoff :
                         if np.abs(InnerProd[1,2])<cutoff :
+
                             func.predictor.add(np.asarray(blist)[1], np.asarray(reslist)[1])
+                            solIndx=solIndx+1
+                            fnameb='DataOuput/bdata/b'+str(solIndx).zfill(4)+'.dat'
+                            fnamesol='DataOuput/soldata/res'+str(solIndx).zfill(4)+'.dat'
+                            np.savetxt(fnameb,blist[1])
+                            np.savetxt(fnamesol,reslist[1])
+
                             func.predictor.add(np.asarray(blist)[2], np.asarray(reslist)[2])
+                            solIndx=solIndx+1
+                            fnameb='DataOuput/bdata/b'+str(solIndx).zfill(4)+'.dat'
+                            fnamesol='DataOuput/soldata/res'+str(solIndx).zfill(4)+'.dat'
+                            np.savetxt(fnameb,blist[2])
+                            np.savetxt(fnamesol,reslist[2])
+
                         elif np.abs(InnerProd[1,2])>=cutoff: 
                             func.predictor.add(np.asarray(blist)[1], np.asarray(reslist)[1])
+                            solIndx=solIndx+1
+                            fnameb='DataOuput/bdata/b'+str(solIndx).zfill(4)+'.dat'
+                            fnamesol='DataOuput/soldata/res'+str(solIndx).zfill(4)+'.dat'
+                            np.savetxt(fnameb,blist[1])
+                            np.savetxt(fnamesol,reslist[1])
+
                     elif np.abs(InnerProd[0,1])<cutoff :
                         func.predictor.add(np.asarray(blist)[1], np.asarray(reslist)[1])
+                        solIndx=solIndx+1
+                        fnameb='DataOuput/bdata/b'+str(solIndx).zfill(4)+'.dat'
+                        fnamesol='DataOuput/soldata/res'+str(solIndx).zfill(4)+'.dat'
+                        np.savetxt(fnameb,blist[1])
+                        np.savetxt(fnamesol,reslist[1])
+
                     elif np.abs(InnerProd[0,2])<cutoff :
                         func.predictor.add(np.asarray(blist)[2], np.asarray(reslist)[2])
-
-
-
-
+                        solIndx=solIndx+1
+                        fnameb='DataOuput/bdata/b'+str(solIndx).zfill(4)+'.dat'
+                        fnamesol='DataOuput/soldata/res'+str(solIndx).zfill(4)+'.dat'
+                        np.savetxt(fnameb,blist[2])
+                        np.savetxt(fnamesol,reslist[2])
 
 
                 # #  check orthogonality of 2 solutions that met training set critera
@@ -298,9 +336,6 @@ def cnn_preconditionerOnline_timed_2D(retrain_freq=10, debug=False,InputDim=2,Hi
                 #         func.predictor.add(np.asarray(blist)[1], np.asarray(reslist)[1])
                     
 
-
-
-
                     if func.predictor.counter>=retrain_freq:
                         if func.debug:
                             print("retraining")
@@ -310,7 +345,7 @@ def cnn_preconditionerOnline_timed_2D(retrain_freq=10, debug=False,InputDim=2,Hi
                             blist=[]
                             reslist=[]
                             reslist_flat=[]
-            return target,ML_GMRES_Time_list,trainTime,blist,reslist,Err_list,reslist_flat,ML_GMRES_Time_list2
+            return target,ML_GMRES_Time_list,trainTime,blist,reslist,Err_list,reslist_flat,ML_GMRES_Time_list2,solIndx
 
         return speedup_wrapper
     return my_decorator

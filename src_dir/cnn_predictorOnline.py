@@ -39,12 +39,13 @@ class CNNPredictorOnline(object):
         # Construct our model by instantiating the class defined above
         device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
         self.model = CnnOnline(self.D_in, self.H,self.D_out).to(device)
+        
 
         # Construct our loss function and an Optimizer. The call to model.parameters()
         # in the SGD constructor will contain the learnable parameters of the two
         # nn.Conv1d modules which are members of the model.
         self.criterion = torch.nn.MSELoss(reduction='sum')
-        self.optimizer = torch.optim.Adagrad(self.model.parameters(), lr=1e-2)
+        self.optimizer = torch.optim.SGD(self.model.parameters(), lr=1e-2)
 
         # x will hold entire training set b data
         # y will hold entire training set solution data
