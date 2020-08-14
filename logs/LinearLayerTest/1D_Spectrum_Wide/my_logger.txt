@@ -1,0 +1,9 @@
+2020-08-11 01:58:55 [INFO] <ipython-input-4-4437744cf7b1> 2 - 1D Linear Test
+2020-08-11 03:26:24 [INFO] <ipython-input-6-35dc2960cb0a> 80 - Runtime of Non-decorated version is:
+2020-08-11 03:26:24 [INFO] <ipython-input-6-35dc2960cb0a> 81 - 3801.6469165123344
+2020-08-11 03:26:24 [INFO] <ipython-input-6-35dc2960cb0a> 83 - Runtime of MLGMRES decorator is:
+2020-08-11 03:26:24 [INFO] <ipython-input-6-35dc2960cb0a> 84 - 1358.8358584278103
+2020-08-11 03:26:24 [INFO] <ipython-input-6-35dc2960cb0a> 86 - Runtime of MLGMRES (only GMRES time) is:
+2020-08-11 03:26:24 [INFO] <ipython-input-6-35dc2960cb0a> 87 - 1275.716919129125
+2020-08-11 03:26:24 [INFO] <ipython-input-6-35dc2960cb0a> 90 - Runtime of training (backprop) is:
+2020-08-11 03:26:24 [INFO] <ipython-input-6-35dc2960cb0a> 91 - 70.66225431200291

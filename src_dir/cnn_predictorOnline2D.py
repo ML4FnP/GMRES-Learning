@@ -44,6 +44,7 @@ class CNNPredictorOnline_2D(object):
         # in the SGD constructor will contain the learnable parameters of the two
         # nn.Conv1d modules which are members of the model.
         self.criterion = torch.nn.MSELoss(reduction='sum')
+#         self.optimizer = torch.optim.SGD(self.model.parameters(), lr=1e-2)
         self.optimizer = torch.optim.Adagrad(self.model.parameters(), lr=1e-2)
         # self.optimizer = torch.optim.Adam(self.model.parameters(), lr=1e-3)
 
@@ -98,7 +99,7 @@ class CNNPredictorOnline_2D(object):
         self.loss_val.append(10.0)
 
         batch_size=32
-        numEpochs=1000
+        numEpochs=3000
         e1=1e-5
         epoch=0
         
@@ -209,7 +210,7 @@ def cnn_preconditionerOnline_timed_2D(retrain_freq=10, debug=False,InputDim=2,Hi
                 IterErr_test = resid(A, target_test, b)
                 print('size',len(IterErr_test))
                 print(IterErr_test[5],max(Err_list))
-                if (IterErr_test[5]>max(Err_list)): 
+                if (IterErr_test[5]>1.75*max(Err_list)): 
                     print('poor prediction,using initial x0')
                     pred_x0 = x0
             else:
