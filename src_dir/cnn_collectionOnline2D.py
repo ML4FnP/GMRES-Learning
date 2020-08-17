@@ -26,14 +26,15 @@ class CnnOnline_2D(torch.nn.Module):
         # self.lin1 = torch.nn.Linear(int(D_in**2.0),int(D_out**2.0))
         # self.relu   = torch.nn.LeakyReLU()
 
-        self.Conv1   = torch.nn.Conv2d(1,1,(13,13), stride=1, padding=(6,6), dilation=1, groups=1, bias=False, padding_mode='zeros')#even dim
-        self.Conv2   = torch.nn.Conv2d(1,1,(11,11), stride=1, padding=(5,5), dilation=1, groups=1, bias=False, padding_mode='zeros')#even dim
-        self.Conv3   = torch.nn.Conv2d(1,1,(9,9), stride=1, padding=(4,4), dilation=1, groups=1, bias=False, padding_mode='zeros')#even dim
-        self.Conv4   = torch.nn.Conv2d(1,1,(7,7), stride=1, padding=(3,3), dilation=1, groups=1, bias=False, padding_mode='zeros')#even dim
-        self.Conv5   = torch.nn.Conv2d(1,1,(7,7), stride=1, padding=(3,3), dilation=1, groups=1, bias=False, padding_mode='zeros')#even dim
-        self.Conv6   = torch.nn.Conv2d(1,1,(7,7), stride=1, padding=(3,3), dilation=1, groups=1, bias=False, padding_mode='zeros')#even dim
+        self.Conv1   = torch.nn.Conv2d(1,16,(7,7), stride=1, padding=(6,6), dilation=2, groups=1, bias=False, padding_mode='zeros')#even dim
+        self.Conv2   = torch.nn.Conv2d(16,8,(5,5),stride=1, padding=(4,4), dilation=2, groups=1, bias=False, padding_mode='zeros')#even dim
+        self.Conv3   = torch.nn.Conv2d(8,8,(5,5),stride=1, padding=(4,4), dilation=2, groups=1, bias=False, padding_mode='zeros')#even dim
+        self.Conv4   = torch.nn.Conv2d(8,4,(3,3),stride=1, padding=(2,2), dilation=2, groups=1, bias=False, padding_mode='zeros')#even dim
+        self.Conv5   = torch.nn.Conv2d(4,2,(3,3), stride=1, padding=(2,2), dilation=2, groups=1, bias=False, padding_mode='zeros')#even dim
+        self.Conv6   = torch.nn.Conv2d(2,1,(1,1), stride=1, padding=(0,0), dilation=1, groups=1, bias=False, padding_mode='zeros')#even dim
         
-#         self.lin1 = torch.nn.Linear(int(D_in**2.0),int(D_out**2.0),bias=False)
+        
+        self.lin1 = torch.nn.Linear(int(D_in**2.0),int(D_out**2.0),bias=False)
         self.relu   = torch.nn.LeakyReLU()
 
 
@@ -96,7 +97,6 @@ class CnnOnline_2D(torch.nn.Module):
 
 
 
-
 #######################################################
 
 
@@ -131,6 +131,7 @@ class CnnOnline_2D(torch.nn.Module):
         ConvOut5=self.relu(self.Conv5(ConvOut4))
         ConvOut6=(self.Conv6(ConvOut5))
         y_pred = ConvOut6.squeeze(1) #Remove channel dimension
+
 
         return y_pred
 

@@ -16,7 +16,7 @@ from torch.nn       import Linear, ReLU, CrossEntropyLoss, \
 
 from torch.optim    import Adam, SGD
 
-from src_dir.cnn_collectionOnline2D import CnnOnline_2D
+from src_dir.cnn_collectionOnline2D_alt import CnnOnline_2D_alt
 
 from src_dir import resid,timer,moving_average,GMRES
 
@@ -24,7 +24,7 @@ from src_dir import resid,timer,moving_average,GMRES
 
 
 
-class CNNPredictorOnline_2D(object):
+class CNNPredictorOnline_2D_alt(object):
 
     def __init__(self,D_in,H,D_out):
         
@@ -38,7 +38,7 @@ class CNNPredictorOnline_2D(object):
 
         # Construct our model by instantiating the class defined above
         device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-        self.model = CnnOnline_2D(self.D_in, self.H,self.D_out).to(device)
+        self.model = CnnOnline_2D_alt(self.D_in, self.H,self.D_out).to(device)
 
         # Construct our loss function and an Optimizer. The call to model.parameters()
         # in the SGD constructor will contain the learnable parameters of the two
@@ -178,9 +178,9 @@ class CNNPredictorOnline_2D(object):
 
 
 
-def cnn_preconditionerOnline_timed_2D(retrain_freq=10,debug=False,InputDim=0,HiddenDim=0,OutputDim=0):
+def cnn_preconditionerOnline_timed_2D_alt(retrain_freq=10,debug=False,InputDim=0,HiddenDim=0,OutputDim=0):
     def my_decorator(func):
-        func.predictor    = CNNPredictorOnline_2D(InputDim,HiddenDim,OutputDim)
+        func.predictor    = CNNPredictorOnline_2D_alt(InputDim,HiddenDim,OutputDim)
         func.retrain_freq = retrain_freq
         func.debug        = debug
         func.InputDim     = InputDim

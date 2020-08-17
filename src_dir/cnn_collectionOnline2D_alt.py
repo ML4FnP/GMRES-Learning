@@ -15,14 +15,14 @@ import torch.nn.init as I
     This is experimental! 
 """
 
-class CnnOnline_2D(torch.nn.Module):
+class CnnOnline_2D_alt(torch.nn.Module):
 
     def __init__(self, D_in, H, D_out):
         """
         In the constructor we instantiate two nn.Conv1d modules and assign them
         as member variables.
         """
-        super(CnnOnline_2D, self).__init__()
+        super(CnnOnline_2D_alt, self).__init__()
         
         # Assuming D_in=D_out=H
 

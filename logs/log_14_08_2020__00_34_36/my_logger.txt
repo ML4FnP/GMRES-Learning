@@ -1,9 +1,0 @@
-2020-08-14 00:34:37 [INFO] <ipython-input-6-3c9c423c5a01> 2 - 5 Layer Conv Net. Dim 20
-2020-08-14 04:41:17 [INFO] <ipython-input-8-f31569943214> 92 - Runtime of Non-decorated version is:
-2020-08-14 04:41:17 [INFO] <ipython-input-8-f31569943214> 93 - 4240.864077276157
-2020-08-14 04:41:17 [INFO] <ipython-input-8-f31569943214> 95 - Runtime of MLGMRES decorator is:
-2020-08-14 04:41:17 [INFO] <ipython-input-8-f31569943214> 96 - 7295.229499272282
-2020-08-14 04:41:17 [INFO] <ipython-input-8-f31569943214> 98 - Runtime of MLGMRES (only GMRES time) is:
-2020-08-14 04:41:17 [INFO] <ipython-input-8-f31569943214> 99 - 3147.8336247661937
-2020-08-14 04:41:17 [INFO] <ipython-input-8-f31569943214> 102 - Runtime of training (backprop) is:
-2020-08-14 04:41:17 [INFO] <ipython-input-8-f31569943214> 103 - 1720.9966111179092
