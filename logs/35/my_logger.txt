@@ -1,0 +1,9 @@
+2020-08-21 10:13:58 [INFO] <ipython-input-6-d2526e5cc570> 2 - 5 Layer convnet. Add dilation to layers. Dim is 20
+2020-08-21 13:51:37 [INFO] <ipython-input-8-783e28c20cc4> 91 - Runtime of Non-decorated version is:
+2020-08-21 13:51:37 [INFO] <ipython-input-8-783e28c20cc4> 92 - 4254.02558934252
+2020-08-21 13:51:37 [INFO] <ipython-input-8-783e28c20cc4> 94 - Runtime of MLGMRES decorator is:
+2020-08-21 13:51:37 [INFO] <ipython-input-8-783e28c20cc4> 95 - 5429.3617892322945
+2020-08-21 13:51:37 [INFO] <ipython-input-8-783e28c20cc4> 97 - Runtime of MLGMRES (only GMRES time) is:
+2020-08-21 13:51:37 [INFO] <ipython-input-8-783e28c20cc4> 98 - 3022.5481206321565
+2020-08-21 13:51:37 [INFO] <ipython-input-8-783e28c20cc4> 101 - Runtime of training (backprop) is:
+2020-08-21 13:51:37 [INFO] <ipython-input-8-783e28c20cc4> 102 - 101.4872059308691

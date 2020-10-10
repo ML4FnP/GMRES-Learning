@@ -9,6 +9,7 @@ from torch.nn       import Linear, ReLU, CrossEntropyLoss, \
                            Module, Softmax, BatchNorm2d, Dropout
 from torch.optim    import Adam, SGD
 
+import torch.nn.init as I
 
 
 class CnnOnline(torch.nn.Module):
@@ -165,3 +166,8 @@ class CnnOnline(torch.nn.Module):
         W=self.linear1.weight
 
         return W
+
+
+    # def initialize_weights(self):
+    #     I.orthogonal_(self.linear1.weight)
+        

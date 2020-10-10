@@ -39,14 +39,15 @@ class CNNPredictorOnline_2D(object):
         # Construct our model by instantiating the class defined above
         device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
         self.model = CnnOnline_2D(self.D_in, self.H,self.D_out).to(device)
-
+#         self.model._initialize_weights()
+        
         # Construct our loss function and an Optimizer. The call to model.parameters()
         # in the SGD constructor will contain the learnable parameters of the two
         # nn.Conv1d modules which are members of the model.
-        self.criterion = torch.nn.MSELoss(reduction='sum')
-#         self.optimizer = torch.optim.SGD(self.model.parameters(), lr=1e-2)
-        self.optimizer = torch.optim.Adagrad(self.model.parameters(), lr=1e-2)
-        # self.optimizer = torch.optim.Adam(self.model.parameters(), lr=1e-3)
+        self.criterion = torch.nn.MSELoss(reduction='mean')
+        self.optimizer = torch.optim.SGD(self.model.parameters(), lr=1e-2)
+#         self.optimizer = torch.optim.Adagrad(self.model.parameters(), lr=1e-2)
+#         self.optimizer = torch.optim.Adam(self.model.parameters(), lr=1e-3)
 
 
 
@@ -98,8 +99,8 @@ class CNNPredictorOnline_2D(object):
         self.loss_val = list()  # clear loss val history
         self.loss_val.append(10.0)
 
-        batch_size=32
-        numEpochs=3000
+        batch_size=16
+        numEpochs=500
         e1=1e-5
         epoch=0
         
@@ -143,6 +144,18 @@ class CNNPredictorOnline_2D(object):
                 
         print('Final loss:',loss.item())
         self.loss_val.append(loss.item())
+        
+        f=open("Losses.txt","ab")
+#         print(np.asarray(self.loss_val[1:-1]))
+        np.savetxt(f,np.asarray(self.loss_val[1:-1]))
+        f.close()
+        
+        f2=open("NumSamples.txt","ab")
+        Temp=np.zeros((1,1))
+        Temp[0,0]=self.x.size(0)
+        np.savetxt(f2,Temp)
+        f2.close()
+        
         self.xNew = torch.empty(0, self.D_in,self.D_in)
         self.yNew = torch.empty(0, self.D_out,self.D_out)
 
