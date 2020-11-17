@@ -1,28 +1,5 @@
 # Speed up GMRES (and other linear solvers) using Machine Learning
 
+Here we demonstrate the usage of online machine learning (using pytorch) to accelerate a GMRES-based CFD solver. The philsophy of this project is to design a machine learning pipeline that will accelerate the time-to-solution provided by existing solver codes with minimal user intervention, while minimizing the size of the training data. By using wrappers/function decorators we have made this approach portable to a broad range of iterative solver (not just GMRES). And by using an online-learning approach, we are simulating only as much data as is needed.
 
-## Links
-
-### GMRES Algorithm
-
-1. Quick and dirty implementations:
-    - https://stackoverflow.com/questions/37962271/whats-wrong-with-my-gmres-implementation
-2. https://www.programcreek.com/python/example/97734/scipy.sparse.linalg.gmres
-2. https://elearning.di.unipi.it/pluginfile.php/16231/mod_resource/content/0/17-GMRES.pdf
-3. Implementations with Given's Rotation:
-    1. Sophisticated: https://github.com/pyamg/pyamg/blob/master/pyamg/krylov/_gmres_mgs.py
-    2. Trimmed down (and I actually don't like this one anymore): https://github.com/pygbe/pygbe/blob/master/pygbe/gmres.py
-4. https://github.com/nikdavis/gmres
-5. Books and literature:
-    1. https://www-users.cs.umn.edu/~saad/books.html
-    2. https://ctk.math.ncsu.edu/
-    3. Collected lit in this repo [(archived here)](literature/gmres)
-
-### ML
-
-1. https://www.analyticsvidhya.com/blog/2019/10/building-image-classification-models-cnn-pytorch/
-2. DL talks: https://sites.google.com/lbl.gov/dl4sci2019
-
-### GPUS:
-
-1. Docker+NVIDIA: https://github.com/NVIDIA/nvidia-docker
+This is very much a work in progress -- we are actively adding features/refactoring experimental code. If you have any questions, please feel free to reach out to Johannes Blaschke: https://www.nersc.gov/about/nersc-staff/data-science-engagement-group/johannes-blaschke/
