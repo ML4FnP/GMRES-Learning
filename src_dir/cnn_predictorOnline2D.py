@@ -45,8 +45,8 @@ class CNNPredictorOnline_2D(object):
         # in the SGD constructor will contain the learnable parameters of the two
         # nn.Conv1d modules which are members of the model.
         self.criterion = torch.nn.MSELoss(reduction='mean')
-        self.optimizer = torch.optim.SGD(self.model.parameters(), lr=1e-2)
-#         self.optimizer = torch.optim.Adagrad(self.model.parameters(), lr=1e-2)
+        # self.optimizer = torch.optim.SGD(self.model.parameters(), lr=1e-2)
+        self.optimizer = torch.optim.Adagrad(self.model.parameters(), lr=1e-2)
 #         self.optimizer = torch.optim.Adam(self.model.parameters(), lr=1e-3)
 
 
@@ -164,6 +164,12 @@ class CNNPredictorOnline_2D(object):
 
         self.is_trained = True
 
+        # Output for linear models only
+        # Wwrite=self.model.forwardWeights().detach().cpu().numpy()
+        # f=open("Weights_2D_Point_dim30.txt", "ab") 
+        # np.savetxt(f,Wwrite,delimiter=' ')
+        # f.close()
+
 
 
 
@@ -191,7 +197,7 @@ class CNNPredictorOnline_2D(object):
 
 
 
-def cnn_preconditionerOnline_timed_2D(retrain_freq=10,debug=False,InputDim=0,HiddenDim=0,OutputDim=0):
+def cnn_preconditionerOnline_timed_2D(retrain_freq=1,debug=False,InputDim=0,HiddenDim=0,OutputDim=0):
     def my_decorator(func):
         func.predictor    = CNNPredictorOnline_2D(InputDim,HiddenDim,OutputDim)
         func.retrain_freq = retrain_freq
@@ -268,10 +274,10 @@ def cnn_preconditionerOnline_timed_2D(retrain_freq=10,debug=False,InputDim=0,Hid
                 reslist.append(res)
                 reslist_flat.append(np.reshape(res,(1,-1),order='C').squeeze(0))
 
-                fnameb='DataOuput/bdata/b'+str(solIndx).zfill(4)+'.dat'
-                fnamesol='DataOuput/soldata/res'+str(solIndx).zfill(4)+'.dat'
-                np.savetxt(fnameb,b)
-                np.savetxt(fnamesol,res)
+                # fnameb='DataOuput/bdata/b'+str(solIndx).zfill(4)+'.dat'
+                # fnamesol='DataOuput/soldata/res'+str(solIndx).zfill(4)+'.dat'
+                # np.savetxt(fnameb,b)
+                # np.savetxt(fnamesol,res)
                 
                 # check orthogonality of 3 solutions that met training set critera
                 if   len(blist)==3 :
@@ -284,10 +290,10 @@ def cnn_preconditionerOnline_timed_2D(retrain_freq=10,debug=False,InputDim=0,Hid
 
                     func.predictor.add(np.asarray(blist)[0], np.asarray(reslist)[0])
                     solIndx=solIndx+1
-                    fnameb='DataOuput/bdata/b'+str(solIndx).zfill(4)+'.dat'
-                    fnamesol='DataOuput/soldata/res'+str(solIndx).zfill(4)+'.dat'
-                    np.savetxt(fnameb,blist[0])
-                    np.savetxt(fnamesol,reslist[0])
+                    # fnameb='DataOuput/bdata/b'+str(solIndx).zfill(4)+'.dat'
+                    # fnamesol='DataOuput/soldata/res'+str(solIndx).zfill(4)+'.dat'
+                    # np.savetxt(fnameb,blist[0])
+                    # np.savetxt(fnamesol,reslist[0])
 
 
                     cutoff=0.8
@@ -297,41 +303,41 @@ def cnn_preconditionerOnline_timed_2D(retrain_freq=10,debug=False,InputDim=0,Hid
 
                             func.predictor.add(np.asarray(blist)[1], np.asarray(reslist)[1])
                             solIndx=solIndx+1
-                            fnameb='DataOuput/bdata/b'+str(solIndx).zfill(4)+'.dat'
-                            fnamesol='DataOuput/soldata/res'+str(solIndx).zfill(4)+'.dat'
-                            np.savetxt(fnameb,blist[1])
-                            np.savetxt(fnamesol,reslist[1])
+                            # fnameb='DataOuput/bdata/b'+str(solIndx).zfill(4)+'.dat'
+                            # fnamesol='DataOuput/soldata/res'+str(solIndx).zfill(4)+'.dat'
+                            # np.savetxt(fnameb,blist[1])
+                            # np.savetxt(fnamesol,reslist[1])
 
                             func.predictor.add(np.asarray(blist)[2], np.asarray(reslist)[2])
                             solIndx=solIndx+1
-                            fnameb='DataOuput/bdata/b'+str(solIndx).zfill(4)+'.dat'
-                            fnamesol='DataOuput/soldata/res'+str(solIndx).zfill(4)+'.dat'
-                            np.savetxt(fnameb,blist[2])
-                            np.savetxt(fnamesol,reslist[2])
+                            # fnameb='DataOuput/bdata/b'+str(solIndx).zfill(4)+'.dat'
+                            # fnamesol='DataOuput/soldata/res'+str(solIndx).zfill(4)+'.dat'
+                            # np.savetxt(fnameb,blist[2])
+                            # np.savetxt(fnamesol,reslist[2])
 
                         elif np.abs(InnerProd[1,2])>=cutoff: 
                             func.predictor.add(np.asarray(blist)[1], np.asarray(reslist)[1])
                             solIndx=solIndx+1
-                            fnameb='DataOuput/bdata/b'+str(solIndx).zfill(4)+'.dat'
-                            fnamesol='DataOuput/soldata/res'+str(solIndx).zfill(4)+'.dat'
-                            np.savetxt(fnameb,blist[1])
-                            np.savetxt(fnamesol,reslist[1])
+                            # fnameb='DataOuput/bdata/b'+str(solIndx).zfill(4)+'.dat'
+                            # fnamesol='DataOuput/soldata/res'+str(solIndx).zfill(4)+'.dat'
+                            # np.savetxt(fnameb,blist[1])
+                            # np.savetxt(fnamesol,reslist[1])
 
                     elif np.abs(InnerProd[0,1])<cutoff :
                         func.predictor.add(np.asarray(blist)[1], np.asarray(reslist)[1])
                         solIndx=solIndx+1
-                        fnameb='DataOuput/bdata/b'+str(solIndx).zfill(4)+'.dat'
-                        fnamesol='DataOuput/soldata/res'+str(solIndx).zfill(4)+'.dat'
-                        np.savetxt(fnameb,blist[1])
-                        np.savetxt(fnamesol,reslist[1])
+                        # fnameb='DataOuput/bdata/b'+str(solIndx).zfill(4)+'.dat'
+                        # fnamesol='DataOuput/soldata/res'+str(solIndx).zfill(4)+'.dat'
+                        # np.savetxt(fnameb,blist[1])
+                        # np.savetxt(fnamesol,reslist[1])
 
                     elif np.abs(InnerProd[0,2])<cutoff :
                         func.predictor.add(np.asarray(blist)[2], np.asarray(reslist)[2])
                         solIndx=solIndx+1
-                        fnameb='DataOuput/bdata/b'+str(solIndx).zfill(4)+'.dat'
-                        fnamesol='DataOuput/soldata/res'+str(solIndx).zfill(4)+'.dat'
-                        np.savetxt(fnameb,blist[2])
-                        np.savetxt(fnamesol,reslist[2])
+                        # fnameb='DataOuput/bdata/b'+str(solIndx).zfill(4)+'.dat'
+                        # fnamesol='DataOuput/soldata/res'+str(solIndx).zfill(4)+'.dat'
+                        # np.savetxt(fnameb,blist[2])
+                        # np.savetxt(fnamesol,reslist[2])
 
 
                 # #  check orthogonality of 2 solutions that met training set critera
