@@ -9,10 +9,5 @@ from .nn_predictor         import nn_preconditioner,nn_preconditioner_timed
 from .cnn_predictorOnline  import cnn_preconditionerOnline_timed
 from .cnn_collectionOnline import CnnOnline
 from .benchmarking         import *
-from .cnn_predictorOnline2D_Flat  import cnn_preconditionerOnline_timed_2DFlat
-from .cnn_collectionOnline2D_Flat import CnnOnline_2DFlat
 from .cnn_predictorOnline2D  import cnn_preconditionerOnline_timed_2D
 from .cnn_collectionOnline2D import CnnOnline_2D
-from .cnn_predictorOnline2D_alt  import cnn_preconditionerOnline_timed_2D_alt
-from .cnn_collectionOnline2D_alt import CnnOnline_2D_alt
-

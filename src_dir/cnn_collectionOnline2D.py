@@ -14,7 +14,7 @@ import torch.nn.init as I
 
 class CnnOnline_2D(torch.nn.Module):
 
-    def __init__(self, D_in, H, D_out):
+    def __init__(self, D_in, D_out):
         """
         In the constructor we instantiate two nn.Conv1d modules and assign them
         as member variables.
@@ -70,16 +70,4 @@ class CnnOnline_2D(torch.nn.Module):
 
 
         return y_pred
-
-    
-    
-    def _initialize_weights(self):
-        I.orthogonal_(self.Conv1.weight)
-        I.orthogonal_(self.Conv2.weight)
-        I.orthogonal_(self.Conv3.weight)
-        I.orthogonal_(self.Conv4.weight)
-        I.orthogonal_(self.Conv5.weight)
-        I.orthogonal_(self.Conv6.weight)
-        I.orthogonal_(self.lin1.weight)
-        I.orthogonal_(self.convT.weight)
             

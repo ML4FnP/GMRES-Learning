@@ -26,28 +26,26 @@ from src_dir import resid,timer,moving_average,GMRES
 
 class CNNPredictorOnline_2D(object):
 
-    def __init__(self,D_in,H,D_out):
+    def __init__(self,D_in,D_out):
         
         # N is batch size; D_in is input dimension;
-        # H is hidden dimension; H2 is  second hidden layer dimension. 
         # D_out is output dimension.
         self.D_in=D_in
-        self.H=H   
         self.D_out=D_out
 
 
         # Construct our model by instantiating the class defined above
         device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-        self.model = CnnOnline_2D(self.D_in, self.H,self.D_out).to(device)
-#         self.model._initialize_weights()
+        self.model = CnnOnline_2D(self.D_in,self.D_out).to(device)
         
         # Construct our loss function and an Optimizer. The call to model.parameters()
         # in the SGD constructor will contain the learnable parameters of the two
-        # nn.Conv1d modules which are members of the model.
+        # nn.Conv modules which are members of the model.
         self.criterion = torch.nn.MSELoss(reduction='mean')
+
         # self.optimizer = torch.optim.SGD(self.model.parameters(), lr=1e-2)
         self.optimizer = torch.optim.Adagrad(self.model.parameters(), lr=1e-2)
-#         self.optimizer = torch.optim.Adam(self.model.parameters(), lr=1e-3)
+        # self.optimizer = torch.optim.Adam(self.model.parameters(), lr=1e-3)
 
 
 
@@ -55,7 +53,6 @@ class CNNPredictorOnline_2D(object):
         # y will hold entire training set solution data
         self.x = torch.empty(0, self.D_in,self.D_in).to(device)
         self.y = torch.empty(0, self.D_out,self.D_out).to(device)
-
 
 
         # xNew holds new b additions to training set at the current time
@@ -128,15 +125,19 @@ class CNNPredictorOnline_2D(object):
         permutation = torch.randperm(self.x.size()[0])
         indices = permutation[0:0+batch_size]
         batch_x, batch_y = self.x[indices],self.y[indices]
+
         # Adding new data to each batch
         # Note: only adding at most 3 data points to each batch
         batch_xMix=torch.cat((batch_x,self.xNew)) 
         batch_yMix=torch.cat((batch_y,self.yNew))
+
         # Forward pass: Compute predicted y by passing x to the model
         y_pred = self.model(batch_xMix)
+
         # Compute and print loss
         loss = self.criterion(y_pred, batch_yMix)
         self.loss_val.append(loss.item())
+
         # Zero gradients, perform a backward pass, and update the weights.
         self.optimizer.zero_grad()
         loss.backward()
@@ -164,14 +165,6 @@ class CNNPredictorOnline_2D(object):
 
         self.is_trained = True
 
-        # Output for linear models only
-        # Wwrite=self.model.forwardWeights().detach().cpu().numpy()
-        # f=open("Weights_2D_Point_dim30.txt", "ab") 
-        # np.savetxt(f,Wwrite,delimiter=' ')
-        # f.close()
-
-
-
 
     def add(self, x, y):
         # TODO: don't use `torch.cat` in this incremental mode => will scale poorly
@@ -186,24 +179,23 @@ class CNNPredictorOnline_2D(object):
 
 
     def predict(self, x):
-        device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-        a1=torch.from_numpy(x).unsqueeze_(0).float().to(device)
-        a2=np.squeeze(self.model.forward(a1).detach().cpu().numpy()) 
-        #a2=np.squeeze(self.model.forward(a1).detach().numpy())     # cpu version, above line may work for cpu only... not sure. 
-        return a2
         # inputs need to be [[x_1, x_2, ...]] as floats
         # outputs need to be numpy (non-grad => detach)
         # outputs need to be [y_1, y_2, ...]
+        device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+        a1=torch.from_numpy(x).unsqueeze_(0).float().to(device)
+        a2=np.squeeze(self.model.forward(a1).detach().cpu().numpy()) 
+        return a2
 
 
 
-def cnn_preconditionerOnline_timed_2D(retrain_freq=1,debug=False,InputDim=0,HiddenDim=0,OutputDim=0):
+
+def cnn_preconditionerOnline_timed_2D(retrain_freq=1,debug=False,InputDim=0,OutputDim=0):
     def my_decorator(func):
-        func.predictor    = CNNPredictorOnline_2D(InputDim,HiddenDim,OutputDim)
+        func.predictor    = CNNPredictorOnline_2D(InputDim,OutputDim)
         func.retrain_freq = retrain_freq
         func.debug        = debug
         func.InputDim     = InputDim
-        func.HiddenDim    = HiddenDim
         func.OutputDim    = OutputDim
 
         @functools.wraps(func)
@@ -216,15 +208,12 @@ def cnn_preconditionerOnline_timed_2D(retrain_freq=1,debug=False,InputDim=0,Hidd
             
             
             Initial_set=2
-            SpeedCutOff=0.00 #only add data is solution takes longer than 0.11 for coarse run
-
             IterTime_AVG=0.0
             IterErr10_AVG=0.0
             
             # Check if we are in first GMRES e1 tolerance run. If so, we compute prediction, and check the prediction is "good" before moving forward. 
             if func.predictor.is_trained and refine==False:
                 pred_x0 = func.predictor.predict(b)
-                # target_test  = func(A, b, pred_x0, e, nmax_iter,ML_GMRES_Time_list,ProbCount,1,debug,refine,blist,reslist,Err_list,reslist_flat, *eargs)
                 target_test=GMRES(A, b, x0, e, 6,1, True)
                 IterErr_test = resid(A, target_test, b)
                 print('size',len(IterErr_test))
@@ -268,17 +257,12 @@ def cnn_preconditionerOnline_timed_2D(retrain_freq=1,debug=False,InputDim=0,Hidd
 
 
             # Filter for data to be added to training set
-            if (ML_GMRES_Time_list[-1]>IterTime_AVG and Err_list[-1]>IterErr10_AVG  ) and  refine==True and ProbCount>Initial_set and ML_GMRES_Time_list[-1]>SpeedCutOff  : 
+            if (ML_GMRES_Time_list[-1]>IterTime_AVG and Err_list[-1]>IterErr10_AVG  ) and  refine==True and ProbCount>Initial_set : 
                 
                 blist.append(b)
                 reslist.append(res)
                 reslist_flat.append(np.reshape(res,(1,-1),order='C').squeeze(0))
-
-                # fnameb='DataOuput/bdata/b'+str(solIndx).zfill(4)+'.dat'
-                # fnamesol='DataOuput/soldata/res'+str(solIndx).zfill(4)+'.dat'
-                # np.savetxt(fnameb,b)
-                # np.savetxt(fnamesol,res)
-                
+              
                 # check orthogonality of 3 solutions that met training set critera
                 if   len(blist)==3 :
                     resMat=np.asarray(reslist_flat)
@@ -290,11 +274,6 @@ def cnn_preconditionerOnline_timed_2D(retrain_freq=1,debug=False,InputDim=0,Hidd
 
                     func.predictor.add(np.asarray(blist)[0], np.asarray(reslist)[0])
                     solIndx=solIndx+1
-                    # fnameb='DataOuput/bdata/b'+str(solIndx).zfill(4)+'.dat'
-                    # fnamesol='DataOuput/soldata/res'+str(solIndx).zfill(4)+'.dat'
-                    # np.savetxt(fnameb,blist[0])
-                    # np.savetxt(fnamesol,reslist[0])
-
 
                     cutoff=0.8
                     # Picking out sufficiently orthogonal subset of 3 solutions gathered
@@ -303,59 +282,23 @@ def cnn_preconditionerOnline_timed_2D(retrain_freq=1,debug=False,InputDim=0,Hidd
 
                             func.predictor.add(np.asarray(blist)[1], np.asarray(reslist)[1])
                             solIndx=solIndx+1
-                            # fnameb='DataOuput/bdata/b'+str(solIndx).zfill(4)+'.dat'
-                            # fnamesol='DataOuput/soldata/res'+str(solIndx).zfill(4)+'.dat'
-                            # np.savetxt(fnameb,blist[1])
-                            # np.savetxt(fnamesol,reslist[1])
 
                             func.predictor.add(np.asarray(blist)[2], np.asarray(reslist)[2])
                             solIndx=solIndx+1
-                            # fnameb='DataOuput/bdata/b'+str(solIndx).zfill(4)+'.dat'
-                            # fnamesol='DataOuput/soldata/res'+str(solIndx).zfill(4)+'.dat'
-                            # np.savetxt(fnameb,blist[2])
-                            # np.savetxt(fnamesol,reslist[2])
 
                         elif np.abs(InnerProd[1,2])>=cutoff: 
                             func.predictor.add(np.asarray(blist)[1], np.asarray(reslist)[1])
                             solIndx=solIndx+1
-                            # fnameb='DataOuput/bdata/b'+str(solIndx).zfill(4)+'.dat'
-                            # fnamesol='DataOuput/soldata/res'+str(solIndx).zfill(4)+'.dat'
-                            # np.savetxt(fnameb,blist[1])
-                            # np.savetxt(fnamesol,reslist[1])
 
                     elif np.abs(InnerProd[0,1])<cutoff :
                         func.predictor.add(np.asarray(blist)[1], np.asarray(reslist)[1])
                         solIndx=solIndx+1
-                        # fnameb='DataOuput/bdata/b'+str(solIndx).zfill(4)+'.dat'
-                        # fnamesol='DataOuput/soldata/res'+str(solIndx).zfill(4)+'.dat'
-                        # np.savetxt(fnameb,blist[1])
-                        # np.savetxt(fnamesol,reslist[1])
 
                     elif np.abs(InnerProd[0,2])<cutoff :
                         func.predictor.add(np.asarray(blist)[2], np.asarray(reslist)[2])
-                        solIndx=solIndx+1
-                        # fnameb='DataOuput/bdata/b'+str(solIndx).zfill(4)+'.dat'
-                        # fnamesol='DataOuput/soldata/res'+str(solIndx).zfill(4)+'.dat'
-                        # np.savetxt(fnameb,blist[2])
-                        # np.savetxt(fnamesol,reslist[2])
+                        solIndx=solIndx+1                    
 
-
-                # #  check orthogonality of 2 solutions that met training set critera
-                # if   len(blist)==2 :
-                #     resMat=np.asarray(reslist_flat)
-                #     resMat_square=resMat**2
-                #     row_sums = resMat_square.sum(axis=1,keepdims=True)
-                #     resMat= resMat/np.sqrt(row_sums)
-                #     InnerProd=np.dot(resMat,resMat.T)
-                #     print('InnerProd',InnerProd)
-                #     func.predictor.add(np.asarray(blist)[0], np.asarray(reslist)[0])
-                #     cutoff=0.8
-                    
-                #     # Picking out sufficiently orthogonal subset of 3 solutions gathered
-                #     if np.abs(InnerProd[0,1]) <cutoff :
-                #         func.predictor.add(np.asarray(blist)[1], np.asarray(reslist)[1])
-                    
-
+                    # Train if enoufh data has been collected
                     if func.predictor.counter>=retrain_freq:
                         if func.debug:
                             print("retraining")
