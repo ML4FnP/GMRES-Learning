@@ -2,7 +2,7 @@
 
 from .util                 import resid, cidx, midx, mrange, matmul_a, mat_to_a,\
                                   timer, Gauss_pdf,Gauss_pdf_2D ,moving_average
-from .linop                import laplace_1d, mk_laplace_1d, mk_laplace_2d
+from .linop                import laplace_1d, mk_laplace_1d, mk_laplace_2d,mk_laplace_2d_Tensor
 from .gmres                import GMRES, GMRES_R
 from .nn_collection        import TwoLayerNet
 from .nn_predictor         import nn_preconditioner,nn_preconditioner_timed
