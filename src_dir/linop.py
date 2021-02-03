@@ -74,14 +74,13 @@ def appl_2d(op, x, Nx, Ny):
 
 
 
-def mk_laplace_2d(Nx, Ny, dx, bc="dirichlet", xlo=0, xhi=0, ylo=0, yhi=0):
+def mk_laplace_2d(Nx, Ny, bc="dirichlet", xlo=0, xhi=0, ylo=0, yhi=0):
     '''
     mk_laplace_2d(N, bc="dirichlet", xlo=0, xhi=0, ylo=0, yhi=0)
 
     Generates laplace operator as a stencil operation for a N-cell 2D grid, for
     given boundary conditionds.
     '''
-
     def build_bc_1(x_in):
         x_out = np.zeros((Nx + 2, Ny + 2))
 
@@ -109,7 +108,7 @@ def mk_laplace_2d(Nx, Ny, dx, bc="dirichlet", xlo=0, xhi=0, ylo=0, yhi=0):
 
 
     def laplace_2d(x, i, j):
-        return (-4*x[i, j] + x[i-1, j] + x[i+1, j] + x[i, j-1] + x[i, j+1])/(dx)**2
+        return (-4*x[i, j] + x[i-1, j] + x[i+1, j] + x[i, j-1] + x[i, j+1])
 
 
     if bc == "dirichlet":
@@ -138,7 +137,7 @@ def appl_2d_Tensor(op, x, Nx, Ny):
 
 
 
-def mk_laplace_2d_Tensor(Nx, Ny, dx,bc="dirichlet", xlo=0, xhi=0, ylo=0, yhi=0):
+def mk_laplace_2d_Tensor(Nx, Ny,bc="dirichlet", xlo=0, xhi=0, ylo=0, yhi=0):
     '''
     mk_laplace_2d(N, bc="dirichlet", xlo=0, xhi=0, ylo=0, yhi=0)
 
@@ -176,7 +175,7 @@ def mk_laplace_2d_Tensor(Nx, Ny, dx,bc="dirichlet", xlo=0, xhi=0, ylo=0, yhi=0):
 
 
     def laplace_2d_Tensor(x, i, j):
-        return (-4*x[:,i, j] + x[:,i-1, j] + x[:,i+1, j] + x[:,i, j-1] + x[:,i, j+1])/(dx)**2
+        return (-4*x[:,i, j] + x[:,i-1, j] + x[:,i+1, j] + x[:,i, j-1] + x[:,i, j+1])
 
 
     if bc == "dirichlet":

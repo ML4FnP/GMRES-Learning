@@ -22,117 +22,15 @@ class CnnOnline_2D(torch.nn.Module):
         super(CnnOnline_2D, self).__init__()
 
 ########################################################################3
-## ALL CNN
-# #         10x10 , and 15x15 dim input
-#         self.Conv1   = torch.nn.Conv2d(1,16,(9,9), stride=1, padding=(4,4), dilation=1, groups=1, bias=False, padding_mode='replicate')#even dim
-#         self.Conv2   = torch.nn.Conv2d(16,16,(7,7),stride=1, padding=(3,3), dilation=1, groups=1, bias=False, padding_mode='replicate')#even dim
-#         self.Conv3   = torch.nn.Conv2d(16,8,(5,5),stride=1, padding=(2,2), dilation=1, groups=1, bias=False, padding_mode='replicate')#even dim
-#         self.Conv4   = torch.nn.Conv2d(8,4,(3,3),stride=1, padding=(1,1), dilation=1, groups=1, bias=False, padding_mode='replicate')#even dim
-#         self.Conv5   = torch.nn.Conv2d(4,2,(3,3), stride=1, padding=(1,1), dilation=1, groups=1, bias=False, padding_mode='replicate')#even dim
-#         self.Conv51   = torch.nn.Conv2d(2,2,(3,3), stride=1, padding=(1,1), dilation=1, groups=1, bias=False, padding_mode='replicate')#even dim
-#         self.Conv52   = torch.nn.Conv2d(2,2,(3,3), stride=1, padding=(1,1), dilation=1, groups=1, bias=False, padding_mode='replicate')#even dim
-#         self.Conv53   = torch.nn.Conv2d(2,2,(3,3), stride=1, padding=(1,1), dilation=1, groups=1, bias=False, padding_mode='replicate')#even dim
-#         self.Conv54   = torch.nn.Conv2d(2,2,(3,3), stride=1, padding=(1,1), dilation=1, groups=1, bias=False, padding_mode='replicate')#even dim
-#         self.Conv6   = torch.nn.Conv2d(2,1,(1,1), stride=1, padding=(0,0), dilation=1, groups=1, bias=False, padding_mode='replicate')#even dim
-
-        
-# #         #20x20 and 25x25 dim input
-#         # self.Conv1   = torch.nn.Conv2d(1,16,(9,9), stride=1, padding=(8,8), dilation=2, groups=1, bias=True, padding_mode='reflect')#even dim
-#         # self.Conv2   = torch.nn.Conv2d(16,16,(7,7),stride=1, padding=(6,6), dilation=2, groups=1, bias=True, padding_mode='reflect')#even dim
-#         # self.Conv3   = torch.nn.Conv2d(16,8,(5,5),stride=1, padding=(4,4), dilation=2, groups=1, bias=True, padding_mode='reflect')#even dim
-#         # self.Conv4   = torch.nn.Conv2d(8,4,(3,3),stride=1, padding=(1,1), dilation=1, groups=1, bias=True, padding_mode='reflect')#even dim
-#         # self.Conv5   = torch.nn.Conv2d(4,2,(3,3), stride=1, padding=(1,1), dilation=1, groups=1, bias=True, padding_mode='reflect')#even dim
-#         # self.Conv6   = torch.nn.Conv2d(2,1,(1,1), stride=1, padding=(0,0), dilation=1, groups=1, bias=True, padding_mode='reflect')#even dim
-
-#         #  30x30 dim input
-# #         self.Conv1   = torch.nn.Conv2d(1,16,(9,9), stride=1, padding=(16,16), dilation=4, groups=1, bias=True, padding_mode='reflect')#even dim
-# #         self.Conv2   = torch.nn.Conv2d(16,16,(7,7),stride=1, padding=(12,12), dilation=4, groups=1, bias=True, padding_mode='reflect')#even dim
-# #         self.Conv3   = torch.nn.Conv2d(16,8,(5,5),stride=1, padding=(8,8), dilation=4, groups=1, bias=True, padding_mode='reflect')#even dim
-# #         self.Conv4   = torch.nn.Conv2d(8,4,(3,3),stride=1, padding=(3,3), dilation=3, groups=1, bias=True, padding_mode='reflect')#even dim
-# #         self.Conv5   = torch.nn.Conv2d(4,2,(3,3), stride=1, padding=(3,3), dilation=3, groups=1, bias=True, padding_mode='reflect')#even dim
-# #         self.Conv6   = torch.nn.Conv2d(2,1,(1,1), stride=1, padding=(0,0), dilation=1, groups=1, bias=True, padding_mode='reflect')#even dim
-
-#         self.relu   = torch.nn.LeakyReLU()
-
-#         self.BN1    = torch.nn.BatchNorm2d(16)
-#         self.BN2    = torch.nn.BatchNorm2d(16)
-#         self.BN3    = torch.nn.BatchNorm2d(8)
-
-
-########################################################################3
-## RESNET
-
-        # # 10 dim resolution
-        # self.pad3   = torch.nn.ReflectionPad2d(3)
-        # self.pad2   = torch.nn.ReflectionPad2d(2)
-        # self.pad1   = torch.nn.ReflectionPad2d(1)
-
-
-
-        # self.Conv1  = torch.nn.Conv2d(in_channels=1, out_channels=32, kernel_size=7,bias=False)
-
-        # self.Conv2  = torch.nn.Conv2d(in_channels=32, out_channels=16, kernel_size=5,bias=False)
-        # self.Conv3  = torch.nn.Conv2d(in_channels=16, out_channels=16, kernel_size=5,bias=False)
-
-        # self.Conv4  = torch.nn.Conv2d(in_channels=16, out_channels=8, kernel_size=3,bias=False)
-        # self.Conv5  = torch.nn.Conv2d(in_channels=8, out_channels=8, kernel_size=3,bias=False)
-
-
-        # self.Conv6  = torch.nn.Conv2d(in_channels=8, out_channels=8, kernel_size=3,bias=False)
-        # self.Conv7  = torch.nn.Conv2d(in_channels=8, out_channels=8, kernel_size=3,bias=False)
-
-        # self.Conv8  = torch.nn.Conv2d(in_channels=8, out_channels=8, kernel_size=3,bias=False)
-        # self.Conv9  = torch.nn.Conv2d(in_channels=8, out_channels=8, kernel_size=3,bias=False)
-
-        # self.Conv10  = torch.nn.Conv2d(in_channels=8, out_channels=1, kernel_size=1)
-
-
-        # self.ConvSkip1 = torch.nn.Conv2d(in_channels=32, out_channels=16, kernel_size=1,bias=False)
-        # self.ConvSkip2 = torch.nn.Conv2d(in_channels=16, out_channels=8, kernel_size=1,bias=False)
-
-        # self.relu   = torch.nn.LeakyReLU()
-
-        ##_____________________________________________________________________________________________
-
-
-        # 20 dim resolution
-        # self.pad3   = torch.nn.ReflectionPad2d(6)
-        # self.pad2   = torch.nn.ReflectionPad2d(4)
-        # self.pad1   = torch.nn.ReflectionPad2d(2)
-
-        # self.Conv1  = torch.nn.Conv2d(in_channels=1, out_channels=32, kernel_size=7,bias=False,dilation=2)
-
-        # self.Conv2  = torch.nn.Conv2d(in_channels=32, out_channels=16, kernel_size=5,bias=False,dilation=2)
-        # self.Conv3  = torch.nn.Conv2d(in_channels=16, out_channels=16, kernel_size=5,bias=False,dilation=2)
-
-        # self.Conv4  = torch.nn.Conv2d(in_channels=16, out_channels=8, kernel_size=3,bias=False,dilation=2)
-        # self.Conv5  = torch.nn.Conv2d(in_channels=8, out_channels=8, kernel_size=3,bias=False,dilation=2)
-
-
-        # self.Conv6  = torch.nn.Conv2d(in_channels=8, out_channels=8, kernel_size=3,bias=False,dilation=2)
-        # self.Conv7  = torch.nn.Conv2d(in_channels=8, out_channels=8, kernel_size=3,bias=False,dilation=2)
-
-        # self.Conv8  = torch.nn.Conv2d(in_channels=8, out_channels=8, kernel_size=3,bias=False,dilation=2)
-        # self.Conv9  = torch.nn.Conv2d(in_channels=8, out_channels=8, kernel_size=3,bias=False,dilation=2)
-
-        # self.Conv10  = torch.nn.Conv2d(in_channels=8, out_channels=1, kernel_size=1)
-
-
-        # self.ConvSkip1 = torch.nn.Conv2d(in_channels=32, out_channels=16, kernel_size=1,bias=False)
-        # self.ConvSkip2 = torch.nn.Conv2d(in_channels=16, out_channels=8, kernel_size=1,bias=False)
-
-        # self.relu   = torch.nn.LeakyReLU()
-
-########################################################################3
 ## FLUID NET
 
-        # # 10 dim resolution
+        # # 10-19 dim resolution
         # self.pad_7Kernel   = torch.nn.ZeroPad2d(3)
         # self.pad_5Kernel   = torch.nn.ZeroPad2d(2)
         # self.pad_3Kernel   = torch.nn.ZeroPad2d(1)
 
         # self.AVG = torch.nn.AvgPool2d(2, stride=2)
-        # self.Upsample = torch.nn.Upsample(mode='bilinear',size=(10,10))
+        # self.Upsample = torch.nn.Upsample(mode='bilinear',size=(D_in,D_in))
 
         # self.ConvInit1  = torch.nn.Conv2d(in_channels=1, out_channels=2, kernel_size=7,bias=False)
         # self.ConvInit2  = torch.nn.Conv2d(in_channels=2, out_channels=4, kernel_size=5,bias=False)
@@ -159,53 +57,91 @@ class CnnOnline_2D(torch.nn.Module):
 
 
 ##____________________________________________________________________
-        # 20 dim resolution
-        self.pad_7Kernel   = torch.nn.ReflectionPad2d(6)
-        self.pad_5Kernel   = torch.nn.ReflectionPad2d(4)
-        self.pad_3Kernel_Dilated   = torch.nn.ReflectionPad2d(2)
-        self.pad_3Kernel   = torch.nn.ReflectionPad2d(1)
+        # # 20-29 dim resolution
+        self.pad_7Kernel   = torch.nn.ZeroPad2d(6)
+        self.pad_5Kernel   = torch.nn.ZeroPad2d(4)
+        self.pad_3Kernel   = torch.nn.ZeroPad2d(1)
+        self.pad_3Kernel_Dilated   = torch.nn.ZeroPad2d(2)
 
         self.AVG = torch.nn.AvgPool2d(2, stride=2)
-        self.Upsample = torch.nn.Upsample(mode='bilinear',size=(20,20))
+        self.Upsample = torch.nn.Upsample(mode='bilinear',size=(D_in,D_in))
 
 
         self.ConvInit1  = torch.nn.Conv2d(in_channels=1, out_channels=2, kernel_size=7,dilation=2,bias=False)
-        self.ConvInit2  = torch.nn.Conv2d(in_channels=2, out_channels=4, kernel_size=5,dilation=2,bias=False)
+        self.ConvInit2  = torch.nn.Conv2d(in_channels=2, out_channels=8, kernel_size=5,dilation=2,bias=False)
 
-        self.Conv11  = torch.nn.Conv2d(in_channels=4, out_channels=4, kernel_size=5,dilation=2,bias=False)
-        self.Conv12  = torch.nn.Conv2d(in_channels=4, out_channels=4, kernel_size=5,dilation=2,bias=False)
-        self.Conv21  = torch.nn.Conv2d(in_channels=4, out_channels=4, kernel_size=5,dilation=2,bias=False)
-        self.Conv22  = torch.nn.Conv2d(in_channels=4, out_channels=4, kernel_size=5,dilation=2,bias=False)
-        self.Conv31  = torch.nn.Conv2d(in_channels=4, out_channels=4, kernel_size=3,bias=False)
-        self.Conv32  = torch.nn.Conv2d(in_channels=4, out_channels=4, kernel_size=3,bias=False)
-        self.Conv41  = torch.nn.Conv2d(in_channels=4, out_channels=4, kernel_size=1,bias=False)
-        self.Conv42  = torch.nn.Conv2d(in_channels=4, out_channels=4, kernel_size=1,bias=False)
+        self.Conv11  = torch.nn.Conv2d(in_channels=8, out_channels=8, kernel_size=5,dilation=2,bias=False)
+        self.Conv12  = torch.nn.Conv2d(in_channels=8, out_channels=8, kernel_size=5,dilation=2,bias=False)
+        self.Conv21  = torch.nn.Conv2d(in_channels=8, out_channels=8, kernel_size=5,dilation=2,bias=False)
+        self.Conv22  = torch.nn.Conv2d(in_channels=8, out_channels=8, kernel_size=5,dilation=2,bias=False)
+        self.Conv31  = torch.nn.Conv2d(in_channels=8, out_channels=8, kernel_size=3,bias=False)
+        self.Conv32  = torch.nn.Conv2d(in_channels=8, out_channels=8, kernel_size=3,bias=False)
+        self.Conv41  = torch.nn.Conv2d(in_channels=8, out_channels=8, kernel_size=1,bias=False)
+        self.Conv42  = torch.nn.Conv2d(in_channels=8, out_channels=8, kernel_size=1,bias=False)
 
-        self.Conv_Post1 = torch.nn.Conv2d(in_channels=4, out_channels=4, kernel_size=3,dilation=2,bias=False)
-        self.Conv_Post2 = torch.nn.Conv2d(in_channels=4, out_channels=4, kernel_size=3,dilation=2,bias=False)
-        self.Conv_Post3 = torch.nn.Conv2d(in_channels=4, out_channels=4, kernel_size=3,dilation=2,bias=False)
-        self.Conv_Post4 = torch.nn.Conv2d(in_channels=4, out_channels=4, kernel_size=3,dilation=2,bias=False)
-        self.Conv_Post5 = torch.nn.Conv2d(in_channels=4, out_channels=4, kernel_size=3,dilation=2,bias=False)
-        self.Conv_Post6 = torch.nn.Conv2d(in_channels=4, out_channels=4, kernel_size=3,dilation=2,bias=False)
-        self.Conv_Post7 = torch.nn.Conv2d(in_channels=4, out_channels=4, kernel_size=3,dilation=2,bias=False)
-        self.Conv_Post8 = torch.nn.Conv2d(in_channels=4, out_channels=4, kernel_size=3,dilation=2,bias=False)
+        self.Conv_Post1 = torch.nn.Conv2d(in_channels=8, out_channels=8, kernel_size=3,dilation=2,bias=False)
+        self.Conv_Post2 = torch.nn.Conv2d(in_channels=8, out_channels=8, kernel_size=3,dilation=2,bias=False)
+        self.Conv_Post3 = torch.nn.Conv2d(in_channels=8, out_channels=8, kernel_size=3,dilation=2,bias=False)
+        self.Conv_Post4 = torch.nn.Conv2d(in_channels=8, out_channels=8, kernel_size=3,dilation=2,bias=False)
+        self.Conv_Post5 = torch.nn.Conv2d(in_channels=8, out_channels=8, kernel_size=3,dilation=2,bias=False)
+        self.Conv_Post6 = torch.nn.Conv2d(in_channels=8, out_channels=8, kernel_size=3,dilation=2,bias=False)
+        self.Conv_Post7 = torch.nn.Conv2d(in_channels=8, out_channels=8, kernel_size=3,dilation=2,bias=False)
+        self.Conv_Post8 = torch.nn.Conv2d(in_channels=8, out_channels=8, kernel_size=3,dilation=2,bias=False)
 
 
-        self.Conv4 =torch.nn.Conv2d(in_channels=4, out_channels=4, kernel_size=1,bias=False)
-        self.Conv5 =torch.nn.Conv2d(in_channels=4, out_channels=1, kernel_size=1,bias=False)
+        self.Conv4 =torch.nn.Conv2d(in_channels=8, out_channels=8, kernel_size=1,bias=False)
+        self.Conv5 =torch.nn.Conv2d(in_channels=8, out_channels=1, kernel_size=1,bias=False)
 
         self.ConvOut =torch.nn.Conv2d(in_channels=1, out_channels=1, kernel_size=1,bias=False)
 
 
         self.relu   = torch.nn.LeakyReLU()
+##____________________________________________________________________
+        # 30-39 dim resolution
+        # self.pad_7Kernel   = torch.nn.ZeroPad2d(9)
+        # self.pad_5Kernel   = torch.nn.ZeroPad2d(6)
+        # self.pad_3Kernel_3scale   = torch.nn.ZeroPad2d(2)
+        # self.pad_3Kernel_4scale   = torch.nn.ZeroPad2d(1)
+        # self.pad_3Kernel_Res   = torch.nn.ZeroPad2d(3)
+
+
+
+        # self.AVG = torch.nn.AvgPool2d(2, stride=2)
+        # self.Upsample = torch.nn.Upsample(mode='bilinear',size=(D_in,D_in))
+
+
+        # self.ConvInit1  = torch.nn.Conv2d(in_channels=1, out_channels=2, kernel_size=7,dilation=3,bias=False)
+        # self.ConvInit2  = torch.nn.Conv2d(in_channels=2, out_channels=8, kernel_size=5,dilation=3,bias=False)
+
+        # self.Conv11  = torch.nn.Conv2d(in_channels=8, out_channels=8, kernel_size=5,dilation=3,bias=False)
+        # self.Conv12  = torch.nn.Conv2d(in_channels=8, out_channels=8, kernel_size=5,dilation=3,bias=False)
+        # self.Conv21  = torch.nn.Conv2d(in_channels=8, out_channels=8, kernel_size=5,dilation=3,bias=False)
+        # self.Conv22  = torch.nn.Conv2d(in_channels=8, out_channels=8, kernel_size=5,dilation=3,bias=False)
+        # self.Conv31  = torch.nn.Conv2d(in_channels=8, out_channels=8, kernel_size=3,dilation=2,bias=False)
+        # self.Conv32  = torch.nn.Conv2d(in_channels=8, out_channels=8, kernel_size=3,dilation=2,bias=False)
+        # self.Conv41  = torch.nn.Conv2d(in_channels=8, out_channels=8, kernel_size=3,bias=False)
+        # self.Conv42  = torch.nn.Conv2d(in_channels=8, out_channels=8, kernel_size=3,bias=False)
+
+        # self.Conv_Post1 = torch.nn.Conv2d(in_channels=8, out_channels=8, kernel_size=3,dilation=3,bias=False)
+        # self.Conv_Post2 = torch.nn.Conv2d(in_channels=8, out_channels=8, kernel_size=3,dilation=3,bias=False)
+        # self.Conv_Post3 = torch.nn.Conv2d(in_channels=8, out_channels=8, kernel_size=3,dilation=3,bias=False)
+        # self.Conv_Post4 = torch.nn.Conv2d(in_channels=8, out_channels=8, kernel_size=3,dilation=3,bias=False)
+        # self.Conv_Post5 = torch.nn.Conv2d(in_channels=8, out_channels=8, kernel_size=3,dilation=3,bias=False)
+        # self.Conv_Post6 = torch.nn.Conv2d(in_channels=8, out_channels=8, kernel_size=3,dilation=3,bias=False)
+        # self.Conv_Post7 = torch.nn.Conv2d(in_channels=8, out_channels=8, kernel_size=3,dilation=3,bias=False)
+        # self.Conv_Post8 = torch.nn.Conv2d(in_channels=8, out_channels=8, kernel_size=3,dilation=3,bias=False)
+
+
+        # self.Conv4 =torch.nn.Conv2d(in_channels=8, out_channels=8, kernel_size=1,bias=False)
+        # self.Conv5 =torch.nn.Conv2d(in_channels=8, out_channels=1, kernel_size=1,bias=False)
+
+        # self.ConvOut =torch.nn.Conv2d(in_channels=1, out_channels=1, kernel_size=1,bias=False)
+
+
+        # self.relu   = torch.nn.LeakyReLU()
 
 ########################################################################
 ########################################################################
-########################################################################
-########################################################################
-########################################################################
-
-
 
 #__________________________________________________________________
 ## Fluidnet + resnet forward
@@ -407,7 +343,7 @@ class CnnOnline_2D(torch.nn.Module):
                 z4 = self.relu(self.Conv42((z4)))
                 z4 = self.Upsample(z4)
                 # Sum all convolution output scales
-                z = z1+z2+z3
+                z = z1+z2+z3+z4
                 #resblock 1
                 y = self.relu(z)
                 y = self.relu(self.Conv_Post1(self.pad_3Kernel_Dilated(z)))
@@ -448,7 +384,7 @@ class CnnOnline_2D(torch.nn.Module):
                 z4 = self.relu(self.Conv42((z4)))
                 z4 = self.Upsample(z4)
                 # Sum all convolution output scales
-                z = z1+z2+z3
+                z = z1+z2+z3+z4
                 #resblock 1
                 y = self.relu(z)
                 y = self.relu(self.Conv_Post1(self.pad_3Kernel_Dilated(z)))
@@ -494,7 +430,7 @@ class CnnOnline_2D(torch.nn.Module):
                 z4 = self.relu(self.Conv42((z4)))
                 z4 = self.Upsample(z4)
                 # Sum all convolution output scales
-                z = z1+z2+z3
+                z = z1+z2+z3+z4
                 #resblock 1
                 y = self.relu(z)
                 y = self.relu(self.Conv_Post1(self.pad_3Kernel_Dilated(z)))
@@ -523,6 +459,224 @@ class CnnOnline_2D(torch.nn.Module):
                 return z.squeeze(1) 
 
 
+#_____________________________________________________-
+## Fluidnet forward 30-39 dim
+#     def forward(self, x,DataSetSize,Factor):
+#         x2=x.unsqueeze(1)  # Add channel dimension (C) to input
+#         Current_batchsize=int(x.shape[0])  # N in pytorch docs
+
+
+#         if (DataSetSize < Factor*1):
+#                 z = self.ConvInit1(self.pad_7Kernel(x2))
+#                 z1 =  self.relu(self.ConvInit2(self.pad_5Kernel(z)))
+#                 z2 =  self.AVG(z1)
+#                 z3 =  self.AVG(z2)
+#                 z4 =  self.AVG(z3)
+#                 # Full scale
+#                 z1 = self.relu(self.Conv11(self.pad_5Kernel(z1)))
+#                 z1 = self.relu(self.Conv12(self.pad_5Kernel(z1)))
+#                 # Downsample1 scale
+#                 z2 = self.relu(self.Conv21(self.pad_5Kernel(z2)))
+#                 z2 = self.relu(self.Conv22(self.pad_5Kernel(z2)))
+#                 z2 = self.Upsample(z2)
+#                 # Downsample2 scale
+#                 z3 = self.relu(self.Conv31(self.pad_3Kernel_3scale(z3)))
+#                 z3 = self.relu(self.Conv32(self.pad_3Kernel_3scale(z3)))
+#                 z3 = self.Upsample(z3)
+#                 # Downsample3 scale
+#                 z4 = self.relu(self.Conv41((self.pad_3Kernel_4scale(z4))))
+#                 z4 = self.relu(self.Conv42((self.pad_3Kernel_4scale(z4))))
+#                 z4 = self.Upsample(z4)
+#                 # Sum all convolution output scales
+#                 z = z1+z2+z3+z4
+#                 z = self.relu(self.Conv4(z))
+#                 z = self.relu(self.Conv5(z))
+#                 z=self.ConvOut(z)
+#                 return z.squeeze(1) 
+
+
+#         # Forward function with 1 extra resblock at end
+#         if (DataSetSize >=Factor*1):
+#                 z = self.ConvInit1(self.pad_7Kernel(x2))
+#                 z1 =  self.relu(self.ConvInit2(self.pad_5Kernel(z)))
+#                 z2 =  self.AVG(z1)
+#                 z3 =  self.AVG(z2)
+#                 z4 =  self.AVG(z3)
+#                 # Full scale
+#                 z1 = self.relu(self.Conv11(self.pad_5Kernel(z1)))
+#                 z1 = self.relu(self.Conv12(self.pad_5Kernel(z1)))
+#                 # Downsample1 scale
+#                 z2 = self.relu(self.Conv21(self.pad_5Kernel(z2)))
+#                 z2 = self.relu(self.Conv22(self.pad_5Kernel(z2)))
+#                 z2 =  self.Upsample(z2)
+#                 # Downsample2 scale
+#                 z3 = self.relu(self.Conv31(self.pad_3Kernel_3scale(z3)))
+#                 z3 = self.relu(self.Conv32(self.pad_3Kernel_3scale(z3)))
+#                 z3 = self.Upsample(z3)
+#                 # Downsample3 scale
+#                 z4 = self.relu(self.Conv41((self.pad_3Kernel_4scale(z4))))
+#                 z4 = self.relu(self.Conv42(( self.pad_3Kernel_4scale(z4))))
+#                 z4 = self.Upsample(z4)
+#                 # Sum all convolution output scales
+#                 z = z1+z2+z3+z4
+#                 #resblock 1
+#                 y = self.relu(z)
+#                 y = self.relu(self.Conv_Post1(self.pad_3Kernel_Res(z)))
+#                 y = self.Conv_Post2(self.pad_3Kernel_Res(y))
+#                 z = z + y   
+#                 z = self.relu(z)
+#                 z = self.relu(self.Conv4(z))
+#                 z = self.relu(self.Conv5(z))
+#                 z=self.ConvOut(z)
+#                 return z.squeeze(1) 
+
+
+
+#         # Forward function with 2 extra resblock at end
+#         if (DataSetSize >=Factor*2):
+#                 z = self.ConvInit1(self.pad_7Kernel(x2))
+#                 z1 =  self.relu(self.ConvInit2(self.pad_5Kernel(z)))
+#                 z2 =  self.AVG(z1)
+#                 z3 =  self.AVG(z2)
+#                 z4 =  self.AVG(z3)
+#                 # Full scale
+#                 z1 = self.relu(self.Conv11(self.pad_5Kernel(z1)))
+#                 z1 = self.relu(self.Conv12(self.pad_5Kernel(z1)))
+#                 # Downsample1 scale
+#                 z2 = self.relu(self.Conv21(self.pad_5Kernel(z2)))
+#                 z2 = self.relu(self.Conv22(self.pad_5Kernel(z2)))
+#                 z2 =  self.Upsample(z2)
+#                 # Downsample2 scale
+#                 z3 = self.relu(self.Conv31(self.pad_3Kernel_3scale(z3)))
+#                 z3 = self.relu(self.Conv32(self.pad_3Kernel_3scale(z3)))
+#                 z3 = self.Upsample(z3)
+#                 # Downsample3 scale
+#                 z4 = self.relu(self.Conv41(( self.pad_3Kernel_4scale(z4))))
+#                 z4 = self.relu(self.Conv42((z4)))
+#                 z4 = self.Upsample(z4)
+#                 # Sum all convolution output scales
+#                 z = z1+z2+z3+z4
+#                 #resblock 1
+#                 y = self.relu(z)
+#                 y = self.relu(self.Conv_Post1(self.pad_3Kernel_Res(z)))
+#                 y = self.Conv_Post2(self.pad_3Kernel_Res(y))
+#                 z = z + y   
+#                 z = self.relu(z)
+#                 #resblock 2
+#                 y = self.relu(z)
+#                 y = self.relu(self.Conv_Post3(self.pad_3Kernel_Res(z)))
+#                 y = self.Conv_Post4(self.pad_3Kernel_Res(y))
+#                 z = z + y    
+#                 z = self.relu(z)
+#                 z = self.relu(self.Conv4(z))
+#                 z = self.relu(self.Conv5(z))
+#                 z=self.ConvOut(z)
+#                 return z.squeeze(1) 
+
+#         # Forward function with 2 extra resblock at end
+#         if (DataSetSize >=Factor*3):
+#                 z = self.ConvInit1(self.pad_7Kernel(x2))
+#                 z1 =  self.relu(self.ConvInit2(self.pad_5Kernel(z)))
+#                 z2 =  self.AVG(z1)
+#                 z3 =  self.AVG(z2)
+#                 z4 =  self.AVG(z3)
+#                 # Full scale
+#                 z1 = self.relu(self.Conv11(self.pad_5Kernel(z1)))
+#                 z1 = self.relu(self.Conv12(self.pad_5Kernel(z1)))
+#                 # Downsample1 scale
+#                 z2 = self.relu(self.Conv21(self.pad_5Kernel(z2)))
+#                 z2 = self.relu(self.Conv22(self.pad_5Kernel(z2)))
+#                 z2 =  self.Upsample(z2)
+#                 # Downsample2 scale
+#                 z3 = self.relu(self.Conv31(self.pad_3Kernel_3scale(z3)))
+#                 z3 = self.relu(self.Conv32(self.pad_3Kernel_3scale(z3)))
+#                 z3 = self.Upsample(z3)
+#                 # Downsample3 scale
+#                 z4 = self.relu(self.Conv41(( self.pad_3Kernel_4scale(z4))))
+#                 z4 = self.relu(self.Conv42(( self.pad_3Kernel_4scale(z4))))
+#                 z4 = self.Upsample(z4)
+#                 # Sum all convolution output scales
+#                 z = z1+z2+z3+z4
+#                 #resblock 1
+#                 y = self.relu(z)
+#                 y = self.relu(self.Conv_Post1(self.pad_3Kernel_Res(z)))
+#                 y = self.Conv_Post2(self.pad_3Kernel_Res(y))
+#                 z = z + y   
+#                 z = self.relu(z)
+#                 #resblock 2
+#                 y = self.relu(z)
+#                 y = self.relu(self.Conv_Post3(self.pad_3Kernel_Res(z)))
+#                 y = self.Conv_Post4(self.pad_3Kernel_Res(y))
+#                 z = z + y 
+#                 #resblock 3
+#                 y = self.relu(z)
+#                 y = self.relu(self.Conv_Post5(self.pad_3Kernel_Res(z)))
+#                 y = self.Conv_Post6(self.pad_3Kernel_Res(y))
+#                 z = z + y      
+#                 z = self.relu(z)
+#                 z = self.relu(self.Conv4(z))
+#                 z = self.relu(self.Conv5(z))
+#                 z=self.ConvOut(z)
+#                 return z.squeeze(1) 
+
+#         # Forward function with 2 extra resblock at end
+#         if (DataSetSize >=Factor*4):
+#                 z = self.ConvInit1(self.pad_7Kernel(x2))
+#                 z1 =  self.relu(self.ConvInit2(self.pad_5Kernel(z)))
+#                 z2 =  self.AVG(z1)
+#                 z3 =  self.AVG(z2)
+#                 z4 =  self.AVG(z3)
+#                 # Full scale
+#                 z1 = self.relu(self.Conv11(self.pad_5Kernel(z1)))
+#                 z1 = self.relu(self.Conv12(self.pad_5Kernel(z1)))
+#                 # Downsample1 scale
+#                 z2 = self.relu(self.Conv21(self.pad_5Kernel(z2)))
+#                 z2 = self.relu(self.Conv22(self.pad_5Kernel(z2)))
+#                 z2 =  self.Upsample(z2)
+#                 # Downsample2 scale
+#                 z3 = self.relu(self.Conv31(self.pad_3Kernel_3scale(z3)))
+#                 z3 = self.relu(self.Conv32(self.pad_3Kernel_3scale(z3)))
+#                 z3 = self.Upsample(z3)
+#                 # Downsample3 scale
+#                 z4 = self.relu(self.Conv41(( self.pad_3Kernel_4scale(z4))))
+#                 z4 = self.relu(self.Conv42(( self.pad_3Kernel_4scale(z4))))
+#                 z4 = self.Upsample(z4)
+#                 # Sum all convolution output scales
+#                 z = z1+z2+z3+z4
+#                 #resblock 1
+#                 y = self.relu(z)
+#                 y = self.relu(self.Conv_Post1(self.pad_3Kernel_Res(z)))
+#                 y = self.Conv_Post2(self.pad_3Kernel_Res(y))
+#                 z = z + y   
+#                 z = self.relu(z)
+#                 #resblock 2
+#                 y = self.relu(z)
+#                 y = self.relu(self.Conv_Post3(self.pad_3Kernel_Res(z)))
+#                 y = self.Conv_Post4(self.pad_3Kernel_Res(y))
+#                 z = z + y 
+#                 #resblock 3
+#                 y = self.relu(z)
+#                 y = self.relu(self.Conv_Post5(self.pad_3Kernel_Res(z)))
+#                 y = self.Conv_Post6(self.pad_3Kernel_Res(y))
+#                 z = z + y     
+#                 #resblock 4
+#                 y = self.relu(z)
+#                 y = self.relu(self.Conv_Post7(self.pad_3Kernel_Res(z)))
+#                 y = self.Conv_Post8(self.pad_3Kernel_Res(y))
+#                 z = z + y      
+#                 z = self.relu(z)
+#                 z = self.relu(self.Conv4(z))
+#                 z = self.relu(self.Conv5(z))
+#                 z=self.ConvOut(z)
+#                 return z.squeeze(1) 
+
+
+
+
+################################################################################################################################################
+################################################################################################################################################
+################################################################################################################################################
+## Unused network architecture code snipets
 
 
 
@@ -530,10 +684,74 @@ class CnnOnline_2D(torch.nn.Module):
 ########################################################################
 #__________________________________________________________________
 
-# Resnet forward function
+# Resnet
 #__________________________________________________________________
 ########################################################################
 ########################################################################
+########################################################################
+## RESNET
+
+        # # 10 dim resolution
+        # self.pad3   = torch.nn.ReflectionPad2d(3)
+        # self.pad2   = torch.nn.ReflectionPad2d(2)
+        # self.pad1   = torch.nn.ReflectionPad2d(1)
+
+
+
+        # self.Conv1  = torch.nn.Conv2d(in_channels=1, out_channels=32, kernel_size=7,bias=False)
+
+        # self.Conv2  = torch.nn.Conv2d(in_channels=32, out_channels=16, kernel_size=5,bias=False)
+        # self.Conv3  = torch.nn.Conv2d(in_channels=16, out_channels=16, kernel_size=5,bias=False)
+
+        # self.Conv4  = torch.nn.Conv2d(in_channels=16, out_channels=8, kernel_size=3,bias=False)
+        # self.Conv5  = torch.nn.Conv2d(in_channels=8, out_channels=8, kernel_size=3,bias=False)
+
+
+        # self.Conv6  = torch.nn.Conv2d(in_channels=8, out_channels=8, kernel_size=3,bias=False)
+        # self.Conv7  = torch.nn.Conv2d(in_channels=8, out_channels=8, kernel_size=3,bias=False)
+
+        # self.Conv8  = torch.nn.Conv2d(in_channels=8, out_channels=8, kernel_size=3,bias=False)
+        # self.Conv9  = torch.nn.Conv2d(in_channels=8, out_channels=8, kernel_size=3,bias=False)
+
+        # self.Conv10  = torch.nn.Conv2d(in_channels=8, out_channels=1, kernel_size=1)
+
+
+        # self.ConvSkip1 = torch.nn.Conv2d(in_channels=32, out_channels=16, kernel_size=1,bias=False)
+        # self.ConvSkip2 = torch.nn.Conv2d(in_channels=16, out_channels=8, kernel_size=1,bias=False)
+
+        # self.relu   = torch.nn.LeakyReLU()
+
+        ##_____________________________________________________________________________________________
+
+
+        # 20 dim resolution
+        # self.pad3   = torch.nn.ReflectionPad2d(6)
+        # self.pad2   = torch.nn.ReflectionPad2d(4)
+        # self.pad1   = torch.nn.ReflectionPad2d(2)
+
+        # self.Conv1  = torch.nn.Conv2d(in_channels=1, out_channels=32, kernel_size=7,bias=False,dilation=2)
+
+        # self.Conv2  = torch.nn.Conv2d(in_channels=32, out_channels=16, kernel_size=5,bias=False,dilation=2)
+        # self.Conv3  = torch.nn.Conv2d(in_channels=16, out_channels=16, kernel_size=5,bias=False,dilation=2)
+
+        # self.Conv4  = torch.nn.Conv2d(in_channels=16, out_channels=8, kernel_size=3,bias=False,dilation=2)
+        # self.Conv5  = torch.nn.Conv2d(in_channels=8, out_channels=8, kernel_size=3,bias=False,dilation=2)
+
+
+        # self.Conv6  = torch.nn.Conv2d(in_channels=8, out_channels=8, kernel_size=3,bias=False,dilation=2)
+        # self.Conv7  = torch.nn.Conv2d(in_channels=8, out_channels=8, kernel_size=3,bias=False,dilation=2)
+
+        # self.Conv8  = torch.nn.Conv2d(in_channels=8, out_channels=8, kernel_size=3,bias=False,dilation=2)
+        # self.Conv9  = torch.nn.Conv2d(in_channels=8, out_channels=8, kernel_size=3,bias=False,dilation=2)
+
+        # self.Conv10  = torch.nn.Conv2d(in_channels=8, out_channels=1, kernel_size=1)
+
+
+        # self.ConvSkip1 = torch.nn.Conv2d(in_channels=32, out_channels=16, kernel_size=1,bias=False)
+        # self.ConvSkip2 = torch.nn.Conv2d(in_channels=16, out_channels=8, kernel_size=1,bias=False)
+
+        # self.relu   = torch.nn.LeakyReLU()
+
 
 
 #__________________________________________________________________
@@ -595,6 +813,42 @@ class CnnOnline_2D(torch.nn.Module):
 #__________________________________________________________________
 ########################################################################
 ########################################################################
+## ALL CNN
+# #         10x10 , and 15x15 dim input
+#         self.Conv1   = torch.nn.Conv2d(1,16,(9,9), stride=1, padding=(4,4), dilation=1, groups=1, bias=False, padding_mode='replicate')#even dim
+#         self.Conv2   = torch.nn.Conv2d(16,16,(7,7),stride=1, padding=(3,3), dilation=1, groups=1, bias=False, padding_mode='replicate')#even dim
+#         self.Conv3   = torch.nn.Conv2d(16,8,(5,5),stride=1, padding=(2,2), dilation=1, groups=1, bias=False, padding_mode='replicate')#even dim
+#         self.Conv4   = torch.nn.Conv2d(8,4,(3,3),stride=1, padding=(1,1), dilation=1, groups=1, bias=False, padding_mode='replicate')#even dim
+#         self.Conv5   = torch.nn.Conv2d(4,2,(3,3), stride=1, padding=(1,1), dilation=1, groups=1, bias=False, padding_mode='replicate')#even dim
+#         self.Conv51   = torch.nn.Conv2d(2,2,(3,3), stride=1, padding=(1,1), dilation=1, groups=1, bias=False, padding_mode='replicate')#even dim
+#         self.Conv52   = torch.nn.Conv2d(2,2,(3,3), stride=1, padding=(1,1), dilation=1, groups=1, bias=False, padding_mode='replicate')#even dim
+#         self.Conv53   = torch.nn.Conv2d(2,2,(3,3), stride=1, padding=(1,1), dilation=1, groups=1, bias=False, padding_mode='replicate')#even dim
+#         self.Conv54   = torch.nn.Conv2d(2,2,(3,3), stride=1, padding=(1,1), dilation=1, groups=1, bias=False, padding_mode='replicate')#even dim
+#         self.Conv6   = torch.nn.Conv2d(2,1,(1,1), stride=1, padding=(0,0), dilation=1, groups=1, bias=False, padding_mode='replicate')#even dim
+
+        
+# #         #20x20 and 25x25 dim input
+#         # self.Conv1   = torch.nn.Conv2d(1,16,(9,9), stride=1, padding=(8,8), dilation=2, groups=1, bias=True, padding_mode='reflect')#even dim
+#         # self.Conv2   = torch.nn.Conv2d(16,16,(7,7),stride=1, padding=(6,6), dilation=2, groups=1, bias=True, padding_mode='reflect')#even dim
+#         # self.Conv3   = torch.nn.Conv2d(16,8,(5,5),stride=1, padding=(4,4), dilation=2, groups=1, bias=True, padding_mode='reflect')#even dim
+#         # self.Conv4   = torch.nn.Conv2d(8,4,(3,3),stride=1, padding=(1,1), dilation=1, groups=1, bias=True, padding_mode='reflect')#even dim
+#         # self.Conv5   = torch.nn.Conv2d(4,2,(3,3), stride=1, padding=(1,1), dilation=1, groups=1, bias=True, padding_mode='reflect')#even dim
+#         # self.Conv6   = torch.nn.Conv2d(2,1,(1,1), stride=1, padding=(0,0), dilation=1, groups=1, bias=True, padding_mode='reflect')#even dim
+
+#         #  30x30 dim input
+# #         self.Conv1   = torch.nn.Conv2d(1,16,(9,9), stride=1, padding=(16,16), dilation=4, groups=1, bias=True, padding_mode='reflect')#even dim
+# #         self.Conv2   = torch.nn.Conv2d(16,16,(7,7),stride=1, padding=(12,12), dilation=4, groups=1, bias=True, padding_mode='reflect')#even dim
+# #         self.Conv3   = torch.nn.Conv2d(16,8,(5,5),stride=1, padding=(8,8), dilation=4, groups=1, bias=True, padding_mode='reflect')#even dim
+# #         self.Conv4   = torch.nn.Conv2d(8,4,(3,3),stride=1, padding=(3,3), dilation=3, groups=1, bias=True, padding_mode='reflect')#even dim
+# #         self.Conv5   = torch.nn.Conv2d(4,2,(3,3), stride=1, padding=(3,3), dilation=3, groups=1, bias=True, padding_mode='reflect')#even dim
+# #         self.Conv6   = torch.nn.Conv2d(2,1,(1,1), stride=1, padding=(0,0), dilation=1, groups=1, bias=True, padding_mode='reflect')#even dim
+
+#         self.relu   = torch.nn.LeakyReLU()
+
+#         self.BN1    = torch.nn.BatchNorm2d(16)
+#         self.BN2    = torch.nn.BatchNorm2d(16)
+#         self.BN3    = torch.nn.BatchNorm2d(8)
+
 
 ###___________________________________________________________________
 #     def forward(self, x,DataSetSize):
