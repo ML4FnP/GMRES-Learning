@@ -20,6 +20,7 @@ class CnnOnline_2D(torch.nn.Module):
         as member variables.
         """
         super(CnnOnline_2D, self).__init__()
+        device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
 ########################################################################3
 ## FLUID NET
@@ -104,7 +105,7 @@ class CnnOnline_2D(torch.nn.Module):
                         [0.5, -3., 0.5],
                         [0.25,  0.5, 0.25]])
         self.Aweights = self.Aweights.view(1,1,3 ,3)
-        self.Aweights= self.Aweights.to("cuda:0")
+        self.Aweights= self.Aweights.to(device)
         
 
   
@@ -112,7 +113,7 @@ class CnnOnline_2D(torch.nn.Module):
                         [2., 4., 2.],
                         [1.,  2., 1.]])
         self.Blur = self.Blur.view(1,1,3 ,3)
-        self.Blur= self.Blur.to("cuda:0")
+        self.Blur= self.Blur.to(device)
 ##____________________________________________________________________
         # 30-39 dim resolution
         # self.pad_7Kernel   = torch.nn.ZeroPad2d(9)
