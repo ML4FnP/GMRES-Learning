@@ -224,13 +224,13 @@ def cnn_preconditionerOnline_timed_2D(nmax_iter,restart,Area,dx,retrain_freq=1,d
             if func.predictor.is_trained:
                 pred_x0 = func.predictor.predict(b/b_norm/b_Norm_max)
                 pred_x0 = pred_x0*b_norm*b_Norm_max
-                target_test=GMRES(A, b, x0, e, 6,1, True)
-                IterErr_test = resid(A, target_test, b)
-                print('size',len(IterErr_test))
-                print(IterErr_test[5],max(Err_list))
-                if (IterErr_test[5]>1.75*max(Err_list)): 
-                    print('poor prediction,using initial x0')
-                    pred_x0 = x0
+                # target_test=GMRES(A, b, x0, e, 6,1, True)
+                # IterErr_test = resid(A, target_test, b)
+                # print('size',len(IterErr_test))
+                # print(IterErr_test[5],max(Err_list))
+                # if (IterErr_test[5]>1.75*max(Err_list)): 
+                #     print('poor prediction,using initial x0')
+                # pred_x0 = x0
             else:
                 pred_x0 = x0
 
@@ -247,7 +247,7 @@ def cnn_preconditionerOnline_timed_2D(nmax_iter,restart,Area,dx,retrain_freq=1,d
             IterErr = resid(A, target, b)
             IterErrList.append(IterErr)
             IterTime=(toc-tic)
-            IterErr10=IterErr[5]
+            IterErr10=IterErr[22]
             ML_GMRES_Time_list.append(IterTime)
             Err_list.append(IterErr10)  
 

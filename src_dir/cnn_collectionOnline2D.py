@@ -67,8 +67,8 @@ class CnnOnline_2D(torch.nn.Module):
         self.Upsample = torch.nn.Upsample(mode='bilinear',size=(D_in,D_in))
 
 
-        self.ConvInit1  = torch.nn.Conv2d(in_channels=1, out_channels=2, kernel_size=7,dilation=2,bias=False)
-        self.ConvInit2  = torch.nn.Conv2d(in_channels=2, out_channels=8, kernel_size=5,dilation=2,bias=False)
+        self.ConvInit1  = torch.nn.Conv2d(in_channels=3, out_channels=4, kernel_size=7,dilation=2,bias=False)
+        self.ConvInit2  = torch.nn.Conv2d(in_channels=4, out_channels=8, kernel_size=5,dilation=2,bias=False)
 
         self.Conv11  = torch.nn.Conv2d(in_channels=8, out_channels=8, kernel_size=5,dilation=2,bias=False)
         self.Conv12  = torch.nn.Conv2d(in_channels=8, out_channels=8, kernel_size=5,dilation=2,bias=False)
@@ -96,6 +96,23 @@ class CnnOnline_2D(torch.nn.Module):
 
 
         self.relu   = torch.nn.LeakyReLU()
+
+
+        self.FDpad=torch.nn.ZeroPad2d(1)
+
+        self.Aweights = torch.tensor([[0.25, 0.5, 0.25],
+                        [0.5, -3., 0.5],
+                        [0.25,  0.5, 0.25]])
+        self.Aweights = self.Aweights.view(1,1,3 ,3)
+        self.Aweights= self.Aweights.to("cuda:0")
+        
+
+  
+        self.Blur = (1/16)*torch.tensor([[1., 2., 1.],
+                        [2., 4., 2.],
+                        [1.,  2., 1.]])
+        self.Blur = self.Blur.view(1,1,3 ,3)
+        self.Blur= self.Blur.to("cuda:0")
 ##____________________________________________________________________
         # 30-39 dim resolution
         # self.pad_7Kernel   = torch.nn.ZeroPad2d(9)
@@ -253,6 +270,11 @@ class CnnOnline_2D(torch.nn.Module):
         x2=x.unsqueeze(1)  # Add channel dimension (C) to input
         Current_batchsize=int(x.shape[0])  # N in pytorch docs
 
+
+        x3=torch.nn.functional.conv2d(self.FDpad(x2), self.Blur, bias=None, stride=1)
+        x4=torch.nn.functional.conv2d(self.FDpad(x2), self.Aweights, bias=None, stride=1)
+        x2=torch.cat((x2,x3),1)
+        x2=torch.cat((x2,x4),1)
 
         if (DataSetSize < Factor*1):
                 z = self.ConvInit1(self.pad_7Kernel(x2))
