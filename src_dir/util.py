@@ -112,7 +112,7 @@ class StatusPrinter(object, metaclass=Singleton):
 
     def __str__(self):
         return (
-            f"iter={self._iter:<5} "
+            f"iter={self._iter} "
             f"speedup={self._speedup:0.4f} "
             f"loss={self._loss:0.4e} "
             f"parameters={self._num_p} "
