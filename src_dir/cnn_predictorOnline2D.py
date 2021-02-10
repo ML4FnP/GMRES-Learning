@@ -20,6 +20,8 @@ from src_dir.cnn_collectionOnline2D import CnnOnline_2D
 
 from src_dir import resid,timer,moving_average,GMRES
 
+from src_dir import StatusPrinter
+
 class CNNPredictorOnline_2D(object):
 
     def __init__(self,D_in,D_out,Area,dx):
@@ -72,6 +74,7 @@ class CNNPredictorOnline_2D(object):
 
         # Diagnostic data => remove in production
         self.loss_val = list()
+        
 
     @property
     def is_trained(self):
@@ -125,11 +128,12 @@ class CNNPredictorOnline_2D(object):
                 loss = (self.criterion(y_pred, batch_y))
                 self.loss_val.append(loss.item())
 
-                ## Print loss to console
-                print("****************")
-                print('Total Loss:',loss.item())
-                print("****************")
-
+                # ## Print loss to console
+                # print("****************")
+                # print('Total Loss:',loss.item())
+                # print("****************")
+                StatusPrinter().update_training(loss.item())
+                
                 ## Zero gradients, perform a backward pass, and update the weights.
                 self.optimizer.zero_grad()
                 loss.backward()
@@ -154,11 +158,12 @@ class CNNPredictorOnline_2D(object):
         loss = (self.criterion(y_pred, batch_yMix))
         self.loss_val.append(loss.item())
 
-        ## Print loss to console
-        print("****************")
-        print('Final Total Loss:',loss.item())
-        print("****************")
-
+        # ## Print loss to console
+        # print("****************")
+        # print('Final Total Loss:',loss.item())
+        # print("****************")
+        StatusPrinter().update_training(loss.item())
+        
         # Zero gradients, perform a backward pass, and update the weights.
         self.optimizer.zero_grad()
         loss.backward()
@@ -170,9 +175,10 @@ class CNNPredictorOnline_2D(object):
 
         ## Print number of parameters to console
         numparams=sum(p.numel() for p in self.model.parameters() if p.requires_grad)
-        print('Number of parameters:',numparams)
-        print('Number of data points collected:',self.x.size(0))
-
+        # print('Number of parameters:',numparams)
+        # print('Number of data points collected:',self.x.size(0))
+        StatusPrinter().update_training_summary(numparams, self.x.size(0))
+        
         self.is_trained = True
 
 
@@ -260,13 +266,13 @@ def cnn_preconditionerOnline_timed_2D(nmax_iter,restart,Area,dx,retrain_freq=1,d
                 func.predictor.add_init(b,res)
             if ProbCount==Initial_set:
                 timeLoop=func.predictor.retrain_timed()
-                print('Initial Training')
+                # print('Initial Training')
 
             ## Compute moving averages used to filter data
             if ProbCount>Initial_set:
                 IterTime_AVG=moving_average(np.asarray(ML_GMRES_Time_list),ProbCount)
                 IterErr10_AVG=moving_average(np.asarray(Err_list),ProbCount)
-                print(ML_GMRES_Time_list[-1],IterTime_AVG,Err_list[-1],IterErr10_AVG)
+                # print(ML_GMRES_Time_list[-1],IterTime_AVG,Err_list[-1],IterErr10_AVG)
 
 
             ## Filter for data to be added to training set
@@ -286,7 +292,7 @@ def cnn_preconditionerOnline_timed_2D(nmax_iter,restart,Area,dx,retrain_freq=1,d
                         row_sums = resMat_square.sum(axis=1,keepdims=True)
                         resMat= resMat/np.sqrt(row_sums)
                         InnerProd=np.dot(resMat,resMat.T)
-                        print('InnerProd',InnerProd)
+                        # print('InnerProd',InnerProd)
 
                         func.predictor.add(np.asarray(blist)[0], np.asarray(reslist)[0])
 
@@ -310,9 +316,9 @@ def cnn_preconditionerOnline_timed_2D(nmax_iter,restart,Area,dx,retrain_freq=1,d
 
                         ## Train if enough data has been collected
                         if func.predictor.counter>=retrain_freq:
-                            if func.debug:
-                                print("retraining")
-                                print(func.predictor.counter)
+                            # if func.debug:
+                            #     print("retraining")
+                            #     print(func.predictor.counter)
                             timeLoop=func.predictor.retrain_timed()
                             trainTime=float(timeLoop[-1])
                             blist=[]
