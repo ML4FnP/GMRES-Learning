@@ -9,267 +9,218 @@ from torch.nn       import Linear, ReLU, CrossEntropyLoss, \
                            Module, Softmax, BatchNorm2d, Dropout
 from torch.optim    import Adam, SGD
 
+#TODO: is the import needed
 import torch.nn.init as I
 
 
-class CnnOnline_2D(torch.nn.Module):
+
+class FluidNet2D10(torch.nn.Module):
+
 
     def __init__(self, D_in, D_out):
         """
-        In the constructor we instantiate two nn.Conv1d modules and assign them
-        as member variables.
+        FluidNet 2D optimized fro a 10-19 dim resolution.
         """
-        super(CnnOnline_2D, self).__init__()
+
+        super().__init__()
+        #TODO: make compatible with multiple devices
+        #TODO: this should be class member
         device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
-########################################################################3
-## FLUID NET
-
-        # # 10-19 dim resolution
-        # self.pad_7Kernel   = torch.nn.ZeroPad2d(3)
-        # self.pad_5Kernel   = torch.nn.ZeroPad2d(2)
-        # self.pad_3Kernel   = torch.nn.ZeroPad2d(1)
-
-        # self.AVG = torch.nn.AvgPool2d(2, stride=2)
-        # self.Upsample = torch.nn.Upsample(mode='bilinear',size=(D_in,D_in))
-
-        # self.ConvInit1  = torch.nn.Conv2d(in_channels=1, out_channels=2, kernel_size=7,bias=False)
-        # self.ConvInit2  = torch.nn.Conv2d(in_channels=2, out_channels=4, kernel_size=5,bias=False)
-
-        # self.Conv11  = torch.nn.Conv2d(in_channels=4, out_channels=4, kernel_size=5,bias=False)
-        # self.Conv12  = torch.nn.Conv2d(in_channels=4, out_channels=4, kernel_size=5,bias=False)
-        # self.Conv21  = torch.nn.Conv2d(in_channels=4, out_channels=4, kernel_size=3,bias=False)
-        # self.Conv22  = torch.nn.Conv2d(in_channels=4, out_channels=4, kernel_size=3,bias=False)
-        # self.Conv31  = torch.nn.Conv2d(in_channels=4, out_channels=4, kernel_size=1,bias=False)
-        # self.Conv32  = torch.nn.Conv2d(in_channels=4, out_channels=4, kernel_size=1,bias=False)
-
-        # self.Conv_Post1 = torch.nn.Conv2d(in_channels=4, out_channels=4, kernel_size=3,bias=False)
-        # self.Conv_Post2 = torch.nn.Conv2d(in_channels=4, out_channels=4, kernel_size=3,bias=False)
-        # self.Conv_Post3 = torch.nn.Conv2d(in_channels=4, out_channels=4, kernel_size=3,bias=False)
-        # self.Conv_Post4 = torch.nn.Conv2d(in_channels=4, out_channels=4, kernel_size=3,bias=False)
-
-        # self.Conv4 =torch.nn.Conv2d(in_channels=4, out_channels=4, kernel_size=1,bias=False)
-        # self.Conv5 =torch.nn.Conv2d(in_channels=4, out_channels=1, kernel_size=1,bias=False)
-
-        # self.ConvOut =torch.nn.Conv2d(in_channels=1, out_channels=1, kernel_size=1,bias=False)
-
-
-        # self.relu   = torch.nn.LeakyReLU()
-
-
-##____________________________________________________________________
-        # # 20-29 dim resolution
-        self.pad_7Kernel   = torch.nn.ZeroPad2d(6)
-        self.pad_5Kernel   = torch.nn.ZeroPad2d(4)
-        self.pad_3Kernel   = torch.nn.ZeroPad2d(1)
-        self.pad_3Kernel_Dilated   = torch.nn.ZeroPad2d(2)
+        self.pad_7Kernel = torch.nn.ZeroPad2d(3)
+        self.pad_5Kernel = torch.nn.ZeroPad2d(2)
+        self.pad_3Kernel = torch.nn.ZeroPad2d(1)
 
         self.AVG = torch.nn.AvgPool2d(2, stride=2)
-        self.Upsample = torch.nn.Upsample(mode='bilinear',size=(D_in,D_in))
+        self.Upsample = torch.nn.Upsample(mode='bilinear', size=(D_in, D_in))
 
+        self.ConvInit1 = torch.nn.Conv2d(in_channels=1, out_channels=2, kernel_size=7, bias=False)
+        self.ConvInit2 = torch.nn.Conv2d(in_channels=2, out_channels=4, kernel_size=5, bias=False)
 
-        self.ConvInit1  = torch.nn.Conv2d(in_channels=3, out_channels=4, kernel_size=7,dilation=2,bias=False)
-        self.ConvInit2  = torch.nn.Conv2d(in_channels=4, out_channels=8, kernel_size=5,dilation=2,bias=False)
+        self.Conv11 = torch.nn.Conv2d(in_channels=4, out_channels=4, kernel_size=5, bias=False)
+        self.Conv12 = torch.nn.Conv2d(in_channels=4, out_channels=4, kernel_size=5, bias=False)
+        self.Conv21 = torch.nn.Conv2d(in_channels=4, out_channels=4, kernel_size=3, bias=False)
+        self.Conv22 = torch.nn.Conv2d(in_channels=4, out_channels=4, kernel_size=3, bias=False)
+        self.Conv31 = torch.nn.Conv2d(in_channels=4, out_channels=4, kernel_size=1, bias=False)
+        self.Conv32 = torch.nn.Conv2d(in_channels=4, out_channels=4, kernel_size=1, bias=False)
 
-        self.Conv11  = torch.nn.Conv2d(in_channels=8, out_channels=8, kernel_size=5,dilation=2,bias=False)
-        self.Conv12  = torch.nn.Conv2d(in_channels=8, out_channels=8, kernel_size=5,dilation=2,bias=False)
-        self.Conv21  = torch.nn.Conv2d(in_channels=8, out_channels=8, kernel_size=5,dilation=2,bias=False)
-        self.Conv22  = torch.nn.Conv2d(in_channels=8, out_channels=8, kernel_size=5,dilation=2,bias=False)
-        self.Conv31  = torch.nn.Conv2d(in_channels=8, out_channels=8, kernel_size=3,bias=False)
-        self.Conv32  = torch.nn.Conv2d(in_channels=8, out_channels=8, kernel_size=3,bias=False)
-        self.Conv41  = torch.nn.Conv2d(in_channels=8, out_channels=8, kernel_size=1,bias=False)
-        self.Conv42  = torch.nn.Conv2d(in_channels=8, out_channels=8, kernel_size=1,bias=False)
+        self.Conv_Post1 = torch.nn.Conv2d(in_channels=4, out_channels=4, kernel_size=3, bias=False)
+        self.Conv_Post2 = torch.nn.Conv2d(in_channels=4, out_channels=4, kernel_size=3, bias=False)
+        self.Conv_Post3 = torch.nn.Conv2d(in_channels=4, out_channels=4, kernel_size=3, bias=False)
+        self.Conv_Post4 = torch.nn.Conv2d(in_channels=4, out_channels=4, kernel_size=3, bias=False)
 
-        self.Conv_Post1 = torch.nn.Conv2d(in_channels=8, out_channels=8, kernel_size=3,dilation=2,bias=False)
-        self.Conv_Post2 = torch.nn.Conv2d(in_channels=8, out_channels=8, kernel_size=3,dilation=2,bias=False)
-        self.Conv_Post3 = torch.nn.Conv2d(in_channels=8, out_channels=8, kernel_size=3,dilation=2,bias=False)
-        self.Conv_Post4 = torch.nn.Conv2d(in_channels=8, out_channels=8, kernel_size=3,dilation=2,bias=False)
-        self.Conv_Post5 = torch.nn.Conv2d(in_channels=8, out_channels=8, kernel_size=3,dilation=2,bias=False)
-        self.Conv_Post6 = torch.nn.Conv2d(in_channels=8, out_channels=8, kernel_size=3,dilation=2,bias=False)
-        self.Conv_Post7 = torch.nn.Conv2d(in_channels=8, out_channels=8, kernel_size=3,dilation=2,bias=False)
-        self.Conv_Post8 = torch.nn.Conv2d(in_channels=8, out_channels=8, kernel_size=3,dilation=2,bias=False)
+        self.Conv4 = torch.nn.Conv2d(in_channels=4, out_channels=4, kernel_size=1, bias=False)
+        self.Conv5 = torch.nn.Conv2d(in_channels=4, out_channels=1, kernel_size=1, bias=False)
 
-
-        self.Conv4 =torch.nn.Conv2d(in_channels=8, out_channels=8, kernel_size=1,bias=False)
-        self.Conv5 =torch.nn.Conv2d(in_channels=8, out_channels=1, kernel_size=1,bias=False)
-
-        self.ConvOut =torch.nn.Conv2d(in_channels=1, out_channels=1, kernel_size=1,bias=False)
-
+        self.ConvOut = torch.nn.Conv2d(in_channels=1, out_channels=1, kernel_size=1,bias=False)
 
         self.relu   = torch.nn.LeakyReLU()
 
 
-        self.FDpad=torch.nn.ZeroPad2d(1)
+    def forward(self, x,DataSetSize,Factor):
+        x2=x.unsqueeze(1)  # Add channel dimension (C) to input
+        Current_batchsize=int(x.shape[0])  # N in pytorch docs
+
+        if (DataSetSize < Factor*1):
+            z = self.ConvInit1(self.pad_7Kernel(x2))
+            z1 = self.relu(self.ConvInit2(self.pad_5Kernel(z)))
+            z2 = self.AVG(z1)
+            z3 = self.AVG(z2)
+            # Full scale
+            z1 = self.relu(self.Conv11(self.pad_5Kernel(z1)))
+            z1 = self.relu(self.Conv12(self.pad_5Kernel(z1)))
+            # Downsample1 scale
+            z2 = self.relu(self.Conv21(self.pad_3Kernel(z2)))
+            z2 = self.relu(self.Conv22(self.pad_3Kernel(z2)))
+            z2 = self.Upsample(z2)
+            # Downsample2 scale
+            z3 = self.relu(self.Conv31(z3))
+            z3 = self.relu(self.Conv32(z3))
+            z3 = self.Upsample(z3)
+            # Sum all convolution output scales
+            z = z1 + z2 + z3
+            z = self.relu(self.Conv4(z))
+            z = self.relu(self.Conv5(z))
+            z = self.ConvOut(z)
+            return z.squeeze(1)
+
+        # Forward function with 1 extra resblock at end
+        if (DataSetSize >= Factor*1):
+            z = self.ConvInit1(self.pad_7Kernel(x2))
+            z1 = self.relu(self.ConvInit2(self.pad_5Kernel(z)))
+            z2 = self.AVG(z1)
+            z3 = self.AVG(z2)
+            # Full scale
+            z1 = self.relu(self.Conv11(self.pad_5Kernel(z1)))
+            z1 = self.relu(self.Conv12(self.pad_5Kernel(z1)))
+            # Downsample1 scale
+            z2 = self.relu(self.Conv21(self.pad_3Kernel(z2)))
+            z2 = self.relu(self.Conv22(self.pad_3Kernel(z2)))
+            z2 = self.Upsample(z2)
+            # Downsample2 scale
+            z3 = self.relu(self.Conv31(z3))
+            z3 = self.relu(self.Conv32(z3))
+            z3 = self.Upsample(z3)
+            # Sum all convolution output scales
+            z = z1 + z2 + z3
+            #resblock 1
+            y = self.relu(z)
+            y = self.relu(self.Conv_Post1(self.pad_3Kernel(z)))
+            y = self.Conv_Post2(self.pad_3Kernel(y))
+            z = z + y
+            z = self.relu(z)
+            z = self.relu(self.Conv4(z))
+            z = self.relu(self.Conv5(z))
+            z = self.ConvOut(z)
+            return z.squeeze(1)
+
+        # Forward function with 2 extra resblock at end
+        if (DataSetSize >= Factor*2):
+            z = self.ConvInit1(self.pad_7Kernel(x2))
+            z1 = self.relu(self.ConvInit2(self.pad_5Kernel(z)))
+            z2 = self.AVG(z1)
+            z3 = self.AVG(z2)
+            # Full scale
+            z1 = self.relu(self.Conv11(self.pad_5Kernel(z1)))
+            z1 = self.relu(self.Conv12(self.pad_5Kernel(z1)))
+            # Downsample1 scale
+            z2 = self.relu(self.Conv21(self.pad_3Kernel(z2)))
+            z2 = self.relu(self.Conv22(self.pad_3Kernel(z2)))
+            z2 = self.Upsample(z2)
+            # Downsample2 scale
+            z3 = self.relu(self.Conv31(z3))
+            z3 = self.relu(self.Conv32(z3))
+            z3 = self.Upsample(z3)
+            # Sum all convolution output scales
+            z = z1 + z2 + z3
+            #resblock 1
+            y = self.relu(z)
+            y = self.relu(self.Conv_Post1(self.pad_3Kernel(z)))
+            y = self.Conv_Post2(self.pad_3Kernel(y))
+            z = z + y
+            z = self.relu(z)
+            #resblock 2
+            y = self.relu(z)
+            y = self.relu(self.Conv_Post3(self.pad_3Kernel(z)))
+            y = self.Conv_Post4(self.pad_3Kernel(y))
+            z = z + y
+            z = self.relu(z)
+            z = self.relu(self.Conv4(z))
+            z = self.relu(self.Conv5(z))
+            z = self.ConvOut(z)
+            return z.squeeze(1)
+
+
+
+class FluidNet2D20(torch.nn.Module):
+
+
+    def __init__(self, D_in, D_out):
+        """
+        FluidNet 2D optimized for a 20-29 dim resolution.
+        """
+
+        super().__init__()
+        #TODO: make compatible with multiple devices
+        #TODO: this should be class member
+        device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+
+        self.pad_7Kernel = torch.nn.ZeroPad2d(6)
+        self.pad_5Kernel = torch.nn.ZeroPad2d(4)
+        self.pad_3Kernel = torch.nn.ZeroPad2d(1)
+        self.pad_3Kernel_Dilated = torch.nn.ZeroPad2d(2)
+
+        self.AVG = torch.nn.AvgPool2d(2, stride=2)
+        self.Upsample = torch.nn.Upsample(mode='bilinear', size=(D_in, D_in))
+
+        self.ConvInit1 = torch.nn.Conv2d(in_channels=3, out_channels=4, kernel_size=7, dilation=2, bias=False)
+        self.ConvInit2 = torch.nn.Conv2d(in_channels=4, out_channels=8, kernel_size=5, dilation=2, bias=False)
+
+        self.Conv11 = torch.nn.Conv2d(in_channels=8, out_channels=8, kernel_size=5, dilation=2, bias=False)
+        self.Conv12 = torch.nn.Conv2d(in_channels=8, out_channels=8, kernel_size=5, dilation=2, bias=False)
+        self.Conv21 = torch.nn.Conv2d(in_channels=8, out_channels=8, kernel_size=5, dilation=2, bias=False)
+        self.Conv22 = torch.nn.Conv2d(in_channels=8, out_channels=8, kernel_size=5, dilation=2, bias=False)
+        self.Conv31 = torch.nn.Conv2d(in_channels=8, out_channels=8, kernel_size=3, bias=False)
+        self.Conv32 = torch.nn.Conv2d(in_channels=8, out_channels=8, kernel_size=3, bias=False)
+        self.Conv41 = torch.nn.Conv2d(in_channels=8, out_channels=8, kernel_size=1, bias=False)
+        self.Conv42 = torch.nn.Conv2d(in_channels=8, out_channels=8, kernel_size=1, bias=False)
+
+        self.Conv_Post1 = torch.nn.Conv2d(in_channels=8, out_channels=8, kernel_size=3, dilation=2, bias=False)
+        self.Conv_Post2 = torch.nn.Conv2d(in_channels=8, out_channels=8, kernel_size=3, dilation=2, bias=False)
+        self.Conv_Post3 = torch.nn.Conv2d(in_channels=8, out_channels=8, kernel_size=3, dilation=2, bias=False)
+        self.Conv_Post4 = torch.nn.Conv2d(in_channels=8, out_channels=8, kernel_size=3, dilation=2, bias=False)
+        self.Conv_Post5 = torch.nn.Conv2d(in_channels=8, out_channels=8, kernel_size=3, dilation=2, bias=False)
+        self.Conv_Post6 = torch.nn.Conv2d(in_channels=8, out_channels=8, kernel_size=3, dilation=2, bias=False)
+        self.Conv_Post7 = torch.nn.Conv2d(in_channels=8, out_channels=8, kernel_size=3, dilation=2, bias=False)
+        self.Conv_Post8 = torch.nn.Conv2d(in_channels=8, out_channels=8, kernel_size=3, dilation=2, bias=False)
+
+
+        self.Conv4 = torch.nn.Conv2d(in_channels=8, out_channels=8, kernel_size=1, bias=False)
+        self.Conv5 = torch.nn.Conv2d(in_channels=8, out_channels=1, kernel_size=1, bias=False)
+
+        self.ConvOut = torch.nn.Conv2d(in_channels=1, out_channels=1, kernel_size=1, bias=False)
+
+        self.relu = torch.nn.LeakyReLU()
+
+        self.FDpad = torch.nn.ZeroPad2d(1)
 
         self.Aweights = torch.tensor([[0.25, 0.5, 0.25],
                         [0.5, -3., 0.5],
                         [0.25,  0.5, 0.25]])
         self.Aweights = self.Aweights.view(1,1,3 ,3)
-        self.Aweights= self.Aweights.to(device)
-        
+        self.Aweights = self.Aweights.to(device)
 
-  
         self.Blur = (1/16)*torch.tensor([[1., 2., 1.],
                         [2., 4., 2.],
                         [1.,  2., 1.]])
         self.Blur = self.Blur.view(1,1,3 ,3)
-        self.Blur= self.Blur.to(device)
-##____________________________________________________________________
-        # 30-39 dim resolution
-        # self.pad_7Kernel   = torch.nn.ZeroPad2d(9)
-        # self.pad_5Kernel   = torch.nn.ZeroPad2d(6)
-        # self.pad_3Kernel_3scale   = torch.nn.ZeroPad2d(2)
-        # self.pad_3Kernel_4scale   = torch.nn.ZeroPad2d(1)
-        # self.pad_3Kernel_Res   = torch.nn.ZeroPad2d(3)
+        self.Blur = self.Blur.to(device)
 
 
 
-        # self.AVG = torch.nn.AvgPool2d(2, stride=2)
-        # self.Upsample = torch.nn.Upsample(mode='bilinear',size=(D_in,D_in))
-
-
-        # self.ConvInit1  = torch.nn.Conv2d(in_channels=1, out_channels=2, kernel_size=7,dilation=3,bias=False)
-        # self.ConvInit2  = torch.nn.Conv2d(in_channels=2, out_channels=8, kernel_size=5,dilation=3,bias=False)
-
-        # self.Conv11  = torch.nn.Conv2d(in_channels=8, out_channels=8, kernel_size=5,dilation=3,bias=False)
-        # self.Conv12  = torch.nn.Conv2d(in_channels=8, out_channels=8, kernel_size=5,dilation=3,bias=False)
-        # self.Conv21  = torch.nn.Conv2d(in_channels=8, out_channels=8, kernel_size=5,dilation=3,bias=False)
-        # self.Conv22  = torch.nn.Conv2d(in_channels=8, out_channels=8, kernel_size=5,dilation=3,bias=False)
-        # self.Conv31  = torch.nn.Conv2d(in_channels=8, out_channels=8, kernel_size=3,dilation=2,bias=False)
-        # self.Conv32  = torch.nn.Conv2d(in_channels=8, out_channels=8, kernel_size=3,dilation=2,bias=False)
-        # self.Conv41  = torch.nn.Conv2d(in_channels=8, out_channels=8, kernel_size=3,bias=False)
-        # self.Conv42  = torch.nn.Conv2d(in_channels=8, out_channels=8, kernel_size=3,bias=False)
-
-        # self.Conv_Post1 = torch.nn.Conv2d(in_channels=8, out_channels=8, kernel_size=3,dilation=3,bias=False)
-        # self.Conv_Post2 = torch.nn.Conv2d(in_channels=8, out_channels=8, kernel_size=3,dilation=3,bias=False)
-        # self.Conv_Post3 = torch.nn.Conv2d(in_channels=8, out_channels=8, kernel_size=3,dilation=3,bias=False)
-        # self.Conv_Post4 = torch.nn.Conv2d(in_channels=8, out_channels=8, kernel_size=3,dilation=3,bias=False)
-        # self.Conv_Post5 = torch.nn.Conv2d(in_channels=8, out_channels=8, kernel_size=3,dilation=3,bias=False)
-        # self.Conv_Post6 = torch.nn.Conv2d(in_channels=8, out_channels=8, kernel_size=3,dilation=3,bias=False)
-        # self.Conv_Post7 = torch.nn.Conv2d(in_channels=8, out_channels=8, kernel_size=3,dilation=3,bias=False)
-        # self.Conv_Post8 = torch.nn.Conv2d(in_channels=8, out_channels=8, kernel_size=3,dilation=3,bias=False)
-
-
-        # self.Conv4 =torch.nn.Conv2d(in_channels=8, out_channels=8, kernel_size=1,bias=False)
-        # self.Conv5 =torch.nn.Conv2d(in_channels=8, out_channels=1, kernel_size=1,bias=False)
-
-        # self.ConvOut =torch.nn.Conv2d(in_channels=1, out_channels=1, kernel_size=1,bias=False)
-
-
-        # self.relu   = torch.nn.LeakyReLU()
-
-########################################################################
-########################################################################
-
-#__________________________________________________________________
-## Fluidnet + resnet forward
-#__________________________________________________________________
-
-
-##_______________________________________________________________
-# 10 dim flownet
-#     def forward(self, x,DataSetSize,Factor):
-#         x2=x.unsqueeze(1)  # Add channel dimension (C) to input
-#         Current_batchsize=int(x.shape[0])  # N in pytorch docs
-
-
-#         if (DataSetSize < Factor*1):
-#                 z = self.ConvInit1(self.pad_7Kernel(x2))
-#                 z1 =  self.relu(self.ConvInit2(self.pad_5Kernel(z)))
-#                 z2 =  self.AVG(z1)
-#                 z3 =  self.AVG(z2)
-#                 # Full scale
-#                 z1 = self.relu(self.Conv11(self.pad_5Kernel(z1)))
-#                 z1 = self.relu(self.Conv12(self.pad_5Kernel(z1)))
-#                 # Downsample1 scale
-#                 z2 = self.relu(self.Conv21(self.pad_3Kernel(z2)))
-#                 z2 = self.relu(self.Conv22(self.pad_3Kernel(z2)))
-#                 z2 = self.Upsample(z2)
-#                 # Downsample2 scale
-#                 z3 = self.relu(self.Conv31(z3))
-#                 z3 = self.relu(self.Conv32(z3))
-#                 z3 = self.Upsample(z3)
-#                 # Sum all convolution output scales
-#                 z = z1+z2+z3
-#                 z = self.relu(self.Conv4(z))
-#                 z = self.relu(self.Conv5(z))
-#                 z=self.ConvOut(z)
-#                 return z.squeeze(1) 
-
-
-#         # Forward function with 1 extra resblock at end
-#         if (DataSetSize >=Factor*1):
-#                 z = self.ConvInit1(self.pad_7Kernel(x2))
-#                 z1 =  self.relu(self.ConvInit2(self.pad_5Kernel(z)))
-#                 z2 =  self.AVG(z1)
-#                 z3 =  self.AVG(z2)
-#                 # Full scale
-#                 z1 = self.relu(self.Conv11(self.pad_5Kernel(z1)))
-#                 z1 = self.relu(self.Conv12(self.pad_5Kernel(z1)))
-#                 # Downsample1 scale
-#                 z2 = self.relu(self.Conv21(self.pad_3Kernel(z2)))
-#                 z2 = self.relu(self.Conv22(self.pad_3Kernel(z2)))
-#                 z2 =  self.Upsample(z2)
-#                 # Downsample2 scale
-#                 z3 = self.relu(self.Conv31(z3))
-#                 z3 = self.relu(self.Conv32(z3))
-#                 z3 = self.Upsample(z3)
-#                 # Sum all convolution output scales
-#                 z = z1+z2+z3
-#                 #resblock 1
-#                 y = self.relu(z)
-#                 y = self.relu(self.Conv_Post1(self.pad_3Kernel(z)))
-#                 y = self.Conv_Post2(self.pad_3Kernel(y))
-#                 z = z + y   
-#                 z = self.relu(z)
-#                 z = self.relu(self.Conv4(z))
-#                 z = self.relu(self.Conv5(z))
-#                 z=self.ConvOut(z)
-#                 return z.squeeze(1) 
-
-
-
-#         # Forward function with 2 extra resblock at end
-#         if (DataSetSize >=Factor*2):
-#                 z = self.ConvInit1(self.pad_7Kernel(x2))
-#                 z1 =  self.relu(self.ConvInit2(self.pad_5Kernel(z)))
-#                 z2 =  self.AVG(z1)
-#                 z3 =  self.AVG(z2)
-#                 # Full scale
-#                 z1 = self.relu(self.Conv11(self.pad_5Kernel(z1)))
-#                 z1 = self.relu(self.Conv12(self.pad_5Kernel(z1)))
-#                 # Downsample1 scale
-#                 z2 = self.relu(self.Conv21(self.pad_3Kernel(z2)))
-#                 z2 = self.relu(self.Conv22(self.pad_3Kernel(z2)))
-#                 z2 =  self.Upsample(z2)
-#                 # Downsample2 scale
-#                 z3 = self.relu(self.Conv31(z3))
-#                 z3 = self.relu(self.Conv32(z3))
-#                 z3 = self.Upsample(z3)
-#                 # Sum all convolution output scales
-#                 z = z1+z2+z3
-#                 #resblock 1
-#                 y = self.relu(z)
-#                 y = self.relu(self.Conv_Post1(self.pad_3Kernel(z)))
-#                 y = self.Conv_Post2(self.pad_3Kernel(y))
-#                 z = z + y   
-#                 z = self.relu(z)
-#                 #resblock 2
-#                 y = self.relu(z)
-#                 y = self.relu(self.Conv_Post3(self.pad_3Kernel(z)))
-#                 y = self.Conv_Post4(self.pad_3Kernel(y))
-#                 z = z + y    
-#                 z = self.relu(z)
-#                 z = self.relu(self.Conv4(z))
-#                 z = self.relu(self.Conv5(z))
-#                 z=self.ConvOut(z)
-#                 return z.squeeze(1) 
-
-#_____________________________________________________-
-## Fluidnet forward 20 dim
-    def forward(self, x,DataSetSize,Factor):
-        x2=x.unsqueeze(1)  # Add channel dimension (C) to input
-        Current_batchsize=int(x.shape[0])  # N in pytorch docs
+    def forward(self, x, DataSetSize, Factor):
+        x2 = x.unsqueeze(1)  # Add channel dimension (C) to input
+        Current_batchsize = int(x.shape[0])  # N in pytorch docs
 
 
         x3=torch.nn.functional.conv2d(self.FDpad(x2), self.Blur, bias=None, stride=1)
@@ -278,420 +229,463 @@ class CnnOnline_2D(torch.nn.Module):
         x2=torch.cat((x2,x4),1)
 
         if (DataSetSize < Factor*1):
-                z = self.ConvInit1(self.pad_7Kernel(x2))
-                z1 =  self.relu(self.ConvInit2(self.pad_5Kernel(z)))
-                z2 =  self.AVG(z1)
-                z3 =  self.AVG(z2)
-                z4 =  self.AVG(z3)
-                # Full scale
-                z1 = self.relu(self.Conv11(self.pad_5Kernel(z1)))
-                z1 = self.relu(self.Conv12(self.pad_5Kernel(z1)))
-                # Downsample1 scale
-                z2 = self.relu(self.Conv21(self.pad_5Kernel(z2)))
-                z2 = self.relu(self.Conv22(self.pad_5Kernel(z2)))
-                z2 = self.Upsample(z2)
-                # Downsample2 scale
-                z3 = self.relu(self.Conv31(self.pad_3Kernel(z3)))
-                z3 = self.relu(self.Conv32(self.pad_3Kernel(z3)))
-                z3 = self.Upsample(z3)
-                # Downsample3 scale
-                z4 = self.relu(self.Conv41((z4)))
-                z4 = self.relu(self.Conv42((z4)))
-                z4 = self.Upsample(z4)
-                # Sum all convolution output scales
-                z = z1+z2+z3+z4
-                z = self.relu(self.Conv4(z))
-                z = self.relu(self.Conv5(z))
-                z=self.ConvOut(z)
-                return z.squeeze(1) 
-
+            z = self.ConvInit1(self.pad_7Kernel(x2))
+            z1 = self.relu(self.ConvInit2(self.pad_5Kernel(z)))
+            z2 = self.AVG(z1)
+            z3 = self.AVG(z2)
+            z4 = self.AVG(z3)
+            # Full scale
+            z1 = self.relu(self.Conv11(self.pad_5Kernel(z1)))
+            z1 = self.relu(self.Conv12(self.pad_5Kernel(z1)))
+            # Downsample1 scale
+            z2 = self.relu(self.Conv21(self.pad_5Kernel(z2)))
+            z2 = self.relu(self.Conv22(self.pad_5Kernel(z2)))
+            z2 = self.Upsample(z2)
+            # Downsample2 scale
+            z3 = self.relu(self.Conv31(self.pad_3Kernel(z3)))
+            z3 = self.relu(self.Conv32(self.pad_3Kernel(z3)))
+            z3 = self.Upsample(z3)
+            # Downsample3 scale
+            z4 = self.relu(self.Conv41((z4)))
+            z4 = self.relu(self.Conv42((z4)))
+            z4 = self.Upsample(z4)
+            # Sum all convolution output scales
+            z = z1 + z2 + z3 + z4
+            z = self.relu(self.Conv4(z))
+            z = self.relu(self.Conv5(z))
+            z = self.ConvOut(z)
+            return z.squeeze(1)
 
         # Forward function with 1 extra resblock at end
-        if (DataSetSize >=Factor*1):
-                z = self.ConvInit1(self.pad_7Kernel(x2))
-                z1 =  self.relu(self.ConvInit2(self.pad_5Kernel(z)))
-                z2 =  self.AVG(z1)
-                z3 =  self.AVG(z2)
-                z4 =  self.AVG(z3)
-                # Full scale
-                z1 = self.relu(self.Conv11(self.pad_5Kernel(z1)))
-                z1 = self.relu(self.Conv12(self.pad_5Kernel(z1)))
-                # Downsample1 scale
-                z2 = self.relu(self.Conv21(self.pad_5Kernel(z2)))
-                z2 = self.relu(self.Conv22(self.pad_5Kernel(z2)))
-                z2 =  self.Upsample(z2)
-                # Downsample2 scale
-                z3 = self.relu(self.Conv31(self.pad_3Kernel(z3)))
-                z3 = self.relu(self.Conv32(self.pad_3Kernel(z3)))
-                z3 = self.Upsample(z3)
-                # Downsample3 scale
-                z4 = self.relu(self.Conv41((z4)))
-                z4 = self.relu(self.Conv42((z4)))
-                z4 = self.Upsample(z4)
-                # Sum all convolution output scales
-                z = z1+z2+z3+z4
-                #resblock 1
-                y = self.relu(z)
-                y = self.relu(self.Conv_Post1(self.pad_3Kernel_Dilated(z)))
-                y = self.Conv_Post2(self.pad_3Kernel_Dilated(y))
-                z = z + y   
-                z = self.relu(z)
-                z = self.relu(self.Conv4(z))
-                z = self.relu(self.Conv5(z))
-                z=self.ConvOut(z)
-                return z.squeeze(1) 
-
-
+        if (DataSetSize >= Factor*1):
+            z = self.ConvInit1(self.pad_7Kernel(x2))
+            z1 = self.relu(self.ConvInit2(self.pad_5Kernel(z)))
+            z2 = self.AVG(z1)
+            z3 = self.AVG(z2)
+            z4 = self.AVG(z3)
+            # Full scale
+            z1 = self.relu(self.Conv11(self.pad_5Kernel(z1)))
+            z1 = self.relu(self.Conv12(self.pad_5Kernel(z1)))
+            # Downsample1 scale
+            z2 = self.relu(self.Conv21(self.pad_5Kernel(z2)))
+            z2 = self.relu(self.Conv22(self.pad_5Kernel(z2)))
+            z2 = self.Upsample(z2)
+            # Downsample2 scale
+            z3 = self.relu(self.Conv31(self.pad_3Kernel(z3)))
+            z3 = self.relu(self.Conv32(self.pad_3Kernel(z3)))
+            z3 = self.Upsample(z3)
+            # Downsample3 scale
+            z4 = self.relu(self.Conv41((z4)))
+            z4 = self.relu(self.Conv42((z4)))
+            z4 = self.Upsample(z4)
+            # Sum all convolution output scales
+            z = z1 + z2 + z3 + z4
+            #resblock 1
+            y = self.relu(z)
+            y = self.relu(self.Conv_Post1(self.pad_3Kernel_Dilated(z)))
+            y = self.Conv_Post2(self.pad_3Kernel_Dilated(y))
+            z = z + y
+            z = self.relu(z)
+            z = self.relu(self.Conv4(z))
+            z = self.relu(self.Conv5(z))
+            z = self.ConvOut(z)
+            return z.squeeze(1)
 
         # Forward function with 2 extra resblock at end
-        if (DataSetSize >=Factor*2):
-                z = self.ConvInit1(self.pad_7Kernel(x2))
-                z1 =  self.relu(self.ConvInit2(self.pad_5Kernel(z)))
-                z2 =  self.AVG(z1)
-                z3 =  self.AVG(z2)
-                z4 =  self.AVG(z3)
-                # Full scale
-                z1 = self.relu(self.Conv11(self.pad_5Kernel(z1)))
-                z1 = self.relu(self.Conv12(self.pad_5Kernel(z1)))
-                # Downsample1 scale
-                z2 = self.relu(self.Conv21(self.pad_5Kernel(z2)))
-                z2 = self.relu(self.Conv22(self.pad_5Kernel(z2)))
-                z2 =  self.Upsample(z2)
-                # Downsample2 scale
-                z3 = self.relu(self.Conv31(self.pad_3Kernel(z3)))
-                z3 = self.relu(self.Conv32(self.pad_3Kernel(z3)))
-                z3 = self.Upsample(z3)
-                # Downsample3 scale
-                z4 = self.relu(self.Conv41((z4)))
-                z4 = self.relu(self.Conv42((z4)))
-                z4 = self.Upsample(z4)
-                # Sum all convolution output scales
-                z = z1+z2+z3+z4
-                #resblock 1
-                y = self.relu(z)
-                y = self.relu(self.Conv_Post1(self.pad_3Kernel_Dilated(z)))
-                y = self.Conv_Post2(self.pad_3Kernel_Dilated(y))
-                z = z + y   
-                z = self.relu(z)
-                #resblock 2
-                y = self.relu(z)
-                y = self.relu(self.Conv_Post3(self.pad_3Kernel_Dilated(z)))
-                y = self.Conv_Post4(self.pad_3Kernel_Dilated(y))
-                z = z + y    
-                z = self.relu(z)
-                z = self.relu(self.Conv4(z))
-                z = self.relu(self.Conv5(z))
-                z=self.ConvOut(z)
-                return z.squeeze(1) 
+        if (DataSetSize >= Factor*2):
+            z = self.ConvInit1(self.pad_7Kernel(x2))
+            z1 = self.relu(self.ConvInit2(self.pad_5Kernel(z)))
+            z2 = self.AVG(z1)
+            z3 = self.AVG(z2)
+            z4 = self.AVG(z3)
+            # Full scale
+            z1 = self.relu(self.Conv11(self.pad_5Kernel(z1)))
+            z1 = self.relu(self.Conv12(self.pad_5Kernel(z1)))
+            # Downsample1 scale
+            z2 = self.relu(self.Conv21(self.pad_5Kernel(z2)))
+            z2 = self.relu(self.Conv22(self.pad_5Kernel(z2)))
+            z2 = self.Upsample(z2)
+            # Downsample2 scale
+            z3 = self.relu(self.Conv31(self.pad_3Kernel(z3)))
+            z3 = self.relu(self.Conv32(self.pad_3Kernel(z3)))
+            z3 = self.Upsample(z3)
+            # Downsample3 scale
+            z4 = self.relu(self.Conv41((z4)))
+            z4 = self.relu(self.Conv42((z4)))
+            z4 = self.Upsample(z4)
+            # Sum all convolution output scales
+            z = z1 + z2 + z3 + z4
+            #resblock 1
+            y = self.relu(z)
+            y = self.relu(self.Conv_Post1(self.pad_3Kernel_Dilated(z)))
+            y = self.Conv_Post2(self.pad_3Kernel_Dilated(y))
+            z = z + y
+            z = self.relu(z)
+            #resblock 2
+            y = self.relu(z)
+            y = self.relu(self.Conv_Post3(self.pad_3Kernel_Dilated(z)))
+            y = self.Conv_Post4(self.pad_3Kernel_Dilated(y))
+            z = z + y
+            z = self.relu(z)
+            z = self.relu(self.Conv4(z))
+            z = self.relu(self.Conv5(z))
+            z = self.ConvOut(z)
+            return z.squeeze(1)
+
+        # Forward function with 3 extra resblock at end
+        if (DataSetSize >= Factor*3):
+            z = self.ConvInit1(self.pad_7Kernel(x2))
+            z1 = self.relu(self.ConvInit2(self.pad_5Kernel(z)))
+            z2 = self.AVG(z1)
+            z3 = self.AVG(z2)
+            z4 = self.AVG(z3)
+            # Full scale
+            z1 = self.relu(self.Conv11(self.pad_5Kernel(z1)))
+            z1 = self.relu(self.Conv12(self.pad_5Kernel(z1)))
+            # Downsample1 scale
+            z2 = self.relu(self.Conv21(self.pad_5Kernel(z2)))
+            z2 = self.relu(self.Conv22(self.pad_5Kernel(z2)))
+            z2 = self.Upsample(z2)
+            # Downsample2 scale
+            z3 = self.relu(self.Conv31(self.pad_3Kernel(z3)))
+            z3 = self.relu(self.Conv32(self.pad_3Kernel(z3)))
+            z3 = self.Upsample(z3)
+            # Downsample3 scale
+            z4 = self.relu(self.Conv41((z4)))
+            z4 = self.relu(self.Conv42((z4)))
+            z4 = self.Upsample(z4)
+            # Sum all convolution output scales
+            z = z1+z2+z3+z4
+            #resblock 1
+            y = self.relu(z)
+            y = self.relu(self.Conv_Post1(self.pad_3Kernel_Dilated(z)))
+            y = self.Conv_Post2(self.pad_3Kernel_Dilated(y))
+            z = z + y
+            z = self.relu(z)
+            #resblock 2
+            y = self.relu(z)
+            y = self.relu(self.Conv_Post3(self.pad_3Kernel_Dilated(z)))
+            y = self.Conv_Post4(self.pad_3Kernel_Dilated(y))
+            z = z + y
+            #resblock 3
+            y = self.relu(z)
+            y = self.relu(self.Conv_Post5(self.pad_3Kernel_Dilated(z)))
+            y = self.Conv_Post6(self.pad_3Kernel_Dilated(y))
+            z = z + y
+            z = self.relu(z)
+            z = self.relu(self.Conv4(z))
+            z = self.relu(self.Conv5(z))
+            z = self.ConvOut(z)
+            return z.squeeze(1)
+
+        # Forward function with 4 extra resblock at end
+        if (DataSetSize >= Factor*4):
+            z = self.ConvInit1(self.pad_7Kernel(x2))
+            z1 = self.relu(self.ConvInit2(self.pad_5Kernel(z)))
+            z2 = self.AVG(z1)
+            z3 = self.AVG(z2)
+            z4 = self.AVG(z3)
+            # Full scale
+            z1 = self.relu(self.Conv11(self.pad_5Kernel(z1)))
+            z1 = self.relu(self.Conv12(self.pad_5Kernel(z1)))
+            # Downsample1 scale
+            z2 = self.relu(self.Conv21(self.pad_5Kernel(z2)))
+            z2 = self.relu(self.Conv22(self.pad_5Kernel(z2)))
+            z2 = self.Upsample(z2)
+            # Downsample2 scale
+            z3 = self.relu(self.Conv31(self.pad_3Kernel(z3)))
+            z3 = self.relu(self.Conv32(self.pad_3Kernel(z3)))
+            z3 = self.Upsample(z3)
+            # Downsample3 scale
+            z4 = self.relu(self.Conv41((z4)))
+            z4 = self.relu(self.Conv42((z4)))
+            z4 = self.Upsample(z4)
+            # Sum all convolution output scales
+            z = z1 + z2 + z3 + z4
+            #resblock 1
+            y = self.relu(z)
+            y = self.relu(self.Conv_Post1(self.pad_3Kernel_Dilated(z)))
+            y = self.Conv_Post2(self.pad_3Kernel_Dilated(y))
+            z = z + y
+            z = self.relu(z)
+            #resblock 2
+            y = self.relu(z)
+            y = self.relu(self.Conv_Post3(self.pad_3Kernel_Dilated(z)))
+            y = self.Conv_Post4(self.pad_3Kernel_Dilated(y))
+            z = z + y
+            #resblock 3
+            y = self.relu(z)
+            y = self.relu(self.Conv_Post5(self.pad_3Kernel_Dilated(z)))
+            y = self.Conv_Post6(self.pad_3Kernel_Dilated(y))
+            z = z + y
+            #resblock 4
+            y = self.relu(z)
+            y = self.relu(self.Conv_Post7(self.pad_3Kernel_Dilated(z)))
+            y = self.Conv_Post8(self.pad_3Kernel_Dilated(y))
+            z = z + y
+            z = self.relu(z)
+            z = self.relu(self.Conv4(z))
+            z = self.relu(self.Conv5(z))
+            z = self.ConvOut(z)
+            return z.squeeze(1)
+
+
+
+class FluidNet2D30(torch.nn.Module):
+
+
+    def __init__(self, D_in, D_out):
+        """
+        FluidNet 2D optimized for 30-39 dim resolution.
+        """
+
+        super().__init__()
+        #TODO: make compatible with multiple devices
+        #TODO: this should be class member
+        device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+
+        self.pad_7Kernel = torch.nn.ZeroPad2d(9)
+        self.pad_5Kernel = torch.nn.ZeroPad2d(6)
+        self.pad_3Kernel_3scale = torch.nn.ZeroPad2d(2)
+        self.pad_3Kernel_4scale = torch.nn.ZeroPad2d(1)
+        self.pad_3Kernel_Res = torch.nn.ZeroPad2d(3)
+
+        self.AVG = torch.nn.AvgPool2d(2, stride=2)
+        self.Upsample = torch.nn.Upsample(mode='bilinear', size=(D_in, D_in))
+
+        self.ConvInit1 = torch.nn.Conv2d(in_channels=1, out_channels=2, kernel_size=7, dilation=3, bias=False)
+        self.ConvInit2 = torch.nn.Conv2d(in_channels=2, out_channels=8, kernel_size=5, dilation=3, bias=False)
+
+        self.Conv11 = torch.nn.Conv2d(in_channels=8, out_channels=8, kernel_size=5, dilation=3, bias=False)
+        self.Conv12 = torch.nn.Conv2d(in_channels=8, out_channels=8, kernel_size=5, dilation=3, bias=False)
+        self.Conv21 = torch.nn.Conv2d(in_channels=8, out_channels=8, kernel_size=5, dilation=3, bias=False)
+        self.Conv22 = torch.nn.Conv2d(in_channels=8, out_channels=8, kernel_size=5, dilation=3, bias=False)
+        self.Conv31 = torch.nn.Conv2d(in_channels=8, out_channels=8, kernel_size=3, dilation=2, bias=False)
+        self.Conv32 = torch.nn.Conv2d(in_channels=8, out_channels=8, kernel_size=3, dilation=2, bias=False)
+        self.Conv41 = torch.nn.Conv2d(in_channels=8, out_channels=8, kernel_size=3, bias=False)
+        self.Conv42 = torch.nn.Conv2d(in_channels=8, out_channels=8, kernel_size=3, bias=False)
+
+        self.Conv_Post1 = torch.nn.Conv2d(in_channels=8, out_channels=8, kernel_size=3, dilation=3, bias=False)
+        self.Conv_Post2 = torch.nn.Conv2d(in_channels=8, out_channels=8, kernel_size=3, dilation=3, bias=False)
+        self.Conv_Post3 = torch.nn.Conv2d(in_channels=8, out_channels=8, kernel_size=3, dilation=3, bias=False)
+        self.Conv_Post4 = torch.nn.Conv2d(in_channels=8, out_channels=8, kernel_size=3, dilation=3, bias=False)
+        self.Conv_Post5 = torch.nn.Conv2d(in_channels=8, out_channels=8, kernel_size=3, dilation=3, bias=False)
+        self.Conv_Post6 = torch.nn.Conv2d(in_channels=8, out_channels=8, kernel_size=3, dilation=3, bias=False)
+        self.Conv_Post7 = torch.nn.Conv2d(in_channels=8, out_channels=8, kernel_size=3, dilation=3, bias=False)
+        self.Conv_Post8 = torch.nn.Conv2d(in_channels=8, out_channels=8, kernel_size=3, dilation=3, bias=False)
+
+        self.Conv4 =torch.nn.Conv2d(in_channels=8, out_channels=8, kernel_size=1, bias=False)
+        self.Conv5 =torch.nn.Conv2d(in_channels=8, out_channels=1, kernel_size=1, bias=False)
+
+        self.ConvOut =torch.nn.Conv2d(in_channels=1, out_channels=1, kernel_size=1, bias=False)
+
+        self.relu = torch.nn.LeakyReLU()
+
+
+    def forward(self, x,DataSetSize,Factor):
+        x2=x.unsqueeze(1)  # Add channel dimension (C) to input
+        Current_batchsize=int(x.shape[0])  # N in pytorch docs
+
+        if (DataSetSize < Factor*1):
+            z = self.ConvInit1(self.pad_7Kernel(x2))
+            z1 = self.relu(self.ConvInit2(self.pad_5Kernel(z)))
+            z2 = self.AVG(z1)
+            z3 = self.AVG(z2)
+            z4 = self.AVG(z3)
+            # Full scale
+            z1 = self.relu(self.Conv11(self.pad_5Kernel(z1)))
+            z1 = self.relu(self.Conv12(self.pad_5Kernel(z1)))
+            # Downsample1 scale
+            z2 = self.relu(self.Conv21(self.pad_5Kernel(z2)))
+            z2 = self.relu(self.Conv22(self.pad_5Kernel(z2)))
+            z2 = self.Upsample(z2)
+            # Downsample2 scale
+            z3 = self.relu(self.Conv31(self.pad_3Kernel_3scale(z3)))
+            z3 = self.relu(self.Conv32(self.pad_3Kernel_3scale(z3)))
+            z3 = self.Upsample(z3)
+            # Downsample3 scale
+            z4 = self.relu(self.Conv41((self.pad_3Kernel_4scale(z4))))
+            z4 = self.relu(self.Conv42((self.pad_3Kernel_4scale(z4))))
+            z4 = self.Upsample(z4)
+            # Sum all convolution output scales
+            z = z1 + z2 + z3 + z4
+            z = self.relu(self.Conv4(z))
+            z = self.relu(self.Conv5(z))
+            z = self.ConvOut(z)
+            return z.squeeze(1)
+
+        # Forward function with 1 extra resblock at end
+        if (DataSetSize >= Factor*1):
+            z = self.ConvInit1(self.pad_7Kernel(x2))
+            z1 = self.relu(self.ConvInit2(self.pad_5Kernel(z)))
+            z2 = self.AVG(z1)
+            z3 = self.AVG(z2)
+            z4 = self.AVG(z3)
+            # Full scale
+            z1 = self.relu(self.Conv11(self.pad_5Kernel(z1)))
+            z1 = self.relu(self.Conv12(self.pad_5Kernel(z1)))
+            # Downsample1 scale
+            z2 = self.relu(self.Conv21(self.pad_5Kernel(z2)))
+            z2 = self.relu(self.Conv22(self.pad_5Kernel(z2)))
+            z2 = self.Upsample(z2)
+            # Downsample2 scale
+            z3 = self.relu(self.Conv31(self.pad_3Kernel_3scale(z3)))
+            z3 = self.relu(self.Conv32(self.pad_3Kernel_3scale(z3)))
+            z3 = self.Upsample(z3)
+            # Downsample3 scale
+            z4 = self.relu(self.Conv41((self.pad_3Kernel_4scale(z4))))
+            z4 = self.relu(self.Conv42(( self.pad_3Kernel_4scale(z4))))
+            z4 = self.Upsample(z4)
+            # Sum all convolution output scales
+            z = z1 + z2 + z3 + z4
+            #resblock 1
+            y = self.relu(z)
+            y = self.relu(self.Conv_Post1(self.pad_3Kernel_Res(z)))
+            y = self.Conv_Post2(self.pad_3Kernel_Res(y))
+            z = z + y
+            z = self.relu(z)
+            z = self.relu(self.Conv4(z))
+            z = self.relu(self.Conv5(z))
+            z = self.ConvOut(z)
+            return z.squeeze(1)
 
         # Forward function with 2 extra resblock at end
-        if (DataSetSize >=Factor*3):
-                z = self.ConvInit1(self.pad_7Kernel(x2))
-                z1 =  self.relu(self.ConvInit2(self.pad_5Kernel(z)))
-                z2 =  self.AVG(z1)
-                z3 =  self.AVG(z2)
-                z4 =  self.AVG(z3)
-                # Full scale
-                z1 = self.relu(self.Conv11(self.pad_5Kernel(z1)))
-                z1 = self.relu(self.Conv12(self.pad_5Kernel(z1)))
-                # Downsample1 scale
-                z2 = self.relu(self.Conv21(self.pad_5Kernel(z2)))
-                z2 = self.relu(self.Conv22(self.pad_5Kernel(z2)))
-                z2 =  self.Upsample(z2)
-                # Downsample2 scale
-                z3 = self.relu(self.Conv31(self.pad_3Kernel(z3)))
-                z3 = self.relu(self.Conv32(self.pad_3Kernel(z3)))
-                z3 = self.Upsample(z3)
-                # Downsample3 scale
-                z4 = self.relu(self.Conv41((z4)))
-                z4 = self.relu(self.Conv42((z4)))
-                z4 = self.Upsample(z4)
-                # Sum all convolution output scales
-                z = z1+z2+z3+z4
-                #resblock 1
-                y = self.relu(z)
-                y = self.relu(self.Conv_Post1(self.pad_3Kernel_Dilated(z)))
-                y = self.Conv_Post2(self.pad_3Kernel_Dilated(y))
-                z = z + y   
-                z = self.relu(z)
-                #resblock 2
-                y = self.relu(z)
-                y = self.relu(self.Conv_Post3(self.pad_3Kernel_Dilated(z)))
-                y = self.Conv_Post4(self.pad_3Kernel_Dilated(y))
-                z = z + y 
-                #resblock 3
-                y = self.relu(z)
-                y = self.relu(self.Conv_Post5(self.pad_3Kernel_Dilated(z)))
-                y = self.Conv_Post6(self.pad_3Kernel_Dilated(y))
-                z = z + y      
-                z = self.relu(z)
-                z = self.relu(self.Conv4(z))
-                z = self.relu(self.Conv5(z))
-                z=self.ConvOut(z)
-                return z.squeeze(1) 
+        if (DataSetSize >= Factor*2):
+            z = self.ConvInit1(self.pad_7Kernel(x2))
+            z1 = self.relu(self.ConvInit2(self.pad_5Kernel(z)))
+            z2 = self.AVG(z1)
+            z3 = self.AVG(z2)
+            z4 = self.AVG(z3)
+            # Full scale
+            z1 = self.relu(self.Conv11(self.pad_5Kernel(z1)))
+            z1 = self.relu(self.Conv12(self.pad_5Kernel(z1)))
+            # Downsample1 scale
+            z2 = self.relu(self.Conv21(self.pad_5Kernel(z2)))
+            z2 = self.relu(self.Conv22(self.pad_5Kernel(z2)))
+            z2 = self.Upsample(z2)
+            # Downsample2 scale
+            z3 = self.relu(self.Conv31(self.pad_3Kernel_3scale(z3)))
+            z3 = self.relu(self.Conv32(self.pad_3Kernel_3scale(z3)))
+            z3 = self.Upsample(z3)
+            # Downsample3 scale
+            z4 = self.relu(self.Conv41(( self.pad_3Kernel_4scale(z4))))
+            z4 = self.relu(self.Conv42((z4)))
+            z4 = self.Upsample(z4)
+            # Sum all convolution output scales
+            z = z1 + z2 + z3 + z4
+            #resblock 1
+            y = self.relu(z)
+            y = self.relu(self.Conv_Post1(self.pad_3Kernel_Res(z)))
+            y = self.Conv_Post2(self.pad_3Kernel_Res(y))
+            z = z + y
+            z = self.relu(z)
+            #resblock 2
+            y = self.relu(z)
+            y = self.relu(self.Conv_Post3(self.pad_3Kernel_Res(z)))
+            y = self.Conv_Post4(self.pad_3Kernel_Res(y))
+            z = z + y
+            z = self.relu(z)
+            z = self.relu(self.Conv4(z))
+            z = self.relu(self.Conv5(z))
+            z = self.ConvOut(z)
+            return z.squeeze(1)
 
-        # Forward function with 2 extra resblock at end
-        if (DataSetSize >=Factor*4):
-                z = self.ConvInit1(self.pad_7Kernel(x2))
-                z1 =  self.relu(self.ConvInit2(self.pad_5Kernel(z)))
-                z2 =  self.AVG(z1)
-                z3 =  self.AVG(z2)
-                z4 =  self.AVG(z3)
-                # Full scale
-                z1 = self.relu(self.Conv11(self.pad_5Kernel(z1)))
-                z1 = self.relu(self.Conv12(self.pad_5Kernel(z1)))
-                # Downsample1 scale
-                z2 = self.relu(self.Conv21(self.pad_5Kernel(z2)))
-                z2 = self.relu(self.Conv22(self.pad_5Kernel(z2)))
-                z2 =  self.Upsample(z2)
-                # Downsample2 scale
-                z3 = self.relu(self.Conv31(self.pad_3Kernel(z3)))
-                z3 = self.relu(self.Conv32(self.pad_3Kernel(z3)))
-                z3 = self.Upsample(z3)
-                # Downsample3 scale
-                z4 = self.relu(self.Conv41((z4)))
-                z4 = self.relu(self.Conv42((z4)))
-                z4 = self.Upsample(z4)
-                # Sum all convolution output scales
-                z = z1+z2+z3+z4
-                #resblock 1
-                y = self.relu(z)
-                y = self.relu(self.Conv_Post1(self.pad_3Kernel_Dilated(z)))
-                y = self.Conv_Post2(self.pad_3Kernel_Dilated(y))
-                z = z + y   
-                z = self.relu(z)
-                #resblock 2
-                y = self.relu(z)
-                y = self.relu(self.Conv_Post3(self.pad_3Kernel_Dilated(z)))
-                y = self.Conv_Post4(self.pad_3Kernel_Dilated(y))
-                z = z + y 
-                #resblock 3
-                y = self.relu(z)
-                y = self.relu(self.Conv_Post5(self.pad_3Kernel_Dilated(z)))
-                y = self.Conv_Post6(self.pad_3Kernel_Dilated(y))
-                z = z + y     
-                #resblock 4
-                y = self.relu(z)
-                y = self.relu(self.Conv_Post7(self.pad_3Kernel_Dilated(z)))
-                y = self.Conv_Post8(self.pad_3Kernel_Dilated(y))
-                z = z + y      
-                z = self.relu(z)
-                z = self.relu(self.Conv4(z))
-                z = self.relu(self.Conv5(z))
-                z=self.ConvOut(z)
-                return z.squeeze(1) 
+        # Forward function with 3 extra resblock at end
+        if (DataSetSize >= Factor*3):
+            z = self.ConvInit1(self.pad_7Kernel(x2))
+            z1 = self.relu(self.ConvInit2(self.pad_5Kernel(z)))
+            z2 = self.AVG(z1)
+            z3 = self.AVG(z2)
+            z4 = self.AVG(z3)
+            # Full scale
+            z1 = self.relu(self.Conv11(self.pad_5Kernel(z1)))
+            z1 = self.relu(self.Conv12(self.pad_5Kernel(z1)))
+            # Downsample1 scale
+            z2 = self.relu(self.Conv21(self.pad_5Kernel(z2)))
+            z2 = self.relu(self.Conv22(self.pad_5Kernel(z2)))
+            z2 = self.Upsample(z2)
+            # Downsample2 scale
+            z3 = self.relu(self.Conv31(self.pad_3Kernel_3scale(z3)))
+            z3 = self.relu(self.Conv32(self.pad_3Kernel_3scale(z3)))
+            z3 = self.Upsample(z3)
+            # Downsample3 scale
+            z4 = self.relu(self.Conv41(( self.pad_3Kernel_4scale(z4))))
+            z4 = self.relu(self.Conv42(( self.pad_3Kernel_4scale(z4))))
+            z4 = self.Upsample(z4)
+            # Sum all convolution output scales
+            z = z1 + z2 + z3 + z4
+            #resblock 1
+            y = self.relu(z)
+            y = self.relu(self.Conv_Post1(self.pad_3Kernel_Res(z)))
+            y = self.Conv_Post2(self.pad_3Kernel_Res(y))
+            z = z + y
+            z = self.relu(z)
+            #resblock 2
+            y = self.relu(z)
+            y = self.relu(self.Conv_Post3(self.pad_3Kernel_Res(z)))
+            y = self.Conv_Post4(self.pad_3Kernel_Res(y))
+            z = z + y
+            #resblock 3
+            y = self.relu(z)
+            y = self.relu(self.Conv_Post5(self.pad_3Kernel_Res(z)))
+            y = self.Conv_Post6(self.pad_3Kernel_Res(y))
+            z = z + y
+            z = self.relu(z)
+            z = self.relu(self.Conv4(z))
+            z = self.relu(self.Conv5(z))
+            z = self.ConvOut(z)
+            return z.squeeze(1)
 
-
-#_____________________________________________________-
-## Fluidnet forward 30-39 dim
-#     def forward(self, x,DataSetSize,Factor):
-#         x2=x.unsqueeze(1)  # Add channel dimension (C) to input
-#         Current_batchsize=int(x.shape[0])  # N in pytorch docs
-
-
-#         if (DataSetSize < Factor*1):
-#                 z = self.ConvInit1(self.pad_7Kernel(x2))
-#                 z1 =  self.relu(self.ConvInit2(self.pad_5Kernel(z)))
-#                 z2 =  self.AVG(z1)
-#                 z3 =  self.AVG(z2)
-#                 z4 =  self.AVG(z3)
-#                 # Full scale
-#                 z1 = self.relu(self.Conv11(self.pad_5Kernel(z1)))
-#                 z1 = self.relu(self.Conv12(self.pad_5Kernel(z1)))
-#                 # Downsample1 scale
-#                 z2 = self.relu(self.Conv21(self.pad_5Kernel(z2)))
-#                 z2 = self.relu(self.Conv22(self.pad_5Kernel(z2)))
-#                 z2 = self.Upsample(z2)
-#                 # Downsample2 scale
-#                 z3 = self.relu(self.Conv31(self.pad_3Kernel_3scale(z3)))
-#                 z3 = self.relu(self.Conv32(self.pad_3Kernel_3scale(z3)))
-#                 z3 = self.Upsample(z3)
-#                 # Downsample3 scale
-#                 z4 = self.relu(self.Conv41((self.pad_3Kernel_4scale(z4))))
-#                 z4 = self.relu(self.Conv42((self.pad_3Kernel_4scale(z4))))
-#                 z4 = self.Upsample(z4)
-#                 # Sum all convolution output scales
-#                 z = z1+z2+z3+z4
-#                 z = self.relu(self.Conv4(z))
-#                 z = self.relu(self.Conv5(z))
-#                 z=self.ConvOut(z)
-#                 return z.squeeze(1) 
-
-
-#         # Forward function with 1 extra resblock at end
-#         if (DataSetSize >=Factor*1):
-#                 z = self.ConvInit1(self.pad_7Kernel(x2))
-#                 z1 =  self.relu(self.ConvInit2(self.pad_5Kernel(z)))
-#                 z2 =  self.AVG(z1)
-#                 z3 =  self.AVG(z2)
-#                 z4 =  self.AVG(z3)
-#                 # Full scale
-#                 z1 = self.relu(self.Conv11(self.pad_5Kernel(z1)))
-#                 z1 = self.relu(self.Conv12(self.pad_5Kernel(z1)))
-#                 # Downsample1 scale
-#                 z2 = self.relu(self.Conv21(self.pad_5Kernel(z2)))
-#                 z2 = self.relu(self.Conv22(self.pad_5Kernel(z2)))
-#                 z2 =  self.Upsample(z2)
-#                 # Downsample2 scale
-#                 z3 = self.relu(self.Conv31(self.pad_3Kernel_3scale(z3)))
-#                 z3 = self.relu(self.Conv32(self.pad_3Kernel_3scale(z3)))
-#                 z3 = self.Upsample(z3)
-#                 # Downsample3 scale
-#                 z4 = self.relu(self.Conv41((self.pad_3Kernel_4scale(z4))))
-#                 z4 = self.relu(self.Conv42(( self.pad_3Kernel_4scale(z4))))
-#                 z4 = self.Upsample(z4)
-#                 # Sum all convolution output scales
-#                 z = z1+z2+z3+z4
-#                 #resblock 1
-#                 y = self.relu(z)
-#                 y = self.relu(self.Conv_Post1(self.pad_3Kernel_Res(z)))
-#                 y = self.Conv_Post2(self.pad_3Kernel_Res(y))
-#                 z = z + y   
-#                 z = self.relu(z)
-#                 z = self.relu(self.Conv4(z))
-#                 z = self.relu(self.Conv5(z))
-#                 z=self.ConvOut(z)
-#                 return z.squeeze(1) 
-
-
-
-#         # Forward function with 2 extra resblock at end
-#         if (DataSetSize >=Factor*2):
-#                 z = self.ConvInit1(self.pad_7Kernel(x2))
-#                 z1 =  self.relu(self.ConvInit2(self.pad_5Kernel(z)))
-#                 z2 =  self.AVG(z1)
-#                 z3 =  self.AVG(z2)
-#                 z4 =  self.AVG(z3)
-#                 # Full scale
-#                 z1 = self.relu(self.Conv11(self.pad_5Kernel(z1)))
-#                 z1 = self.relu(self.Conv12(self.pad_5Kernel(z1)))
-#                 # Downsample1 scale
-#                 z2 = self.relu(self.Conv21(self.pad_5Kernel(z2)))
-#                 z2 = self.relu(self.Conv22(self.pad_5Kernel(z2)))
-#                 z2 =  self.Upsample(z2)
-#                 # Downsample2 scale
-#                 z3 = self.relu(self.Conv31(self.pad_3Kernel_3scale(z3)))
-#                 z3 = self.relu(self.Conv32(self.pad_3Kernel_3scale(z3)))
-#                 z3 = self.Upsample(z3)
-#                 # Downsample3 scale
-#                 z4 = self.relu(self.Conv41(( self.pad_3Kernel_4scale(z4))))
-#                 z4 = self.relu(self.Conv42((z4)))
-#                 z4 = self.Upsample(z4)
-#                 # Sum all convolution output scales
-#                 z = z1+z2+z3+z4
-#                 #resblock 1
-#                 y = self.relu(z)
-#                 y = self.relu(self.Conv_Post1(self.pad_3Kernel_Res(z)))
-#                 y = self.Conv_Post2(self.pad_3Kernel_Res(y))
-#                 z = z + y   
-#                 z = self.relu(z)
-#                 #resblock 2
-#                 y = self.relu(z)
-#                 y = self.relu(self.Conv_Post3(self.pad_3Kernel_Res(z)))
-#                 y = self.Conv_Post4(self.pad_3Kernel_Res(y))
-#                 z = z + y    
-#                 z = self.relu(z)
-#                 z = self.relu(self.Conv4(z))
-#                 z = self.relu(self.Conv5(z))
-#                 z=self.ConvOut(z)
-#                 return z.squeeze(1) 
-
-#         # Forward function with 2 extra resblock at end
-#         if (DataSetSize >=Factor*3):
-#                 z = self.ConvInit1(self.pad_7Kernel(x2))
-#                 z1 =  self.relu(self.ConvInit2(self.pad_5Kernel(z)))
-#                 z2 =  self.AVG(z1)
-#                 z3 =  self.AVG(z2)
-#                 z4 =  self.AVG(z3)
-#                 # Full scale
-#                 z1 = self.relu(self.Conv11(self.pad_5Kernel(z1)))
-#                 z1 = self.relu(self.Conv12(self.pad_5Kernel(z1)))
-#                 # Downsample1 scale
-#                 z2 = self.relu(self.Conv21(self.pad_5Kernel(z2)))
-#                 z2 = self.relu(self.Conv22(self.pad_5Kernel(z2)))
-#                 z2 =  self.Upsample(z2)
-#                 # Downsample2 scale
-#                 z3 = self.relu(self.Conv31(self.pad_3Kernel_3scale(z3)))
-#                 z3 = self.relu(self.Conv32(self.pad_3Kernel_3scale(z3)))
-#                 z3 = self.Upsample(z3)
-#                 # Downsample3 scale
-#                 z4 = self.relu(self.Conv41(( self.pad_3Kernel_4scale(z4))))
-#                 z4 = self.relu(self.Conv42(( self.pad_3Kernel_4scale(z4))))
-#                 z4 = self.Upsample(z4)
-#                 # Sum all convolution output scales
-#                 z = z1+z2+z3+z4
-#                 #resblock 1
-#                 y = self.relu(z)
-#                 y = self.relu(self.Conv_Post1(self.pad_3Kernel_Res(z)))
-#                 y = self.Conv_Post2(self.pad_3Kernel_Res(y))
-#                 z = z + y   
-#                 z = self.relu(z)
-#                 #resblock 2
-#                 y = self.relu(z)
-#                 y = self.relu(self.Conv_Post3(self.pad_3Kernel_Res(z)))
-#                 y = self.Conv_Post4(self.pad_3Kernel_Res(y))
-#                 z = z + y 
-#                 #resblock 3
-#                 y = self.relu(z)
-#                 y = self.relu(self.Conv_Post5(self.pad_3Kernel_Res(z)))
-#                 y = self.Conv_Post6(self.pad_3Kernel_Res(y))
-#                 z = z + y      
-#                 z = self.relu(z)
-#                 z = self.relu(self.Conv4(z))
-#                 z = self.relu(self.Conv5(z))
-#                 z=self.ConvOut(z)
-#                 return z.squeeze(1) 
-
-#         # Forward function with 2 extra resblock at end
-#         if (DataSetSize >=Factor*4):
-#                 z = self.ConvInit1(self.pad_7Kernel(x2))
-#                 z1 =  self.relu(self.ConvInit2(self.pad_5Kernel(z)))
-#                 z2 =  self.AVG(z1)
-#                 z3 =  self.AVG(z2)
-#                 z4 =  self.AVG(z3)
-#                 # Full scale
-#                 z1 = self.relu(self.Conv11(self.pad_5Kernel(z1)))
-#                 z1 = self.relu(self.Conv12(self.pad_5Kernel(z1)))
-#                 # Downsample1 scale
-#                 z2 = self.relu(self.Conv21(self.pad_5Kernel(z2)))
-#                 z2 = self.relu(self.Conv22(self.pad_5Kernel(z2)))
-#                 z2 =  self.Upsample(z2)
-#                 # Downsample2 scale
-#                 z3 = self.relu(self.Conv31(self.pad_3Kernel_3scale(z3)))
-#                 z3 = self.relu(self.Conv32(self.pad_3Kernel_3scale(z3)))
-#                 z3 = self.Upsample(z3)
-#                 # Downsample3 scale
-#                 z4 = self.relu(self.Conv41(( self.pad_3Kernel_4scale(z4))))
-#                 z4 = self.relu(self.Conv42(( self.pad_3Kernel_4scale(z4))))
-#                 z4 = self.Upsample(z4)
-#                 # Sum all convolution output scales
-#                 z = z1+z2+z3+z4
-#                 #resblock 1
-#                 y = self.relu(z)
-#                 y = self.relu(self.Conv_Post1(self.pad_3Kernel_Res(z)))
-#                 y = self.Conv_Post2(self.pad_3Kernel_Res(y))
-#                 z = z + y   
-#                 z = self.relu(z)
-#                 #resblock 2
-#                 y = self.relu(z)
-#                 y = self.relu(self.Conv_Post3(self.pad_3Kernel_Res(z)))
-#                 y = self.Conv_Post4(self.pad_3Kernel_Res(y))
-#                 z = z + y 
-#                 #resblock 3
-#                 y = self.relu(z)
-#                 y = self.relu(self.Conv_Post5(self.pad_3Kernel_Res(z)))
-#                 y = self.Conv_Post6(self.pad_3Kernel_Res(y))
-#                 z = z + y     
-#                 #resblock 4
-#                 y = self.relu(z)
-#                 y = self.relu(self.Conv_Post7(self.pad_3Kernel_Res(z)))
-#                 y = self.Conv_Post8(self.pad_3Kernel_Res(y))
-#                 z = z + y      
-#                 z = self.relu(z)
-#                 z = self.relu(self.Conv4(z))
-#                 z = self.relu(self.Conv5(z))
-#                 z=self.ConvOut(z)
-#                 return z.squeeze(1) 
+        # Forward function with 4 extra resblock at end
+        if (DataSetSize >= Factor*4):
+            z = self.ConvInit1(self.pad_7Kernel(x2))
+            z1 = self.relu(self.ConvInit2(self.pad_5Kernel(z)))
+            z2 = self.AVG(z1)
+            z3 = self.AVG(z2)
+            z4 = self.AVG(z3)
+            # Full scale
+            z1 = self.relu(self.Conv11(self.pad_5Kernel(z1)))
+            z1 = self.relu(self.Conv12(self.pad_5Kernel(z1)))
+            # Downsample1 scale
+            z2 = self.relu(self.Conv21(self.pad_5Kernel(z2)))
+            z2 = self.relu(self.Conv22(self.pad_5Kernel(z2)))
+            z2 = self.Upsample(z2)
+            # Downsample2 scale
+            z3 = self.relu(self.Conv31(self.pad_3Kernel_3scale(z3)))
+            z3 = self.relu(self.Conv32(self.pad_3Kernel_3scale(z3)))
+            z3 = self.Upsample(z3)
+            # Downsample3 scale
+            z4 = self.relu(self.Conv41(( self.pad_3Kernel_4scale(z4))))
+            z4 = self.relu(self.Conv42(( self.pad_3Kernel_4scale(z4))))
+            z4 = self.Upsample(z4)
+            # Sum all convolution output scales
+            z = z1 + z2 + z3 + z4
+            #resblock 1
+            y = self.relu(z)
+            y = self.relu(self.Conv_Post1(self.pad_3Kernel_Res(z)))
+            y = self.Conv_Post2(self.pad_3Kernel_Res(y))
+            z = z + y
+            z = self.relu(z)
+            #resblock 2
+            y = self.relu(z)
+            y = self.relu(self.Conv_Post3(self.pad_3Kernel_Res(z)))
+            y = self.Conv_Post4(self.pad_3Kernel_Res(y))
+            z = z + y
+            #resblock 3
+            y = self.relu(z)
+            y = self.relu(self.Conv_Post5(self.pad_3Kernel_Res(z)))
+            y = self.Conv_Post6(self.pad_3Kernel_Res(y))
+            z = z + y
+            #resblock 4
+            y = self.relu(z)
+            y = self.relu(self.Conv_Post7(self.pad_3Kernel_Res(z)))
+            y = self.Conv_Post8(self.pad_3Kernel_Res(y))
+            z = z + y
+            z = self.relu(z)
+            z = self.relu(self.Conv4(z))
+            z = self.relu(self.Conv5(z))
+            z = self.ConvOut(z)
+            return z.squeeze(1)
 
 
 
