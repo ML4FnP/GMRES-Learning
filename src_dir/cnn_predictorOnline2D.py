@@ -22,10 +22,12 @@ from src_dir import resid,timer,moving_average,GMRES
 
 from src_dir import StatusPrinter
 
+
+
 class CNNPredictorOnline_2D(object):
 
     def __init__(self,D_in,D_out,Area,dx):
-        
+
         # N is batch size; D_in is input dimension;
         # D_out is output dimension.
         self.D_in=D_in
@@ -37,27 +39,23 @@ class CNNPredictorOnline_2D(object):
 
         ## Increase layer at every multiple of this factor
         self.Factor=40
-        
+
         ## Set Pytorch Seed
         torch.manual_seed(0)
-
 
         ## Construct our model by instantiating the class defined above
         device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
         self.model = CnnOnline_2D(self.D_in,self.D_out).to(device)
 
-
         ## Construct our loss function and an Optimizer. The call to model.parameters()
         ## in the SGD constructor will contain the learnable parameters of the two
         ## nn.Conv modules which are members of the model.
         self.criterion = torch.nn.MSELoss(reduction='mean')
-        
+
         ### Set optimizer
         # self.optimizer = torch.optim.SGD(self.model.parameters(), lr=1e-3)
         # self.optimizer = torch.optim.Adagrad(self.model.parameters(), lr=1e-3)
         self.optimizer = torch.optim.Adam(self.model.parameters(), lr=1e-3)
-
-
 
         ## x will hold entire training set b data
         ## y will hold entire training set solution data
@@ -74,7 +72,7 @@ class CNNPredictorOnline_2D(object):
 
         # Diagnostic data => remove in production
         self.loss_val = list()
-        
+
 
     @property
     def is_trained(self):
@@ -120,7 +118,7 @@ class CNNPredictorOnline_2D(object):
 
                 ## dataset batches
                 batch_x, batch_y = self.x[indices],self.y[indices]
-                
+
                 ## batch of predictions
                 y_pred = self.model(batch_x,self.x.size(0),self.Factor)
 
@@ -128,12 +126,9 @@ class CNNPredictorOnline_2D(object):
                 loss = (self.criterion(y_pred, batch_y))
                 self.loss_val.append(loss.item())
 
-                # ## Print loss to console
-                # print("****************")
-                # print('Total Loss:',loss.item())
-                # print("****************")
+                ## Print loss to console
                 StatusPrinter().update_training(loss.item())
-                
+
                 ## Zero gradients, perform a backward pass, and update the weights.
                 self.optimizer.zero_grad()
                 loss.backward()
@@ -148,7 +143,7 @@ class CNNPredictorOnline_2D(object):
 
         # Adding new data to each batch
         # Note: only adding at most 3 data points to each batch
-        batch_xMix=torch.cat((batch_x,self.xNew)) 
+        batch_xMix=torch.cat((batch_x,self.xNew))
         batch_yMix=torch.cat((batch_y,self.yNew))
 
         ## Forward pass: Compute predicted y by passing x to the model
@@ -158,27 +153,22 @@ class CNNPredictorOnline_2D(object):
         loss = (self.criterion(y_pred, batch_yMix))
         self.loss_val.append(loss.item())
 
-        # ## Print loss to console
-        # print("****************")
-        # print('Final Total Loss:',loss.item())
-        # print("****************")
+        ## Print loss to console
         StatusPrinter().update_training(loss.item())
-        
+
         # Zero gradients, perform a backward pass, and update the weights.
         self.optimizer.zero_grad()
         loss.backward()
         self.optimizer.step()
-                
+
         ## Clear tensors that are used to add data to training set
         self.xNew = torch.empty(0, self.D_in,self.D_in)
         self.yNew = torch.empty(0, self.D_out,self.D_out)
 
         ## Print number of parameters to console
         numparams=sum(p.numel() for p in self.model.parameters() if p.requires_grad)
-        # print('Number of parameters:',numparams)
-        # print('Number of data points collected:',self.x.size(0))
         StatusPrinter().update_training_summary(numparams, self.x.size(0))
-        
+
         self.is_trained = True
 
 
@@ -200,24 +190,79 @@ class CNNPredictorOnline_2D(object):
         # outputs need to be [y_1, y_2, ...]
         device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
         a1=torch.from_numpy(x).unsqueeze_(0).float().to(device)
-        a2=np.squeeze(self.model.forward(a1,self.x.size(0),self.Factor).detach().cpu().numpy()) 
+        a2=np.squeeze(self.model.forward(a1,self.x.size(0),self.Factor).detach().cpu().numpy())
         return a2
 
 
 
+class ArgMap(object):
+    """
+    Map storing the indices of input arguments.
+    """
 
-def cnn_preconditionerOnline_timed_2D(nmax_iter,restart,Area,dx,retrain_freq=1,debug=False,InputDim=0,OutputDim=0,Initial_set=32):
+    def __init__(self, arg_map=[]):
+        """
+        ArgMap(arg_map=["A", "b", "x", ...]) set up argument map where each
+        argument named in the `arg_map` list corresponds to its index.
+        """
+        object.__setattr__(self, "__map", dict())
+        for i, am in enumerate(arg_map):
+            setattr(self, am, i)
+
+
+    def __getattr__(self, attr):
+        return self.vmap()[attr]
+
+
+    def __setattr__(self, attr, val):
+        self.vmap()[attr] = val
+
+
+    def __hasattr__(self, attr):
+        return attr in self.vmap()
+
+
+    def vmap(self):
+        return object.__getattribute__(self, "__map")
+
+
+
+class PreconditionarTrainer(object):
+
+    def __init__(self, preconditioner, arg_map,
+                 retrain_freq=1, debug=False, Initial_set=32):
+
+        self.preconditioner = preconditioner
+        self.retrain_freq   = retrain_freq
+        self.debug          = debug
+        self.Initial_set    = Initial_set
+
+        self.arg_map = arg_map
+
+        self.ML_GMRES_Time_list = list()
+        self.ProbCount          = 0
+        self.prob_debug         = False,
+        self.blist              = list()
+        slef.reslist            = list()
+        slef.Err_list           = list()
+        self.reslist_flat       = list()
+        self.IterErrList        = list()
+
+
+def cnn_preconditionerOnline_timed_2D(trainer):
+
     def my_decorator(func):
-        func.predictor    = CNNPredictorOnline_2D(InputDim,OutputDim,Area,dx)
-        func.retrain_freq = retrain_freq
-        func.debug        = debug
-        func.InputDim     = InputDim
-        func.OutputDim    = OutputDim
+        # func.predictor    = CNNPredictorOnline_2D(InputDim,OutputDim,Area,dx)
 
         @functools.wraps(func)
         def speedup_wrapper(*args, **kwargs):
 
-            A, b, x0, e, ML_GMRES_Time_list,ProbCount,debug,blist,reslist,Err_list,reslist_flat,IterErrList, *eargs = args
+            # A, b, x0, e, *eargs = args
+            A  = self.arg_map.A
+            b  = self.arg_map.b
+            x0 = self.arg_map.x0
+            e  = self.arg_map.e
+
 
             # Initialize NN total train time for iteration with zero value
             trainTime=0.0
@@ -227,21 +272,21 @@ def cnn_preconditionerOnline_timed_2D(nmax_iter,restart,Area,dx,retrain_freq=1,d
             b_norm=np.linalg.norm(b_flat)
             b_Norm_max= np.max(b/b_norm)
 
-            if func.predictor.is_trained:
-                pred_x0 = func.predictor.predict(b/b_norm/b_Norm_max)
+            if trainer.preconditioner.is_trained:
+                pred_x0 = trainer.preconditioner.predict(b/b_norm/b_Norm_max)
                 pred_x0 = pred_x0*b_norm*b_Norm_max
                 # target_test=GMRES(A, b, x0, e, 6,1, True)
                 # IterErr_test = resid(A, target_test, b)
                 # print('size',len(IterErr_test))
                 # print(IterErr_test[5],max(Err_list))
-                # if (IterErr_test[5]>1.75*max(Err_list)): 
+                # if (IterErr_test[5]>1.75*max(Err_list)):
                 #     print('poor prediction,using initial x0')
                 # pred_x0 = x0
             else:
                 pred_x0 = x0
 
 
-            ## Time GMRES function 
+            ## Time GMRES function
             tic = time.perf_counter()
             target  = func(A, b, pred_x0, e, ML_GMRES_Time_list,ProbCount,debug,blist,reslist,Err_list,reslist_flat,IterErrList, *eargs)
             toc = time.perf_counter()
@@ -255,36 +300,36 @@ def cnn_preconditionerOnline_timed_2D(nmax_iter,restart,Area,dx,retrain_freq=1,d
             IterTime=(toc-tic)
             IterErr10=IterErr[22]
             ML_GMRES_Time_list.append(IterTime)
-            Err_list.append(IterErr10)  
+            Err_list.append(IterErr10)
 
             ## Rescale RHS so that network is trained on normalized data
             b=b/b_norm/b_Norm_max
             res=res/b_norm/b_Norm_max
 
 
-            if ProbCount<=Initial_set:
-                func.predictor.add_init(b,res)
-            if ProbCount==Initial_set:
-                timeLoop=func.predictor.retrain_timed()
+            if ProbCount<=trainer.Initial_set:
+                trainer.preconditioner.add_init(b,res)
+            if ProbCount==trainer.Initial_set:
+                timeLoop=trainer.preconditioner.retrain_timed()
                 # print('Initial Training')
 
             ## Compute moving averages used to filter data
-            if ProbCount>Initial_set:
+            if ProbCount>trainer.Initial_set:
                 IterTime_AVG=moving_average(np.asarray(ML_GMRES_Time_list),ProbCount)
                 IterErr10_AVG=moving_average(np.asarray(Err_list),ProbCount)
                 # print(ML_GMRES_Time_list[-1],IterTime_AVG,Err_list[-1],IterErr10_AVG)
 
 
             ## Filter for data to be added to training set
-            if (ProbCount>Initial_set):
-                if (ML_GMRES_Time_list[-1]>IterTime_AVG and Err_list[-1]>IterErr10_AVG  ): 
-                    
+            if (ProbCount>trainer.Initial_set):
+                if (ML_GMRES_Time_list[-1]>IterTime_AVG and Err_list[-1]>IterErr10_AVG  ):
+
                     CoinToss=np.random.rand()
                     if (CoinToss < 0.5):
                         blist.append(b)
                         reslist.append(res)
                         reslist_flat.append(np.reshape(res,(1,-1),order='C').squeeze(0))
-                
+
                     ## check orthogonality of 3 solutions that met training set critera
                     if   len(blist)==3 :
                         resMat=np.asarray(reslist_flat)
@@ -294,32 +339,32 @@ def cnn_preconditionerOnline_timed_2D(nmax_iter,restart,Area,dx,retrain_freq=1,d
                         InnerProd=np.dot(resMat,resMat.T)
                         # print('InnerProd',InnerProd)
 
-                        func.predictor.add(np.asarray(blist)[0], np.asarray(reslist)[0])
+                        trainer.preconditioner.add(np.asarray(blist)[0], np.asarray(reslist)[0])
 
                         cutoff=0.8
                         ## Picking out sufficiently orthogonal subset of 3 solutions gathered
                         if np.abs(InnerProd[0,1]) and np.abs(InnerProd[0,2])<cutoff :
                             if np.abs(InnerProd[1,2])<cutoff :
 
-                                func.predictor.add(np.asarray(blist)[1], np.asarray(reslist)[1])
+                                trainer.preconditioner.add(np.asarray(blist)[1], np.asarray(reslist)[1])
 
-                                func.predictor.add(np.asarray(blist)[2], np.asarray(reslist)[2])
+                                trainer.preconditioner.add(np.asarray(blist)[2], np.asarray(reslist)[2])
 
-                            elif np.abs(InnerProd[1,2])>=cutoff: 
-                                func.predictor.add(np.asarray(blist)[1], np.asarray(reslist)[1])
+                            elif np.abs(InnerProd[1,2])>=cutoff:
+                                trainer.preconditioner.add(np.asarray(blist)[1], np.asarray(reslist)[1])
 
                         elif np.abs(InnerProd[0,1])<cutoff :
-                            func.predictor.add(np.asarray(blist)[1], np.asarray(reslist)[1])
+                            trainer.preconditioner.add(np.asarray(blist)[1], np.asarray(reslist)[1])
 
                         elif np.abs(InnerProd[0,2])<cutoff :
-                            func.predictor.add(np.asarray(blist)[2], np.asarray(reslist)[2])
+                            trainer.preconditioner.add(np.asarray(blist)[2], np.asarray(reslist)[2])
 
                         ## Train if enough data has been collected
-                        if func.predictor.counter>=retrain_freq:
-                            # if func.debug:
+                        if trainer.preconditioner.counter>=trainer.retrain_freq:
+                            # if trainer.debug:
                             #     print("retraining")
-                            #     print(func.predictor.counter)
-                            timeLoop=func.predictor.retrain_timed()
+                            #     print(trainer.preconditioner.counter)
+                            timeLoop=trainer.preconditioner.retrain_timed()
                             trainTime=float(timeLoop[-1])
                             blist=[]
                             reslist=[]
@@ -328,27 +373,6 @@ def cnn_preconditionerOnline_timed_2D(nmax_iter,restart,Area,dx,retrain_freq=1,d
 
         return speedup_wrapper
     return my_decorator
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
