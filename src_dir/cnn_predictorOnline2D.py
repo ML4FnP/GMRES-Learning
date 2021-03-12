@@ -4,7 +4,9 @@
 
 import numpy as np
 
-import functools
+from functools import wraps
+from inspect   import getfullargspec, signature
+from copy      import deepcopy
 
 import time
 
@@ -195,49 +197,95 @@ class CNNPredictorOnline_2D(object):
 
 
 
-class ArgMap(object):
+class ArgsView(object):
     """
-    Map storing the indices of input arguments.
+    A view class that gives access to input arguments
     """
 
-    def __init__(self, arg_map=[]):
-        """
-        ArgMap(arg_map=["A", "b", "x", ...]) set up argument map where each
-        argument named in the `arg_map` list corresponds to its index.
-        """
-        object.__setattr__(self, "__map", dict())
-        for i, am in enumerate(arg_map):
-            setattr(self, am, i)
+    def __init__(self, spec, args, kwargs):
+        self.__spec = spec
+        self.__args = args
+        self.__kwargs = kwargs
+
+        for i, arg_name in enumerate(self.__spec.args):
+            setattr(
+                self,
+                arg_name,
+                self.__arg_view(i, arg_name)
+            )
+
+        self._vargs = []
+        for j in range(i+1, len(self.__args)):
+            self._vargs.append(
+                self.__varg_view(j)
+            )
+
+        for arg_name in self.__spec.kwonlyargs:
+            setattr(
+                self,
+                arg_name,
+                self.__kwoarg_view(arg_name)
+            )
 
 
-    def __getattr__(self, attr):
-        return self.vmap()[attr]
+    @property
+    def _spec(self):
+        return self.__spec
 
 
-    def __setattr__(self, attr, val):
-        self.vmap()[attr] = val
+    def _replace(self, name, data):
+        setattr(self, name, lambda: data)
 
 
-    def __hasattr__(self, attr):
-        return attr in self.vmap()
+    def __arg_view(self, arg_idx, arg_name):
+        if arg_idx < len(self.__args):
+            return lambda: self.__args[arg_idx]
+        if arg_name in self.__kwargs:
+            return lambda: self.__kwargs[arg_name]
+
+        defaults_offset = len(self.__spec.args) - len(self.__spec.defaults)
+        return lambda: self.__spec.defaults[arg_idx - defaults_offset]
 
 
-    def vmap(self):
-        return object.__getattribute__(self, "__map")
+    def __kwoarg_view(self, arg_name):
+        if arg_name in self.__kwargs:
+            return lambda: self.__kwargs[arg_name]
+
+        return lambda: self.__spec.kwonlydefaults[arg_name]
+
+
+    def __varg_view(self, idx):
+        return lambda: self.__args[idx]
+
+
+    def __str__(self):
+        return str(self.__dict__.keys())
+
+
+    def __repr__(self):
+        return repr(self.__dict__.keys())
 
 
 
-class PreconditionarTrainer(object):
+class PreconditionerTrainer(object):
 
-    def __init__(self, preconditioner, arg_map,
-                 retrain_freq=1, debug=False, Initial_set=32):
+    def __init__(
+            self, preconditioner, linop_name="A", prob_rhs_name="b",
+            prob_lhs_name="x", prob_init_name="x0", prob_tolerance_name="e",
+            retrain_freq=1, debug=False, Initial_set=32
+        ):
 
         self.preconditioner = preconditioner
         self.retrain_freq   = retrain_freq
         self.debug          = debug
         self.Initial_set    = Initial_set
 
-        self.arg_map = arg_map
+        # Describe how we get specific arguments out of the input args
+        self.linop_name          = linop_name
+        self.prob_rhs_name       = prob_rhs_name
+        self.prob_lhs_name       = prob_lhs_name
+        self.prob_init_name      = prob_init
+        self.prob_tolerance_name = prob_tolerance_name
 
         self.ML_GMRES_Time_list = list()
         self.ProbCount          = 0
@@ -249,20 +297,56 @@ class PreconditionarTrainer(object):
         self.IterErrList        = list()
 
 
+    def set_args_view(self, spec, args, kwargs):
+        self.args_view = ArgsView(spec, args, kwargs)
+
+
+    def get_problem_data(self):
+        # Construct view into A, x, b, and x0
+        A  = getattr(self.arg_view, trainer.linop_name)
+        b  = getattr(self.arg_view, trainer.prob_rhs_name)
+        x0 = getattr(self.arg_view, trainer.prob_init_name)
+        e  = getattr(self.arg_view, trainer.prob_tolerance_name)
+
+        return A(), b(), x0(), e()
+
+
+    @staticmethod
+    def fill_args(arg_view):
+        args = []
+        for arg in arg_view._spec.args:
+            args.append(
+                getattr(arg_view, arg)()
+            )
+
+        for argv in arg_view._vargs:
+            args.append(
+                argv()
+            )
+
+        kwargs = dict()
+        for kw in arg_view._spec.kwonlyargs:
+            kwargs[kw] = getattr(arg_view, kw)()
+
+        return args, kwargs
+
+
+
 def cnn_preconditionerOnline_timed_2D(trainer):
 
     def my_decorator(func):
         # func.predictor    = CNNPredictorOnline_2D(InputDim,OutputDim,Area,dx)
+        spec = getfullargspec(func)
+        name = func.__name__
 
-        @functools.wraps(func)
+        @wraps(func)
         def speedup_wrapper(*args, **kwargs):
 
-            # A, b, x0, e, *eargs = args
-            A  = self.arg_map.A
-            b  = self.arg_map.b
-            x0 = self.arg_map.x0
-            e  = self.arg_map.e
+            # Construct view into A, x, b, and x0
+            trainer.set_args_view(spec, args, kwargs)
 
+            # Get problem data:
+            A, b, x0, e = trainer.get_problem_data()
 
             # Initialize NN total train time for iteration with zero value
             trainTime=0.0
@@ -278,17 +362,23 @@ def cnn_preconditionerOnline_timed_2D(trainer):
                 # target_test=GMRES(A, b, x0, e, 6,1, True)
                 # IterErr_test = resid(A, target_test, b)
                 # print('size',len(IterErr_test))
-                # print(IterErr_test[5],max(Err_list))
-                # if (IterErr_test[5]>1.75*max(Err_list)):
+                # print(IterErr_test[5],max(trainer.Err_list))
+                # if (IterErr_test[5]>1.75*max(trainer.Err_list)):
                 #     print('poor prediction,using initial x0')
                 # pred_x0 = x0
             else:
                 pred_x0 = x0
 
 
+            # Replace the input initial guess witht the NN preconditioner
+            args_view = deepcopy(trainer.args_view)
+            args_view._replace(trainer.prob_init_name, pred_x0)
+            new_args, new_kwargs = PreconditionerTrainer.fill_args(args_view)
+
             ## Time GMRES function
             tic = time.perf_counter()
-            target  = func(A, b, pred_x0, e, ML_GMRES_Time_list,ProbCount,debug,blist,reslist,Err_list,reslist_flat,IterErrList, *eargs)
+            # target  = func(A, b, pred_x0, e, ML_GMRES_Time_list,ProbCount,debug,blist,reslist,Err_list,reslist_flat,IterErrList, *eargs)
+            target = func(*new_args, *new_kwargs)
             toc = time.perf_counter()
 
             ## Pick out solution from residual list
@@ -296,68 +386,100 @@ def cnn_preconditionerOnline_timed_2D(trainer):
 
             ## Write diagnostic data (error and time-to solution) to list
             IterErr = resid(A, target, b)
-            IterErrList.append(IterErr)
-            IterTime=(toc-tic)
-            IterErr10=IterErr[22]
-            ML_GMRES_Time_list.append(IterTime)
-            Err_list.append(IterErr10)
+            trainer.IterErrList.append(IterErr)
+            IterTime  = (toc-tic)
+            IterErr10 = IterErr[22]
+            trainer.ML_GMRES_Time_list.append(IterTime)
+            trainer.Err_list.append(IterErr10)
 
             ## Rescale RHS so that network is trained on normalized data
             b=b/b_norm/b_Norm_max
             res=res/b_norm/b_Norm_max
 
 
-            if ProbCount<=trainer.Initial_set:
+            if trainer.ProbCount <= trainer.Initial_set:
                 trainer.preconditioner.add_init(b,res)
-            if ProbCount==trainer.Initial_set:
+            if trainer.ProbCount == trainer.Initial_set:
                 timeLoop=trainer.preconditioner.retrain_timed()
                 # print('Initial Training')
 
             ## Compute moving averages used to filter data
-            if ProbCount>trainer.Initial_set:
-                IterTime_AVG=moving_average(np.asarray(ML_GMRES_Time_list),ProbCount)
-                IterErr10_AVG=moving_average(np.asarray(Err_list),ProbCount)
-                # print(ML_GMRES_Time_list[-1],IterTime_AVG,Err_list[-1],IterErr10_AVG)
+            if trainer.ProbCount > trainer.Initial_set:
+                IterTime_AVG = moving_average(
+                        np.asarray(trainer.ML_GMRES_Time_list),
+                        trainer.ProbCount
+                    )
+                IterErr10_AVG = moving_average(
+                        np.asarray(trainer.Err_list),
+                        trainer.ProbCount
+                    )
+                # print(trianer.ML_GMRES_Time_list[-1],IterTime_AVG,trainer.Err_list[-1],IterErr10_AVG)
 
 
             ## Filter for data to be added to training set
-            if (ProbCount>trainer.Initial_set):
-                if (ML_GMRES_Time_list[-1]>IterTime_AVG and Err_list[-1]>IterErr10_AVG  ):
+            if trainer.ProbCount > trainer.Initial_set:
+                if trainer.ML_GMRES_Time_list[-1]>IterTime_AVG and trainer.Err_list[-1]>IterErr10_AVG:
 
                     CoinToss=np.random.rand()
                     if (CoinToss < 0.5):
-                        blist.append(b)
-                        reslist.append(res)
-                        reslist_flat.append(np.reshape(res,(1,-1),order='C').squeeze(0))
+                        trainer.blist.append(b)
+                        trainer.reslist.append(res)
+                        trainer.reslist_flat.append(
+                                np.reshape(res,(1,-1), order='C').squeeze(0)
+                            )
 
                     ## check orthogonality of 3 solutions that met training set critera
-                    if   len(blist)==3 :
-                        resMat=np.asarray(reslist_flat)
-                        resMat_square=resMat**2
-                        row_sums = resMat_square.sum(axis=1,keepdims=True)
-                        resMat= resMat/np.sqrt(row_sums)
-                        InnerProd=np.dot(resMat,resMat.T)
+                    if len(trainer.blist) == 3 :
+                        resMat        = np.asarray(trainer.reslist_flat)
+                        resMat_square = resMat**2
+                        row_sums      = resMat_square.sum(axis=1, keepdims=True)
+                        resMat        = resMat/np.sqrt(row_sums)
+                        InnerProd     = np.dot(resMat, resMat.T)
                         # print('InnerProd',InnerProd)
 
-                        trainer.preconditioner.add(np.asarray(blist)[0], np.asarray(reslist)[0])
+                        #TODO: Do we need np.asarray here?
+                        trainer.preconditioner.add(
+                                np.asarray(trianer.blist)[0],
+                                np.asarray(trainer.reslist)[0]
+                            )
 
                         cutoff=0.8
                         ## Picking out sufficiently orthogonal subset of 3 solutions gathered
                         if np.abs(InnerProd[0,1]) and np.abs(InnerProd[0,2])<cutoff :
                             if np.abs(InnerProd[1,2])<cutoff :
 
-                                trainer.preconditioner.add(np.asarray(blist)[1], np.asarray(reslist)[1])
+                                #TODO: Do we need np.asarray here?
+                                trainer.preconditioner.add(
+                                        np.asarray(trainer.blist)[1],
+                                        np.asarray(trainer.reslist)[1]
+                                    )
 
-                                trainer.preconditioner.add(np.asarray(blist)[2], np.asarray(reslist)[2])
+                                #TODO: Do we need np.asarray here?
+                                trainer.preconditioner.add(
+                                        np.asarray(trainer.blist)[2],
+                                        np.asarray(trainer.reslist)[2]
+                                    )
 
                             elif np.abs(InnerProd[1,2])>=cutoff:
-                                trainer.preconditioner.add(np.asarray(blist)[1], np.asarray(reslist)[1])
+                                #TODO: Do we need np.asarray here?
+                                trainer.preconditioner.add(
+                                        np.asarray(trainer.blist)[1],
+                                        np.asarray(trainer.reslist)[1]
+                                    )
 
                         elif np.abs(InnerProd[0,1])<cutoff :
-                            trainer.preconditioner.add(np.asarray(blist)[1], np.asarray(reslist)[1])
+                            #TODO: Do we need np.asarray here?
+                            trainer.preconditioner.add(
+                                    np.asarray(trainer.blist)[1],
+                                    np.asarray(trainer.reslist)[1]
+                                )
 
                         elif np.abs(InnerProd[0,2])<cutoff :
-                            trainer.preconditioner.add(np.asarray(blist)[2], np.asarray(reslist)[2])
+                            #TODO: Do we need np.asarray here?
+                            trainer.preconditioner.add(
+                                    np.asarray(trainer.blist)[2],
+                                    np.asarray(trainer.reslist)[2]
+                                )
 
                         ## Train if enough data has been collected
                         if trainer.preconditioner.counter>=trainer.retrain_freq:
@@ -366,12 +488,14 @@ def cnn_preconditionerOnline_timed_2D(trainer):
                             #     print(trainer.preconditioner.counter)
                             timeLoop=trainer.preconditioner.retrain_timed()
                             trainTime=float(timeLoop[-1])
-                            blist=[]
-                            reslist=[]
-                            reslist_flat=[]
-            return target,ML_GMRES_Time_list,trainTime,blist,reslist,Err_list,reslist_flat,IterErrList
+                            trainer.blist        = []
+                            trainer.reslist      = []
+                            trainer.reslist_flat = []
+            return target# ,ML_GMRES_Time_list,trainTime,blist,reslist,Err_list,reslist_flat,IterErrList
 
+        speedup_wrapper.__signature__ = signature(func)
         return speedup_wrapper
+
     return my_decorator
 
 
