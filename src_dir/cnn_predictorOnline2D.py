@@ -441,7 +441,7 @@ def cnn_preconditionerOnline_timed_2D(trainer):
 
                         #TODO: Do we need np.asarray here?
                         trainer.preconditioner.add(
-                                np.asarray(trianer.blist)[0],
+                                np.asarray(trainer.blist)[0],
                                 np.asarray(trainer.reslist)[0]
                             )
 
@@ -490,6 +490,8 @@ def cnn_preconditionerOnline_timed_2D(trainer):
                             #     print(trainer.preconditioner.counter)
                             timeLoop=trainer.preconditioner.retrain_timed()
                             # trainTime=float(timeLoop[-1])
+                            # TODO: we need a data retention policy for things
+                            # like the train time history
                             trainer.trainTime.append(timeLoop[-1])
                             trainer.blist        = []
                             trainer.reslist      = []
