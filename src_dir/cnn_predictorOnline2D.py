@@ -18,7 +18,7 @@ from torch.nn       import Linear, ReLU, CrossEntropyLoss, \
 
 from torch.optim    import Adam, SGD
 
-from src_dir.cnn_collectionOnline2D import CnnOnline_2D
+# from src_dir.cnn_collectionOnline2D import CnnOnline_2D
 
 from src_dir import resid,timer,moving_average,GMRES
 
@@ -28,7 +28,7 @@ from src_dir import StatusPrinter
 
 class CNNPredictorOnline_2D(object):
 
-    def __init__(self,D_in,D_out,Area,dx):
+    def __init__(self, D_in, D_out, Area, dx, Model):
 
         # N is batch size; D_in is input dimension;
         # D_out is output dimension.
@@ -47,7 +47,8 @@ class CNNPredictorOnline_2D(object):
 
         ## Construct our model by instantiating the class defined above
         device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-        self.model = CnnOnline_2D(self.D_in,self.D_out).to(device)
+        # self.model = CnnOnline_2D(self.D_in,self.D_out).to(device)
+        self.model = Model(self.D_in, self.D_out).to(device)
 
         ## Construct our loss function and an Optimizer. The call to model.parameters()
         ## in the SGD constructor will contain the learnable parameters of the two
@@ -284,15 +285,15 @@ class PreconditionerTrainer(object):
         self.linop_name          = linop_name
         self.prob_rhs_name       = prob_rhs_name
         self.prob_lhs_name       = prob_lhs_name
-        self.prob_init_name      = prob_init
+        self.prob_init_name      = prob_init_name
         self.prob_tolerance_name = prob_tolerance_name
 
         self.ML_GMRES_Time_list = list()
         self.ProbCount          = 0
         self.prob_debug         = False,
         self.blist              = list()
-        slef.reslist            = list()
-        slef.Err_list           = list()
+        self.reslist            = list()
+        self.Err_list           = list()
         self.reslist_flat       = list()
         self.IterErrList        = list()
 
@@ -429,7 +430,7 @@ def cnn_preconditionerOnline_timed_2D(trainer):
                             )
 
                     ## check orthogonality of 3 solutions that met training set critera
-                    if len(trainer.blist) == 3 :
+                    if len(trainer.blist) == 3:
                         resMat        = np.asarray(trainer.reslist_flat)
                         resMat_square = resMat**2
                         row_sums      = resMat_square.sum(axis=1, keepdims=True)
@@ -445,8 +446,8 @@ def cnn_preconditionerOnline_timed_2D(trainer):
 
                         cutoff=0.8
                         ## Picking out sufficiently orthogonal subset of 3 solutions gathered
-                        if np.abs(InnerProd[0,1]) and np.abs(InnerProd[0,2])<cutoff :
-                            if np.abs(InnerProd[1,2])<cutoff :
+                        if np.abs(InnerProd[0,1]) and np.abs(InnerProd[0,2])<cutoff:
+                            if np.abs(InnerProd[1,2]) < cutoff:
 
                                 #TODO: Do we need np.asarray here?
                                 trainer.preconditioner.add(
@@ -460,21 +461,21 @@ def cnn_preconditionerOnline_timed_2D(trainer):
                                         np.asarray(trainer.reslist)[2]
                                     )
 
-                            elif np.abs(InnerProd[1,2])>=cutoff:
+                            elif np.abs(InnerProd[1,2]) >= cutoff:
                                 #TODO: Do we need np.asarray here?
                                 trainer.preconditioner.add(
                                         np.asarray(trainer.blist)[1],
                                         np.asarray(trainer.reslist)[1]
                                     )
 
-                        elif np.abs(InnerProd[0,1])<cutoff :
+                        elif np.abs(InnerProd[0,1]) < cutoff :
                             #TODO: Do we need np.asarray here?
                             trainer.preconditioner.add(
                                     np.asarray(trainer.blist)[1],
                                     np.asarray(trainer.reslist)[1]
                                 )
 
-                        elif np.abs(InnerProd[0,2])<cutoff :
+                        elif np.abs(InnerProd[0,2]) < cutoff :
                             #TODO: Do we need np.asarray here?
                             trainer.preconditioner.add(
                                     np.asarray(trainer.blist)[2],
