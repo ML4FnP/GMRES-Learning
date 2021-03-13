@@ -305,10 +305,10 @@ class PreconditionerTrainer(object):
 
     def get_problem_data(self):
         # Construct view into A, x, b, and x0
-        A  = getattr(self.arg_view, trainer.linop_name)
-        b  = getattr(self.arg_view, trainer.prob_rhs_name)
-        x0 = getattr(self.arg_view, trainer.prob_init_name)
-        e  = getattr(self.arg_view, trainer.prob_tolerance_name)
+        A  = getattr(self.args_view, self.linop_name)
+        b  = getattr(self.args_view, self.prob_rhs_name)
+        x0 = getattr(self.args_view, self.prob_init_name)
+        e  = getattr(self.args_view, self.prob_tolerance_name)
 
         return A(), b(), x0(), e()
 
