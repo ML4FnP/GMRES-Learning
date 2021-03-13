@@ -296,6 +296,7 @@ class PreconditionerTrainer(object):
         self.Err_list           = list()
         self.reslist_flat       = list()
         self.IterErrList        = list()
+        self.trainTime          = list()
 
 
     def set_args_view(self, spec, args, kwargs):
@@ -350,7 +351,7 @@ def cnn_preconditionerOnline_timed_2D(trainer):
             A, b, x0, e = trainer.get_problem_data()
 
             # Initialize NN total train time for iteration with zero value
-            trainTime=0.0
+            # trainTime = 0.0
 
             ## Compute 2-norm of RHS(for scaling RHS input to network)
             b_flat=np.reshape(b,(1,-1),order='F').squeeze(0)
@@ -488,13 +489,15 @@ def cnn_preconditionerOnline_timed_2D(trainer):
                             #     print("retraining")
                             #     print(trainer.preconditioner.counter)
                             timeLoop=trainer.preconditioner.retrain_timed()
-                            trainTime=float(timeLoop[-1])
+                            # trainTime=float(timeLoop[-1])
+                            trainer.trainTime.append(timeLoop[-1])
                             trainer.blist        = []
                             trainer.reslist      = []
                             trainer.reslist_flat = []
             return target# ,ML_GMRES_Time_list,trainTime,blist,reslist,Err_list,reslist_flat,IterErrList
 
         speedup_wrapper.__signature__ = signature(func)
+
         return speedup_wrapper
 
     return my_decorator
