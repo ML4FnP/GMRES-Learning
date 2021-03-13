@@ -2,9 +2,11 @@
 # -*- coding: utf-8 -*-
 
 import numpy as np
-import functools
 import time
 import math
+
+from functools import wraps
+from inspect   import signature
 
 # define consistent linear math that stick with `np.array` (rather than
 # `np.matrix`) => this will mean that we're sticking with the "minimal" data
@@ -40,8 +42,8 @@ mrange = lambda n: range(1, n + 1)
 
 def timer(func):
     """Print the runtime of the decorated function"""
-    
-    @functools.wraps(func)
+
+    @wraps(func)
     def wrapper_timer(*args, **kwargs):
         start_time = time.perf_counter()  # 1
         value = func(*args, **kwargs)
@@ -49,8 +51,11 @@ def timer(func):
         run_time = end_time - start_time  # 3
         # print(f"Finished {func.__name__!r} in {run_time:.4f} secs")
         return value,run_time
-    
-    return wrapper_timer #  no "()" here, we need the object to be returned.
+
+    # preserve the original function signature
+    wrapper_timer.__signature__ = signature(func)
+
+    return wrapper_timer
 
 
 
