@@ -337,7 +337,6 @@ class PreconditionerTrainer(object):
 def cnn_preconditionerOnline_timed_2D(trainer):
 
     def my_decorator(func):
-        # func.predictor    = CNNPredictorOnline_2D(InputDim,OutputDim,Area,dx)
         spec = getfullargspec(func)
         name = func.__name__
 
@@ -350,17 +349,14 @@ def cnn_preconditionerOnline_timed_2D(trainer):
             # Get problem data:
             A, b, x0, e = trainer.get_problem_data()
 
-            # Initialize NN total train time for iteration with zero value
-            # trainTime = 0.0
-
             ## Compute 2-norm of RHS(for scaling RHS input to network)
-            b_flat=np.reshape(b,(1,-1),order='F').squeeze(0)
-            b_norm=np.linalg.norm(b_flat)
-            b_Norm_max= np.max(b/b_norm)
+            b_flat     = np.reshape(b, (1,-1), order='F').squeeze(0)
+            b_norm     = np.linalg.norm(b_flat)
+            b_Norm_max = np.max(b/b_norm)
 
             if trainer.preconditioner.is_trained:
                 pred_x0 = trainer.preconditioner.predict(b/b_norm/b_Norm_max)
-                pred_x0 = pred_x0*b_norm*b_Norm_max
+                pred_x0 = pred_x0 * b_norm*b_Norm_max
                 # target_test=GMRES(A, b, x0, e, 6,1, True)
                 # IterErr_test = resid(A, target_test, b)
                 # print('size',len(IterErr_test))
@@ -379,7 +375,6 @@ def cnn_preconditionerOnline_timed_2D(trainer):
 
             ## Time GMRES function
             tic = time.perf_counter()
-            # target  = func(A, b, pred_x0, e, ML_GMRES_Time_list,ProbCount,debug,blist,reslist,Err_list,reslist_flat,IterErrList, *eargs)
             target = func(*new_args, *new_kwargs)
             toc = time.perf_counter()
 
@@ -395,15 +390,14 @@ def cnn_preconditionerOnline_timed_2D(trainer):
             trainer.Err_list.append(IterErr10)
 
             ## Rescale RHS so that network is trained on normalized data
-            b=b/b_norm/b_Norm_max
-            res=res/b_norm/b_Norm_max
+            b   = b/b_norm/b_Norm_max
+            res = res/b_norm/b_Norm_max
 
 
             if trainer.ProbCount <= trainer.Initial_set:
                 trainer.preconditioner.add_init(b,res)
             if trainer.ProbCount == trainer.Initial_set:
-                timeLoop=trainer.preconditioner.retrain_timed()
-                # print('Initial Training')
+                timeLoop = trainer.preconditioner.retrain_timed()
 
             ## Compute moving averages used to filter data
             if trainer.ProbCount > trainer.Initial_set:
@@ -415,12 +409,10 @@ def cnn_preconditionerOnline_timed_2D(trainer):
                         np.asarray(trainer.Err_list),
                         trainer.ProbCount
                     )
-                # print(trianer.ML_GMRES_Time_list[-1],IterTime_AVG,trainer.Err_list[-1],IterErr10_AVG)
-
 
             ## Filter for data to be added to training set
             if trainer.ProbCount > trainer.Initial_set:
-                if trainer.ML_GMRES_Time_list[-1]>IterTime_AVG and trainer.Err_list[-1]>IterErr10_AVG:
+                if trainer.ML_GMRES_Time_list[-1] > IterTime_AVG and trainer.Err_list[-1] > IterErr10_AVG:
 
                     CoinToss=np.random.rand()
                     if (CoinToss < 0.5):
@@ -437,7 +429,6 @@ def cnn_preconditionerOnline_timed_2D(trainer):
                         row_sums      = resMat_square.sum(axis=1, keepdims=True)
                         resMat        = resMat/np.sqrt(row_sums)
                         InnerProd     = np.dot(resMat, resMat.T)
-                        # print('InnerProd',InnerProd)
 
                         #TODO: Do we need np.asarray here?
                         trainer.preconditioner.add(
@@ -447,7 +438,7 @@ def cnn_preconditionerOnline_timed_2D(trainer):
 
                         cutoff=0.8
                         ## Picking out sufficiently orthogonal subset of 3 solutions gathered
-                        if np.abs(InnerProd[0,1]) and np.abs(InnerProd[0,2])<cutoff:
+                        if np.abs(InnerProd[0,1]) and np.abs(InnerProd[0,2]) < cutoff:
                             if np.abs(InnerProd[1,2]) < cutoff:
 
                                 #TODO: Do we need np.asarray here?
@@ -484,7 +475,7 @@ def cnn_preconditionerOnline_timed_2D(trainer):
                                 )
 
                         ## Train if enough data has been collected
-                        if trainer.preconditioner.counter>=trainer.retrain_freq:
+                        if trainer.preconditioner.counter >= trainer.retrain_freq:
                             # if trainer.debug:
                             #     print("retraining")
                             #     print(trainer.preconditioner.counter)
@@ -496,7 +487,7 @@ def cnn_preconditionerOnline_timed_2D(trainer):
                             trainer.blist        = []
                             trainer.reslist      = []
                             trainer.reslist_flat = []
-            return target# ,ML_GMRES_Time_list,trainTime,blist,reslist,Err_list,reslist_flat,IterErrList
+            return target
 
         speedup_wrapper.__signature__ = signature(func)
 
