@@ -350,8 +350,27 @@ class PreconditionerTrainer(object):
         return args, kwargs
 
 
-    def predict(self, A, b):
-        pass
+    def predict(self, A, b, x0):
+        # Compute 2-norm of RHS(for scaling RHS input to network)
+        b_flat     = np.reshape(b, (1,-1), order='F').squeeze(0)
+        b_norm     = np.linalg.norm(b_flat)
+        b_Norm_max = np.max(b/b_norm)
+
+        if self.preconditioner.is_trained:
+            pred_x0 = self.preconditioner.predict(b/b_norm/b_Norm_max)
+            pred_x0 = pred_x0 * b_norm * b_Norm_max
+            # target_test=GMRES(A, b, x0, e, 6,1, True)
+            # IterErr_test = resid(A, target_test, b)
+            # print('size',len(IterErr_test))
+            # print(IterErr_test[5],max(trainer.Err_list))
+            # if (IterErr_test[5]>1.75*max(trainer.Err_list)):
+            #     print('poor prediction,using initial x0')
+            # pred_x0 = x0
+        else:
+            pred_x0 = x0
+
+        return pred_x0, b_norm, b_Norm_max
+
 
 
 
@@ -370,39 +389,23 @@ def cnn_preconditionerOnline_timed_2D(trainer):
             # Get problem data:
             A, b, x0, e = trainer.get_problem_data()
 
-            ## Compute 2-norm of RHS(for scaling RHS input to network)
-            b_flat     = np.reshape(b, (1,-1), order='F').squeeze(0)
-            b_norm     = np.linalg.norm(b_flat)
-            b_Norm_max = np.max(b/b_norm)
-
-            if trainer.preconditioner.is_trained:
-                pred_x0 = trainer.preconditioner.predict(b/b_norm/b_Norm_max)
-                pred_x0 = pred_x0 * b_norm * b_Norm_max
-                # target_test=GMRES(A, b, x0, e, 6,1, True)
-                # IterErr_test = resid(A, target_test, b)
-                # print('size',len(IterErr_test))
-                # print(IterErr_test[5],max(trainer.Err_list))
-                # if (IterErr_test[5]>1.75*max(trainer.Err_list)):
-                #     print('poor prediction,using initial x0')
-                # pred_x0 = x0
-            else:
-                pred_x0 = x0
-
+            # Use predictor to generate initial guess:
+            pred_x0, b_norm, b_Norm_max = trainer.predict(A, b, x0)
 
             # Replace the input initial guess witht the NN preconditioner
             args_view = deepcopy(trainer.args_view)
             args_view._replace(trainer.prob_init_name, pred_x0)
             new_args, new_kwargs = PreconditionerTrainer.fill_args(args_view)
 
-            ## Time GMRES function
+            # Run function (and time it)
             tic = time.perf_counter()
             target = func(*new_args, **new_kwargs)
             toc = time.perf_counter()
 
-            ## Pick out solution from residual list
+            # Pick out solution from residual list
             res = target[-1]
 
-            ## Write diagnostic data (error and time-to solution) to list
+            # Write diagnostic data (error and time-to solution) to list
             IterErr = resid(A, target, b)
             trainer.IterErrList.append(IterErr)
             IterTime  = (toc-tic)
@@ -410,13 +413,13 @@ def cnn_preconditionerOnline_timed_2D(trainer):
             trainer.ML_GMRES_Time_list.append(IterTime)
             trainer.Err_list.append(IterErr10)
 
-            ## Rescale RHS so that network is trained on normalized data
+            # Rescale RHS so that network is trained on normalized data
             b   = b/b_norm/b_Norm_max
             res = res/b_norm/b_Norm_max
 
 
             if trainer.ProbCount <= trainer.Initial_set:
-                trainer.preconditioner.add_init(b,res)
+                trainer.preconditioner.add_init(b, res)
             if trainer.ProbCount == trainer.Initial_set:
                 timeLoop = trainer.preconditioner.retrain_timed()
 
