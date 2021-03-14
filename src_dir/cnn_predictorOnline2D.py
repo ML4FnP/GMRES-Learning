@@ -304,7 +304,7 @@ class PreconditionerTrainer(object):
 
 
     def get_problem_data(self):
-        # Construct view into A, x, b, and x0
+        # Construct view into A, b, x0, and e
         A  = getattr(self.args_view, self.linop_name)
         b  = getattr(self.args_view, self.prob_rhs_name)
         x0 = getattr(self.args_view, self.prob_init_name)
@@ -375,7 +375,7 @@ def cnn_preconditionerOnline_timed_2D(trainer):
 
             ## Time GMRES function
             tic = time.perf_counter()
-            target = func(*new_args, *new_kwargs)
+            target = func(*new_args, **new_kwargs)
             toc = time.perf_counter()
 
             ## Pick out solution from residual list
