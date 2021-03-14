@@ -32,15 +32,15 @@ class CNNPredictorOnline_2D(object):
 
         # N is batch size; D_in is input dimension;
         # D_out is output dimension.
-        self.D_in=D_in
-        self.D_out=D_out
+        self.D_in  = D_in
+        self.D_out = D_out
 
         ## Domain area and finite difference stencil width
-        self.Area=Area
-        self.dx=dx
+        self.Area = Area
+        self.dx   = dx
 
         ## Increase layer at every multiple of this factor
-        self.Factor=40
+        self.Factor = 40
 
         ## Set Pytorch Seed
         torch.manual_seed(0)
@@ -62,13 +62,13 @@ class CNNPredictorOnline_2D(object):
 
         ## x will hold entire training set b data
         ## y will hold entire training set solution data
-        self.x = torch.empty(0, self.D_in,self.D_in).to(device)
-        self.y = torch.empty(0, self.D_out,self.D_out).to(device)
+        self.x = torch.empty(0, self.D_in,  self.D_in).to(device)
+        self.y = torch.empty(0, self.D_out, self.D_out).to(device)
 
         # xNew holds new b additions to training set at the current time
         # yNew holds new solution (x) additions to training set at the current time
-        self.xNew = torch.empty(0, self.D_in,self.D_in)
-        self.yNew = torch.empty(0, self.D_out,self.D_out)
+        self.xNew = torch.empty(0, self.D_in,  self.D_in)
+        self.yNew = torch.empty(0, self.D_out, self.D_out)
 
         # Set train flag
         self._is_trained = False
@@ -89,7 +89,7 @@ class CNNPredictorOnline_2D(object):
 
     @property
     def counter(self):
-        # Counter is based off of the data set to be added to training set 
+        # Counter is based off of the data set to be added to training set
         return self.xNew.size(0)
 
 
@@ -107,14 +107,14 @@ class CNNPredictorOnline_2D(object):
         self.loss_val = list()  # clear loss val history
         self.loss_val.append(10.0)
 
-        batch_size=16
-        numEpochs=1000
-        e1=1e-15
-        epoch=0
+        batch_size = 16
+        numEpochs  = 1000
+        e1         = 1e-15
+        epoch      = 0
 
-        while self.loss_val[-1]> e1 and epoch<numEpochs-1:
+        while self.loss_val[-1] > e1 and epoch < numEpochs - 1:
             permutation = torch.randperm(self.x.size()[0])
-            for t in range(0,self.x.size()[0],batch_size):
+            for t in range(0, self.x.size()[0], batch_size):
 
                 ## indicies of random batch
                 indices = permutation[t:t+batch_size]
@@ -141,16 +141,16 @@ class CNNPredictorOnline_2D(object):
         ## Add recent data to final batch and take one more step:
 
         permutation = torch.randperm(self.x.size()[0])
-        indices = permutation[0:0+batch_size]
-        batch_x, batch_y = self.x[indices],self.y[indices]
+        indices     = permutation[0:0 + batch_size]
+        batch_x, batch_y = self.x[indices], self.y[indices]
 
         # Adding new data to each batch
         # Note: only adding at most 3 data points to each batch
-        batch_xMix=torch.cat((batch_x,self.xNew))
-        batch_yMix=torch.cat((batch_y,self.yNew))
+        batch_xMix = torch.cat((batch_x, self.xNew))
+        batch_yMix = torch.cat((batch_y, self.yNew))
 
         ## Forward pass: Compute predicted y by passing x to the model
-        y_pred = self.model(batch_xMix,self.x.size(0),self.Factor)
+        y_pred = self.model(batch_xMix, self.x.size(0), self.Factor)
 
         ## Compute and print loss
         loss = (self.criterion(y_pred, batch_yMix))
@@ -165,26 +165,39 @@ class CNNPredictorOnline_2D(object):
         self.optimizer.step()
 
         ## Clear tensors that are used to add data to training set
-        self.xNew = torch.empty(0, self.D_in,self.D_in)
-        self.yNew = torch.empty(0, self.D_out,self.D_out)
+        self.xNew = torch.empty(0, self.D_in,  self.D_in)
+        self.yNew = torch.empty(0, self.D_out, self.D_out)
 
         ## Print number of parameters to console
-        numparams=sum(p.numel() for p in self.model.parameters() if p.requires_grad)
+        numparams = sum(
+                p.numel() for p in self.model.parameters() if p.requires_grad
+            )
         StatusPrinter().update_training_summary(numparams, self.x.size(0))
 
         self.is_trained = True
 
 
     def add(self, x, y):
-        # TODO: don't use `torch.cat` in this incremental mode => will scale poorly
-        # instead: use batched buffers
-        self.xNew = torch.cat((self.xNew, torch.from_numpy(x).unsqueeze_(0).float()), 0)
-        self.yNew = torch.cat((self.yNew, torch.from_numpy(y).unsqueeze_(0).float()), 0)
+        # TODO: don't use `torch.cat` in this incremental mode => will scale
+        # poorly instead: use batched buffers
+        self.xNew = torch.cat(
+                (self.xNew, torch.from_numpy(x).unsqueeze_(0).float()), 0
+            )
+        self.yNew = torch.cat(
+                (self.yNew, torch.from_numpy(y).unsqueeze_(0).float()), 0
+            )
+
 
     def add_init(self, x, y):
         device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-        self.x = torch.cat((self.x, torch.from_numpy(x).unsqueeze_(0).float().to(device)), 0)
-        self.y = torch.cat((self.y, torch.from_numpy(y).unsqueeze_(0).float().to(device)), 0)
+        self.x = torch.cat(
+                (self.x, torch.from_numpy(x).unsqueeze_(0).float().to(device)),
+                0
+            )
+        self.y = torch.cat(
+                (self.y, torch.from_numpy(y).unsqueeze_(0).float().to(device)),
+                0
+            )
 
 
     def predict(self, x):
@@ -192,8 +205,12 @@ class CNNPredictorOnline_2D(object):
         # outputs need to be numpy (non-grad => detach)
         # outputs need to be [y_1, y_2, ...]
         device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-        a1=torch.from_numpy(x).unsqueeze_(0).float().to(device)
-        a2=np.squeeze(self.model.forward(a1,self.x.size(0),self.Factor).detach().cpu().numpy())
+        a1 = torch.from_numpy(x).unsqueeze_(0).float().to(device)
+        a2 = np.squeeze(
+                self.model.forward(
+                    a1, self.x.size(0), self.Factor
+                ).detach().cpu().numpy()
+            )
         return a2
 
 
@@ -333,6 +350,10 @@ class PreconditionerTrainer(object):
         return args, kwargs
 
 
+    def predict(self, A, b):
+        pass
+
+
 
 def cnn_preconditionerOnline_timed_2D(trainer):
 
@@ -356,7 +377,7 @@ def cnn_preconditionerOnline_timed_2D(trainer):
 
             if trainer.preconditioner.is_trained:
                 pred_x0 = trainer.preconditioner.predict(b/b_norm/b_Norm_max)
-                pred_x0 = pred_x0 * b_norm*b_Norm_max
+                pred_x0 = pred_x0 * b_norm * b_Norm_max
                 # target_test=GMRES(A, b, x0, e, 6,1, True)
                 # IterErr_test = resid(A, target_test, b)
                 # print('size',len(IterErr_test))
