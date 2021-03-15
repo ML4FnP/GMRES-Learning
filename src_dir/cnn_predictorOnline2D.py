@@ -366,15 +366,15 @@ class PreconditionerTrainer(object):
     def add_single(self, res, b, scale):
 
         # Rescale RHS so that network is trained on normalized data
-        b   = b/scale
-        res = res/scale
+        b   = b   / scale
+        res = res / scale
 
         if self.ProbCount <= self.Initial_set:
             self.preconditioner.add_init(b, res)
         if self.ProbCount == self.Initial_set:
             timeLoop = self.preconditioner.retrain_timed()
 
-        ## Compute moving averages used to filter data
+        # Compute moving averages used to filter data
         if self.ProbCount > self.Initial_set:
             IterTime_AVG = moving_average(
                     np.asarray(self.ML_GMRES_Time_list),
@@ -385,11 +385,12 @@ class PreconditionerTrainer(object):
                     self.ProbCount
                 )
 
-        ## Filter for data to be added to training set
+        # Filter for data to be added to training set
         if self.ProbCount > self.Initial_set:
-            if self.ML_GMRES_Time_list[-1] > IterTime_AVG and self.Err_list[-1] > IterErr10_AVG:
+            if self.ML_GMRES_Time_list[-1] > IterTime_AVG \
+            and self.Err_list[-1] > IterErr10_AVG:
 
-                CoinToss=np.random.rand()
+                CoinToss = np.random.rand()
                 if (CoinToss < 0.5):
                     self.blist.append(b)
                     self.reslist.append(res)
@@ -397,7 +398,8 @@ class PreconditionerTrainer(object):
                             np.reshape(res,(1,-1), order='C').squeeze(0)
                         )
 
-                ## check orthogonality of 3 solutions that met training set critera
+                # check orthogonality of 3 solutions that met training set
+                # critera
                 if len(self.blist) == 3:
                     resMat        = np.asarray(self.reslist_flat)
                     resMat_square = resMat**2
@@ -412,8 +414,10 @@ class PreconditionerTrainer(object):
                         )
 
                     cutoff=0.8
-                    ## Picking out sufficiently orthogonal subset of 3 solutions gathered
-                    if np.abs(InnerProd[0,1]) and np.abs(InnerProd[0,2]) < cutoff:
+                    # Picking out sufficiently orthogonal subset of 3 solutions
+                    # gathered
+                    if np.abs(InnerProd[0,1]) < cutoff \
+                    and np.abs(InnerProd[0,2]) < cutoff:
                         if np.abs(InnerProd[1,2]) < cutoff:
 
                             #TODO: Do we need np.asarray here?
@@ -449,7 +453,7 @@ class PreconditionerTrainer(object):
                                 np.asarray(self.reslist)[2]
                             )
 
-                    ## Train if enough data has been collected
+                    # Train if enough data has been collected
                     if self.preconditioner.counter >= self.retrain_freq:
                         # if self.debug:
                         #     print("retraining")
