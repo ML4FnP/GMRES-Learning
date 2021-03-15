@@ -33,6 +33,16 @@ def resid_kernel(A, x, b):
 
 
 
+def prob_norm(b):
+    # Compute 2-norm of RHS(for scaling RHS input to network)
+    b_flat     = np.reshape(b, (1, -1), order='F').squeeze(0)
+    b_norm     = np.linalg.norm(b_flat)
+    b_Norm_max = np.max(b / b_norm)
+
+    return b_norm, b_Norm_max
+
+
+
 # mathematical indices for python
 cidx   = lambda i: i-1  # c-style index from math-style index
 midx   = lambda i: i+1  # math-style index from c-style index
@@ -56,7 +66,6 @@ def timer(func):
     wrapper_timer.__signature__ = signature(func)
 
     return wrapper_timer
-
 
 
 
@@ -102,10 +111,10 @@ class OverwriteLast(object):
         self.last = len(s)
         print(s, end="\r")
 
-        
+
 
 class StatusPrinter(object, metaclass=Singleton):
-    
+
     def __init__(self):
         self._printer = OverwriteLast()
         self._loss    = 0
@@ -113,7 +122,7 @@ class StatusPrinter(object, metaclass=Singleton):
         self._iter    = 0
         self._num_p   = 0
         self._num_d   = 0
-        
+
 
     def __str__(self):
         return (
@@ -124,27 +133,26 @@ class StatusPrinter(object, metaclass=Singleton):
             f"data size={self._num_d}"
         )
 
-    
+
     def finalize(self):
         self.__init__()
         print("", flush=True)
 
 
     def print(self):
-        # self._printer.print(f"iter={self._iter:<5} speedup={self._speedup:0.5f} loss={self._loss:0.5e} number of parameters={self._num_p} number of data points={self._num_d}")
         self._printer.print(str(self))
 
 
     def update_training(self, loss):
         self._loss = loss
         self.print()
-    
-    
+
+
     def update_simulation(self, speedup, idx):
         self._speedup = speedup
         self._iter    = idx
         self.print()
-        
+
 
     def update_training_summary(self, num_parameters, num_data_points):
         self._num_p = num_parameters

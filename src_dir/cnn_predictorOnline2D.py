@@ -15,12 +15,9 @@ from torch.autograd import Variable
 from torch.nn       import Linear, ReLU, CrossEntropyLoss, \
                            Sequential, Conv2d, MaxPool2d,  \
                            Module, Softmax, BatchNorm2d, Dropout
-
 from torch.optim    import Adam, SGD
 
-# from src_dir.cnn_collectionOnline2D import CnnOnline_2D
-
-from src_dir import resid,timer,moving_average,GMRES
+from src_dir import prob_norm, resid, timer, moving_average, GMRES
 
 from src_dir import StatusPrinter
 
@@ -35,24 +32,23 @@ class CNNPredictorOnline_2D(object):
         self.D_in  = D_in
         self.D_out = D_out
 
-        ## Domain area and finite difference stencil width
+        # Domain area and finite difference stencil width
         self.Area = Area
         self.dx   = dx
 
-        ## Increase layer at every multiple of this factor
+        # Increase layer at every multiple of this factor
         self.Factor = 40
 
-        ## Set Pytorch Seed
+        # Set Pytorch Seed
         torch.manual_seed(0)
 
-        ## Construct our model by instantiating the class defined above
+        # Construct our model by instantiating the class defined above
         device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-        # self.model = CnnOnline_2D(self.D_in,self.D_out).to(device)
         self.model = Model(self.D_in, self.D_out).to(device)
 
-        ## Construct our loss function and an Optimizer. The call to model.parameters()
-        ## in the SGD constructor will contain the learnable parameters of the two
-        ## nn.Conv modules which are members of the model.
+        # Construct our loss function and an Optimizer. The call to
+        # model.parameters() in the SGD constructor will contain the learnable
+        # parameters of the two nn.Conv modules which are members of the model.
         self.criterion = torch.nn.MSELoss(reduction='mean')
 
         ### Set optimizer
@@ -60,13 +56,13 @@ class CNNPredictorOnline_2D(object):
         # self.optimizer = torch.optim.Adagrad(self.model.parameters(), lr=1e-3)
         self.optimizer = torch.optim.Adam(self.model.parameters(), lr=1e-3)
 
-        ## x will hold entire training set b data
-        ## y will hold entire training set solution data
+        # x will hold entire training set b data
+        # y will hold entire training set solution data
         self.x = torch.empty(0, self.D_in,  self.D_in).to(device)
         self.y = torch.empty(0, self.D_out, self.D_out).to(device)
 
-        # xNew holds new b additions to training set at the current time
-        # yNew holds new solution (x) additions to training set at the current time
+        # xNew: new b additions to training set at the current time
+        # yNew: new solution (x) additions to training set at the current time
         self.xNew = torch.empty(0, self.D_in,  self.D_in)
         self.yNew = torch.empty(0, self.D_out, self.D_out)
 
@@ -350,27 +346,122 @@ class PreconditionerTrainer(object):
         return args, kwargs
 
 
-    def predict(self, A, b, x0):
-        # Compute 2-norm of RHS(for scaling RHS input to network)
-        b_flat     = np.reshape(b, (1,-1), order='F').squeeze(0)
-        b_norm     = np.linalg.norm(b_flat)
-        b_Norm_max = np.max(b/b_norm)
-
+    def predict(self, A, b, x0, b_scale):
         if self.preconditioner.is_trained:
-            pred_x0 = self.preconditioner.predict(b/b_norm/b_Norm_max)
-            pred_x0 = pred_x0 * b_norm * b_Norm_max
+            pred_x0 = self.preconditioner.predict(b/b_scale)
+            pred_x0 = pred_x0 * b_scale
             # target_test=GMRES(A, b, x0, e, 6,1, True)
             # IterErr_test = resid(A, target_test, b)
             # print('size',len(IterErr_test))
-            # print(IterErr_test[5],max(trainer.Err_list))
-            # if (IterErr_test[5]>1.75*max(trainer.Err_list)):
+            # print(IterErr_test[5],max(self.Err_list))
+            # if (IterErr_test[5]>1.75*max(self.Err_list)):
             #     print('poor prediction,using initial x0')
             # pred_x0 = x0
         else:
             pred_x0 = x0
 
-        return pred_x0, b_norm, b_Norm_max
+        return pred_x0
 
+
+    def add_single(self, res, b, scale):
+
+        # Rescale RHS so that network is trained on normalized data
+        b   = b/scale
+        res = res/scale
+
+        if self.ProbCount <= self.Initial_set:
+            self.preconditioner.add_init(b, res)
+        if self.ProbCount == self.Initial_set:
+            timeLoop = self.preconditioner.retrain_timed()
+
+        ## Compute moving averages used to filter data
+        if self.ProbCount > self.Initial_set:
+            IterTime_AVG = moving_average(
+                    np.asarray(self.ML_GMRES_Time_list),
+                    self.ProbCount
+                )
+            IterErr10_AVG = moving_average(
+                    np.asarray(self.Err_list),
+                    self.ProbCount
+                )
+
+        ## Filter for data to be added to training set
+        if self.ProbCount > self.Initial_set:
+            if self.ML_GMRES_Time_list[-1] > IterTime_AVG and self.Err_list[-1] > IterErr10_AVG:
+
+                CoinToss=np.random.rand()
+                if (CoinToss < 0.5):
+                    self.blist.append(b)
+                    self.reslist.append(res)
+                    self.reslist_flat.append(
+                            np.reshape(res,(1,-1), order='C').squeeze(0)
+                        )
+
+                ## check orthogonality of 3 solutions that met training set critera
+                if len(self.blist) == 3:
+                    resMat        = np.asarray(self.reslist_flat)
+                    resMat_square = resMat**2
+                    row_sums      = resMat_square.sum(axis=1, keepdims=True)
+                    resMat        = resMat/np.sqrt(row_sums)
+                    InnerProd     = np.dot(resMat, resMat.T)
+
+                    #TODO: Do we need np.asarray here?
+                    self.preconditioner.add(
+                            np.asarray(self.blist)[0],
+                            np.asarray(self.reslist)[0]
+                        )
+
+                    cutoff=0.8
+                    ## Picking out sufficiently orthogonal subset of 3 solutions gathered
+                    if np.abs(InnerProd[0,1]) and np.abs(InnerProd[0,2]) < cutoff:
+                        if np.abs(InnerProd[1,2]) < cutoff:
+
+                            #TODO: Do we need np.asarray here?
+                            self.preconditioner.add(
+                                    np.asarray(self.blist)[1],
+                                    np.asarray(self.reslist)[1]
+                                )
+
+                            #TODO: Do we need np.asarray here?
+                            self.preconditioner.add(
+                                    np.asarray(self.blist)[2],
+                                    np.asarray(self.reslist)[2]
+                                )
+
+                        elif np.abs(InnerProd[1,2]) >= cutoff:
+                            #TODO: Do we need np.asarray here?
+                            self.preconditioner.add(
+                                    np.asarray(self.blist)[1],
+                                    np.asarray(self.reslist)[1]
+                                )
+
+                    elif np.abs(InnerProd[0,1]) < cutoff :
+                        #TODO: Do we need np.asarray here?
+                        self.preconditioner.add(
+                                np.asarray(self.blist)[1],
+                                np.asarray(self.reslist)[1]
+                            )
+
+                    elif np.abs(InnerProd[0,2]) < cutoff :
+                        #TODO: Do we need np.asarray here?
+                        self.preconditioner.add(
+                                np.asarray(self.blist)[2],
+                                np.asarray(self.reslist)[2]
+                            )
+
+                    ## Train if enough data has been collected
+                    if self.preconditioner.counter >= self.retrain_freq:
+                        # if self.debug:
+                        #     print("retraining")
+                        #     print(self.preconditioner.counter)
+                        timeLoop = self.preconditioner.retrain_timed()
+                        # trainTime=float(timeLoop[-1])
+                        # TODO: we need a data retention policy for things
+                        # like the train time history
+                        self.trainTime.append(timeLoop[-1])
+                        self.blist        = []
+                        self.reslist      = []
+                        self.reslist_flat = []
 
 
 
@@ -390,7 +481,8 @@ def cnn_preconditionerOnline_timed_2D(trainer):
             A, b, x0, e = trainer.get_problem_data()
 
             # Use predictor to generate initial guess:
-            pred_x0, b_norm, b_Norm_max = trainer.predict(A, b, x0)
+            b_norm, b_Norm_max = prob_norm(b)
+            pred_x0            = trainer.predict(A, b, x0, b_norm*b_Norm_max)
 
             # Replace the input initial guess witht the NN preconditioner
             args_view = deepcopy(trainer.args_view)
@@ -409,108 +501,12 @@ def cnn_preconditionerOnline_timed_2D(trainer):
             IterErr = resid(A, target, b)
             trainer.IterErrList.append(IterErr)
             IterTime  = (toc-tic)
+            # TODO: 22 = end of first inner loop for the current setup => generalize this
             IterErr10 = IterErr[22]
             trainer.ML_GMRES_Time_list.append(IterTime)
             trainer.Err_list.append(IterErr10)
 
-            # Rescale RHS so that network is trained on normalized data
-            b   = b/b_norm/b_Norm_max
-            res = res/b_norm/b_Norm_max
-
-
-            if trainer.ProbCount <= trainer.Initial_set:
-                trainer.preconditioner.add_init(b, res)
-            if trainer.ProbCount == trainer.Initial_set:
-                timeLoop = trainer.preconditioner.retrain_timed()
-
-            ## Compute moving averages used to filter data
-            if trainer.ProbCount > trainer.Initial_set:
-                IterTime_AVG = moving_average(
-                        np.asarray(trainer.ML_GMRES_Time_list),
-                        trainer.ProbCount
-                    )
-                IterErr10_AVG = moving_average(
-                        np.asarray(trainer.Err_list),
-                        trainer.ProbCount
-                    )
-
-            ## Filter for data to be added to training set
-            if trainer.ProbCount > trainer.Initial_set:
-                if trainer.ML_GMRES_Time_list[-1] > IterTime_AVG and trainer.Err_list[-1] > IterErr10_AVG:
-
-                    CoinToss=np.random.rand()
-                    if (CoinToss < 0.5):
-                        trainer.blist.append(b)
-                        trainer.reslist.append(res)
-                        trainer.reslist_flat.append(
-                                np.reshape(res,(1,-1), order='C').squeeze(0)
-                            )
-
-                    ## check orthogonality of 3 solutions that met training set critera
-                    if len(trainer.blist) == 3:
-                        resMat        = np.asarray(trainer.reslist_flat)
-                        resMat_square = resMat**2
-                        row_sums      = resMat_square.sum(axis=1, keepdims=True)
-                        resMat        = resMat/np.sqrt(row_sums)
-                        InnerProd     = np.dot(resMat, resMat.T)
-
-                        #TODO: Do we need np.asarray here?
-                        trainer.preconditioner.add(
-                                np.asarray(trainer.blist)[0],
-                                np.asarray(trainer.reslist)[0]
-                            )
-
-                        cutoff=0.8
-                        ## Picking out sufficiently orthogonal subset of 3 solutions gathered
-                        if np.abs(InnerProd[0,1]) and np.abs(InnerProd[0,2]) < cutoff:
-                            if np.abs(InnerProd[1,2]) < cutoff:
-
-                                #TODO: Do we need np.asarray here?
-                                trainer.preconditioner.add(
-                                        np.asarray(trainer.blist)[1],
-                                        np.asarray(trainer.reslist)[1]
-                                    )
-
-                                #TODO: Do we need np.asarray here?
-                                trainer.preconditioner.add(
-                                        np.asarray(trainer.blist)[2],
-                                        np.asarray(trainer.reslist)[2]
-                                    )
-
-                            elif np.abs(InnerProd[1,2]) >= cutoff:
-                                #TODO: Do we need np.asarray here?
-                                trainer.preconditioner.add(
-                                        np.asarray(trainer.blist)[1],
-                                        np.asarray(trainer.reslist)[1]
-                                    )
-
-                        elif np.abs(InnerProd[0,1]) < cutoff :
-                            #TODO: Do we need np.asarray here?
-                            trainer.preconditioner.add(
-                                    np.asarray(trainer.blist)[1],
-                                    np.asarray(trainer.reslist)[1]
-                                )
-
-                        elif np.abs(InnerProd[0,2]) < cutoff :
-                            #TODO: Do we need np.asarray here?
-                            trainer.preconditioner.add(
-                                    np.asarray(trainer.blist)[2],
-                                    np.asarray(trainer.reslist)[2]
-                                )
-
-                        ## Train if enough data has been collected
-                        if trainer.preconditioner.counter >= trainer.retrain_freq:
-                            # if trainer.debug:
-                            #     print("retraining")
-                            #     print(trainer.preconditioner.counter)
-                            timeLoop=trainer.preconditioner.retrain_timed()
-                            # trainTime=float(timeLoop[-1])
-                            # TODO: we need a data retention policy for things
-                            # like the train time history
-                            trainer.trainTime.append(timeLoop[-1])
-                            trainer.blist        = []
-                            trainer.reslist      = []
-                            trainer.reslist_flat = []
+            trainer.add_single(res, b, b_norm*b_Norm_max)
             return target
 
         speedup_wrapper.__signature__ = signature(func)
