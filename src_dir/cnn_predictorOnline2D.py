@@ -286,13 +286,14 @@ class PreconditionerTrainer(object):
     def __init__(
             self, preconditioner, linop_name="A", prob_rhs_name="b",
             prob_lhs_name="x", prob_init_name="x0", prob_tolerance_name="e",
-            retrain_freq=1, debug=False, Initial_set=32
+            retrain_freq=1, debug=False, Initial_set=32, diagnostic_probe=22
         ):
 
-        self.preconditioner = preconditioner
-        self.retrain_freq   = retrain_freq
-        self.debug          = debug
-        self.Initial_set    = Initial_set
+        self.preconditioner   = preconditioner
+        self.retrain_freq     = retrain_freq
+        self.debug            = debug
+        self.Initial_set      = Initial_set
+        self.diagnostic_probe = diagnostic_probe
 
         # Describe how we get specific arguments out of the input args
         self.linop_name          = linop_name
@@ -468,6 +469,15 @@ class PreconditionerTrainer(object):
                         self.reslist_flat = []
 
 
+    def write_diagnostics(self, iter_time, A, target, b):
+        iter_err = resid(A, target, b)
+        self.IterErrList.append(iter_err)
+
+        iter_err_probe = iter_err[self.diagnostic_probe]
+        self.ML_GMRES_Time_list.append(iter_time)
+        self.Err_list.append(iter_err_probe)
+
+
 
 def cnn_preconditionerOnline_timed_2D(trainer):
 
@@ -502,15 +512,12 @@ def cnn_preconditionerOnline_timed_2D(trainer):
             res = target[-1]
 
             # Write diagnostic data (error and time-to solution) to list
-            IterErr = resid(A, target, b)
-            trainer.IterErrList.append(IterErr)
-            IterTime  = (toc-tic)
-            # TODO: 22 = end of first inner loop for the current setup => generalize this
-            IterErr10 = IterErr[22]
-            trainer.ML_GMRES_Time_list.append(IterTime)
-            trainer.Err_list.append(IterErr10)
+            IterTime = (toc-tic)
+            trainer.write_diagnostics(IterTime, A, target, b)
 
+            # Add problem to the training set
             trainer.add_single(res, b, b_norm*b_Norm_max)
+
             return target
 
         speedup_wrapper.__signature__ = signature(func)
