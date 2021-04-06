@@ -286,7 +286,7 @@ class PreconditionerTrainer(object):
     def __init__(
             self, preconditioner, linop_name="A", prob_rhs_name="b",
             prob_lhs_name="x", prob_init_name="x0", prob_tolerance_name="e",
-            retrain_freq=1, debug=False, Initial_set=32, diagnostic_probe=22
+            retrain_freq=1, debug=False, Initial_set=32, diagnostic_probe=3
         ):
 
         self.preconditioner   = preconditioner
