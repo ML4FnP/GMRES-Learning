@@ -689,6 +689,70 @@ class FluidNet2D30(torch.nn.Module):
 
 
 
+class CNN_30(torch.nn.Module):
+
+
+    def __init__(self, D_in, D_out):
+        """
+        Sequential convolutions 2D optimized for 30-40 dim resolution.
+        """
+
+        super().__init__()
+        #TODO: make compatible with multiple devices
+        #TODO: this should be class member
+        device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+        self.Conv1   = torch.nn.Conv2d(1,16,(9,9), stride=1, padding=(16,16), dilation=4, groups=1, bias=True, padding_mode='reflect')#even dim
+        self.Conv2   = torch.nn.Conv2d(16,16,(7,7),stride=1, padding=(12,12), dilation=4, groups=1, bias=True, padding_mode='reflect')#even dim
+        self.Conv3   = torch.nn.Conv2d(16,8,(5,5),stride=1, padding=(8,8), dilation=4, groups=1, bias=True, padding_mode='reflect')#even dim
+        self.Conv4   = torch.nn.Conv2d(8,4,(3,3),stride=1, padding=(3,3), dilation=3, groups=1, bias=True, padding_mode='reflect')#even dim
+        self.Conv5   = torch.nn.Conv2d(4,2,(3,3), stride=1, padding=(3,3), dilation=3, groups=1, bias=True, padding_mode='reflect')#even dim
+        self.Conv6   = torch.nn.Conv2d(2,1,(1,1), stride=1, padding=(0,0), dilation=1, groups=1, bias=True, padding_mode='reflect')#even dim
+        self.relu = torch.nn.LeakyReLU()
+
+
+
+    def forward(self, x, DataSetSize, Factor):
+
+        Current_batchsize=int(x.shape[0])  # N in pytorch docs
+        x2=x.unsqueeze(1)  # Add channel dimension (C) to input 
+        ConvOut1=self.relu(self.Conv1(x2))
+        ConvOut2=self.relu(self.Conv2(ConvOut1))
+        ConvOut3=self.relu(self.Conv3(ConvOut2))
+        ConvOut4=self.relu(self.Conv4(ConvOut3))
+        ConvOut5=self.relu(self.Conv5(ConvOut4))
+        ConvOut6=(self.Conv6(ConvOut5))
+        y_pred = ConvOut6.squeeze(1) #Remove channel dimension
+
+        return y_pred.squeeze(1)
+
+
+class SingleDenseLayer(torch.nn.Module):
+
+
+    def __init__(self, D_in, D_out):
+        """
+        Sequential convolutions 2D optimized for 30-40 dim resolution.
+        """
+
+        super().__init__()
+        #TODO: make compatible with multiple devices
+        #TODO: this should be class member
+        device      = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+        self.Lin1   = torch.nn.Linear(D_in*D_in, D_out*D_out, bias=False)
+
+
+
+    def forward(self, x, DataSetSize, Factor):
+
+        Current_batchsize=int(x.shape[0])  # N in pytorch docs
+        TensorDim = x.shape[1]
+        x=torch.reshape(x,(Current_batchsize,1,-1))
+        x = self.Lin1(x)
+        x=torch.reshape(x,(Current_batchsize,TensorDim,TensorDim))
+
+        return x
+
+
 
 ################################################################################################################################################
 ################################################################################################################################################
