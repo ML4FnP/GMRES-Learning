@@ -121,7 +121,7 @@ def GMRES_op(A, b, x0, e, nmax_iter, restart=None, debug=False):
                 beta    = np.zeros(nmax_iter + 1)
                 beta[0] = np.linalg.norm(r)
                 y       = np.linalg.lstsq(h, beta, rcond=None)[0]
-#                 g     = np.dot(np.asarray(q[:cidx(k)]).transpose(), y[:cidx(k)])
+                # g       = np.dot(np.asarray(q[:cidx(k)]).transpose(), y[:cidx(k)])
                 g       = update_solution(x_sol, y[:cidx(k)], q[:cidx(k)])
                 x.append(x_sol + g)
 
@@ -129,7 +129,7 @@ def GMRES_op(A, b, x0, e, nmax_iter, restart=None, debug=False):
         beta    = np.zeros(nmax_iter + 1)
         beta[0] = np.linalg.norm(r)
         y       = np.linalg.lstsq(h, beta, rcond=None)[0]
-#         g     = np.dot(np.asarray(q).transpose(), y)
+        # g       = np.dot(np.asarray(q).transpose(), y)
         g       = update_solution(x_sol, y, q)
         
         x_sol   = x_sol + g
