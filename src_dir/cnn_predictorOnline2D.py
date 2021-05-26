@@ -97,8 +97,8 @@ class CNNPredictorOnline_2D(object):
         self.xNew = self.xNew.to(device)
         self.yNew = self.yNew.to(device)
 
-        self.x=torch.cat((self.x,self.xNew))
-        self.y=torch.cat((self.y,self.yNew))
+        self.x = torch.cat((self.x, self.xNew))
+        self.y = torch.cat((self.y, self.yNew))
 
         self.loss_val = list()  # clear loss val history
         self.loss_val.append(10.0)
@@ -116,10 +116,10 @@ class CNNPredictorOnline_2D(object):
                 indices = permutation[t:t+batch_size]
 
                 ## dataset batches
-                batch_x, batch_y = self.x[indices],self.y[indices]
+                batch_x, batch_y = self.x[indices], self.y[indices]
 
                 ## batch of predictions
-                y_pred = self.model(batch_x,self.x.size(0),self.Factor)
+                y_pred = self.model(batch_x, self.x.size(0), self.Factor)
 
                 ## Compute and print loss
                 loss = (self.criterion(y_pred, batch_y))
@@ -132,7 +132,7 @@ class CNNPredictorOnline_2D(object):
                 self.optimizer.zero_grad()
                 loss.backward()
                 self.optimizer.step()
-                epoch=epoch+1
+                epoch=epoch + 1
 
         ## Add recent data to final batch and take one more step:
 

@@ -2,8 +2,8 @@
 # -*- coding: utf-8 -*-
 
 import torch
-
 import numpy as np
+from   numba import njit
 
 from .util import mrange, cidx
 
@@ -39,7 +39,7 @@ def mk_laplace_1d(N, bc="dirichlet", lval=0, rval=0):
     Generates laplace operator as a stencil operation for a N-cell 1D grid, for
     given boundary conditionds.
     '''
-    
+
     def build_bc_1(x_in):
         x_out = np.zeros((N + 2,))
 
@@ -50,10 +50,8 @@ def mk_laplace_1d(N, bc="dirichlet", lval=0, rval=0):
 
         return x_out
 
-    
     def laplace_1d(x, i):
         return 2*x[i] - x[i-1] - x[i+1]
-
 
     if bc == "dirichlet":
         op  = lambda x, i: laplace_1d(build_bc_1(x), i)
@@ -122,6 +120,90 @@ def mk_laplace_2d(Nx, Ny, bc="dirichlet", xlo=0, xhi=0, ylo=0, yhi=0):
 
 
 
+@njit(nogil=True)
+def laplace_2d(x, i, j):
+    return (-4*x[i, j] + x[i-1, j] + x[i+1, j] + x[i, j-1] + x[i, j+1])
+
+
+
+@njit(nogil=True)
+def laplace_2d_dirichlet(x_in, xlo, xhi, ylo, yhi):
+    '''
+    laplace_2d_dirichlet(x_in, xlo, xhi, ylo, yhi)
+
+    Applies laplace operator as a stencil operation for a N-cell 2D grid, for
+    given boundary conditionds.
+    '''
+
+    Nx, Ny = x_in.shape
+    x_pad = np.zeros((Nx + 2, Ny + 2))
+    x_pad[1:Nx+1, 1:Ny+1] = x_in[:, :]
+
+    x_pad[0,    :] = xlo
+    x_pad[Nx+1, :] = xhi
+    x_pad[:,    0] = ylo
+    x_pad[:, Ny+1] = yhi
+
+    Ax = np.zeros((Nx, Ny))
+    for ix, iy in np.ndindex(Ax.shape):
+        Ax[ix, iy] = laplace_2d(x_pad, ix+1, iy+1)
+
+    return Ax
+
+
+
+@njit(nogil=True)
+def laplace_2d_extrap(x_in):
+    '''
+    laplace_2d_extrap(x_in)
+
+    Applies laplace operator as a stencil operation for a N-cell 2D grid, for
+    given boundary conditionds.
+    '''
+
+    Nx, Ny = x_in.shape
+    x_pad = np.zeros((Nx + 2, Ny + 2))
+    x_pad[1:Nx+1, 1:Ny+1] = x_in[:, :]
+
+    x_pad[0,    :] = x_pad[1,  :] - (x_pad[2,  :] - x_pad[1,    :])
+    x_pad[Nx+1, :] = x_pad[Nx, :] + (x_pad[Nx, :] - x_pad[Nx-1, :])
+    x_pad[:,    0] = x_pad[:,  1] - (x_pad[:,  2] - x_pad[:,    1])
+    x_pad[:, Ny+1] = x_pad[:, Ny] + (x_pad[:, Ny] - x_pad[:, Ny-1])
+
+    Ax = np.zeros((Nx, Ny))
+    for ix, iy in np.ndindex(Ax.shape):
+        Ax[ix, iy] = laplace_2d(x_pad, ix+1, iy+1)
+
+    return Ax
+
+
+
+@njit(nogil=True)
+def laplace_2d_constextrap(x_in):
+    '''
+    laplace_2d_constextrap(x_in)
+
+    Applies laplace operator as a stencil operation for a N-cell 2D grid, for
+    given boundary conditionds.
+    '''
+
+    Nx, Ny = x_in.shape
+    x_pad = np.zeros((Nx + 2, Ny + 2))
+    x_pad[1:Nx+1, 1:Ny+1] = x_in[:, :]
+
+    x_pad[0,    :] = x_pad[1,  :]
+    x_pad[Nx+1, :] = x_pad[Nx, :]
+    x_pad[:,    0] = x_pad[:,  1]
+    x_pad[:, Ny+1] = x_pad[:, Ny]
+
+    Ax = np.zeros((Nx, Ny))
+    for ix, iy in np.ndindex(Ax.shape):
+        Ax[ix, iy] = laplace_2d(x_pad, ix+1, iy+1)
+
+    return Ax
+
+
+
 def mk_Heat_2d(Nx, Ny, bc="dirichlet", xlo=0, xhi=0, ylo=0, yhi=0,dx=1,dt=1,nu=1):
     '''
     mk_Heat_2d(Nx, Ny, bc="dirichlet", xlo=0, xhi=0, ylo=0, yhi=0,dx=1,dt=1,nu=1)
@@ -163,7 +245,7 @@ def mk_Heat_2d(Nx, Ny, bc="dirichlet", xlo=0, xhi=0, ylo=0, yhi=0,dx=1,dt=1,nu=1
         x_out[1:Nx+1, 1:Ny+1] = x_in[:, :]
 
         x_out[:,    0] = -30*(x_out[:,    0]-1)*(x_out[:,    0]+1)
-        x_out[:, Ny+1] = 2*x_out[:, Ny] -x_out[:, Ny-1] 
+        x_out[:, Ny+1] = 2*x_out[:, Ny] -x_out[:, Ny-1]
         x_out[0,    :] = xlo
         x_out[Nx+1, :] = xhi
 
@@ -194,7 +276,7 @@ def mk_Advect_2d_RHS(Nx, Ny,Vx,Vy, bc="dirichlet", xlo=0, xhi=0, ylo=0, yhi=0,dx
     Generates discretized (upwind) 2D Advection Equation  RHS operator as a stencil operation for a N-cell 2D grid, for
     given boundary conditions.
 
-    V can be variable, but note that this operator is applied on the RHS(its an explicit method). 
+    V can be variable, but note that this operator is applied on the RHS(its an explicit method).
     So, care must be taken to ensure the CFL condition is satisfied
     '''
 
@@ -229,7 +311,7 @@ def mk_Advect_2d_RHS(Nx, Ny,Vx,Vy, bc="dirichlet", xlo=0, xhi=0, ylo=0, yhi=0,dx
         x_out[1:Nx+1, 1:Ny+1] = x_in[:, :]
 
         x_out[:,    0] = -30*(x_out[:,    0]-1)*(x_out[:,    0]+1)
-        x_out[:, Ny+1] = 2*x_out[:, Ny] -x_out[:, Ny-1] 
+        x_out[:, Ny+1] = 2*x_out[:, Ny] -x_out[:, Ny-1]
         x_out[0,    :] = xlo
         x_out[Nx+1, :] = xhi
 
@@ -267,15 +349,9 @@ def mk_Advect_2d_RHS(Nx, Ny,Vx,Vy, bc="dirichlet", xlo=0, xhi=0, ylo=0, yhi=0,dx
 
 
 
-
-
-
-
-
-
 ##_____________________________________________________________________________
-    # Tensor Linop code. 
-    # Current implementation leads to slow run time relative to other backprop computations
+# Tensor Linop code.
+# Current implementation leads to slow run time relative to other backprop computations
 
 
 def appl_2d_Tensor(op, x, Nx, Ny):

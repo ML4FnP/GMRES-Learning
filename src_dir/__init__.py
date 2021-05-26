@@ -5,9 +5,10 @@ from .util  import resid, cidx, midx, mrange, matmul_a, mat_to_a, timer, \
                    StatusPrinter, prob_norm
 
 from .linop import laplace_1d, mk_laplace_1d, mk_laplace_2d, \
+                   laplace_2d_dirichlet, laplace_2d_extrap, laplace_2d_constextrap, \
                    mk_laplace_2d_Tensor, mk_Advect_2d_RHS, mk_Heat_2d
 
-from .gmres import GMRES, GMRES_R
+from .gmres import GMRES, GMRES_R, GMRES_numba
 
 from .benchmarking         import *
 

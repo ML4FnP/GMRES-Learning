@@ -5,11 +5,11 @@
 # https://stackoverflow.com/questions/37962271/whats-wrong-with-my-gmres-implementation
 
 
-import numpy as np
-import scipy as sp
-
-from scipy.linalg         import get_blas_funcs, get_lapack_funcs
-from scipy.sparse.sputils import upcast
+import numpy                as     np
+import scipy                as     sp
+from   numba                import njit
+from   scipy.linalg         import get_blas_funcs, get_lapack_funcs
+from   scipy.sparse.sputils import upcast
 
 from .util import matmul_a, cidx, mrange
 
@@ -21,17 +21,35 @@ from .util import matmul_a, cidx, mrange
 # index), and the `mrange` (math-style range for loops: 1..N instead of 0..N-1)
 #
 
+# mathematical indices for python
+@njit(nogil=True)
+def cidx_numba(i):
+    return i-1  # c-style index from math-style index
+@njit(nogil=True)
+def midx_numba(i):
+    return i+1  # math-style index from c-style index
+
+
 
 def update_solution(x, y, q):
     g = np.zeros_like(x)
 
-    q2=np.asarray(q)
-    g2=np.dot(q2.transpose(),y)
+    for i, iy in enumerate(y):
+        # g += q[i]*iy  # This line causes a reduction in precision when x0 input of GMRES comes from the NN.
+        g = g + q[i]*iy
 
+    return g
+
+
+
+@njit(nogil=True)
+def update_solution_numba(x, y, q):
+    g = np.zeros_like(x)
 
     for i, iy in enumerate(y):
-        # g += q[i]*iy  # This line causes a reduction in precision when x0 input of GMRES comes from the NN. 
-        g    = g + q[i]*iy
+        # g += q[i]*iy  # This line causes a reduction in precision when x0 input of GMRES comes from the NN.
+        g = g + q[i]*iy
+
     return g
 
 
@@ -75,7 +93,7 @@ def GMRES_op(A, b, x0, e, nmax_iter, restart=None, debug=False):
     # 1. list -> numpy.array <= better memory access
     # 2. don't append to lists -> prealoc and slice
     # 3. add documentation -- this will probably never happen :P
-    
+
     normb = np.linalg.norm(b)
     if normb == 0.0:
         normb = 1.0
@@ -131,10 +149,117 @@ def GMRES_op(A, b, x0, e, nmax_iter, restart=None, debug=False):
         y       = np.linalg.lstsq(h, beta, rcond=None)[0]
         # g       = np.dot(np.asarray(q).transpose(), y)
         g       = update_solution(x_sol, y, q)
-        
+
         x_sol   = x_sol + g
         x.append(x_sol)
- 
+
+        # r = b - matmul_a(A, x_sol)
+        r = b - A(x_sol)
+
+        # Break out if the residual is lower than threshold
+        if np.linalg.norm(r)/normb < e:
+            break
+
+    return x
+
+
+
+@njit(nogil=True)
+def GMRES_numba(A, b, x0, e, nmax_iter, restart, debug):
+    """
+    Quick and dirty GMRES -- TODO: optimize going to larger
+    systems.
+    """
+    
+    b  = b.astype(np.float64)
+    x0 = x0.astype(np.float64)
+
+    # TODO: you can use this to make the problem agnostic to complex numbers
+    # # Defining xtype as dtype of the problem, to decide which BLAS functions
+    # # import.
+    # xtype = upcast(x0.dtype, b.dtype)
+
+    # Defining dimension
+    #dimen = len(x0)
+    dimen, _ = np.shape(x0)
+
+    # TODO: use BLAS functions
+    # # Get fast access to underlying BLAS routines
+    # [lartg] = get_lapack_funcs(['lartg'], [x0] )
+    # if np.iscomplexobj(np.zeros((1,), dtype=xtype)):
+    #     [axpy, dotu, dotc, scal] =\
+    #         get_blas_funcs(['axpy', 'dotu', 'dotc', 'scal'], [x0])
+    # else:
+    #     # real type
+    #     [axpy, dotu, dotc, scal] =\
+    #         get_blas_funcs(['axpy', 'dot', 'dot', 'scal'], [xO])
+
+    # TODOs for this function:
+    # 1. list -> numpy.array <= better memory access
+    # 2. don't append to lists -> prealoc and slice
+    # 3. add documentation -- this will probably never happen :P
+
+    normb = np.linalg.norm(b)
+    if normb == 0.0:
+        normb = 1.0
+
+    # TODO: is the old code (below) faster?
+    # r = b - np.asarray(np.dot(A, x0)).reshape(-1)
+    # r = b - matmul_a(A, x0)
+    r = b - A(x0)
+
+    # Set number of outer loops based on the value of `restart`
+    n_outer = 1
+    if restart is not None:
+        n_outer = int(restart)
+
+    x     = [x0]
+    x_sol = x0
+
+    # for l in mrange(n_outer):
+    for l in range(1, n_outer + 1):
+        q    = [x0] * (nmax_iter)
+        q[cidx_numba(1)] = r / np.linalg.norm(r)
+
+        h = np.zeros((nmax_iter + 1, nmax_iter))
+
+        # for k in mrange(min(nmax_iter, dimen)):
+        for k in range(1, min(nmax_iter, dimen) + 1):
+            # TODO: is the old code (below) faster?
+            # y = np.asarray(np.dot(A, q[k])).reshape(-1)
+            # y = matmul_a(A, q[cidx(k)])
+            y = A(q[cidx_numba(k)])
+
+            # Modified Grahm-Schmidt
+            for j in range(1, k+1):
+                # use flatten -> enable N-D dot product
+                h[cidx_numba(j), cidx_numba(k)] = np.dot(q[cidx_numba(j)].flatten(), y.flatten())
+                y = y - h[cidx_numba(j), cidx_numba(k)] * q[cidx_numba(j)]
+
+            h[cidx_numba(k + 1), cidx_numba(k)] = np.linalg.norm(y)
+
+            if (h[cidx_numba(k + 1), cidx_numba(k)] != 0 and k != nmax_iter):
+                q[cidx_numba(k + 1)] = y / h[cidx_numba(k + 1), cidx_numba(k)]
+
+            # Debug-mode tracks inner-loop convergence
+            if debug:
+                beta    = np.zeros(nmax_iter + 1)
+                beta[0] = np.linalg.norm(r)
+                y       = np.linalg.lstsq(h, beta)[0]
+                # g       = np.dot(np.asarray(q[:cidx(k)]).transpose(), y[:cidx(k)])
+                g       = update_solution_numba(x_sol, y[:cidx_numba(k)], q[:cidx_numba(k)])
+                x.append(x_sol + g)
+
+
+        beta    = np.zeros(nmax_iter + 1)
+        beta[0] = np.linalg.norm(r)
+        y       = np.linalg.lstsq(h, beta)[0]
+        # g       = np.dot(np.asarray(q).transpose(), y)
+        g       = update_solution_numba(x_sol, y, q)
+
+        x_sol   = x_sol + g
+        x.append(x_sol)
+
         # r = b - matmul_a(A, x_sol)
         r = b - A(x_sol)
 
@@ -241,7 +366,7 @@ def GMRES_R(A, b, x0, tol, max_outer, max_inner, restart=None):
         # Saving initial residual to be used to calculate the rel_resid
         if iteration == 0:
             res_0 = normb
- 
+
         # RHS vector in the Krylov space
         g    = np.zeros((dimen, ), dtype=xtype)
         g[0] = normr
@@ -309,7 +434,7 @@ def GMRES_R(A, b, x0, tol, max_outer, max_inner, restart=None):
         X      = X + update
         aux    = matmul_a(A, X)
         r      = b - aux
-        
+
         normr = norm(r)
         rel_resid = normr/res_0
 
