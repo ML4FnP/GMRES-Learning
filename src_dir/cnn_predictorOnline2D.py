@@ -103,9 +103,9 @@ class CNNPredictorOnline_2D(object):
         self.loss_val = list()  # clear loss val history
         self.loss_val.append(10.0)
 
-        batch_size = 16
-        numEpochs  = 1000
-        e1         = 1e-15
+        batch_size = 128       # 16
+        numEpochs  = int(1e2)  # 1000
+        e1         = 1e-5      # 1e-15
         epoch      = 0
 
         while self.loss_val[-1] > e1 and epoch < numEpochs - 1:
@@ -391,82 +391,98 @@ class PreconditionerTrainer(object):
             if self.ML_GMRES_Time_list[-1] > IterTime_AVG \
             and self.Err_list[-1] > IterErr10_AVG:
 
-                CoinToss = np.random.rand()
-                if (CoinToss < 0.5):
-                    self.blist.append(b)
-                    self.reslist.append(res)
-                    self.reslist_flat.append(
-                            np.reshape(res,(1,-1), order='C').squeeze(0)
-                        )
+                self.preconditioner.add(
+                        np.asarray(b),
+                        np.asarray(res)
+                    )
 
+                # Train if enough data has been collected
+                if self.preconditioner.counter >= self.retrain_freq:
+                    # if self.debug:
+                    #     print("retraining")
+                    #     print(self.preconditioner.counter)
+                    timeLoop = self.preconditioner.retrain_timed()
+                    # trainTime=float(timeLoop[-1])
+                    # TODO: we need a data retention policy for things
+                    # like the train time history
+                    self.trainTime.append(timeLoop[-1])
+
+                # CoinToss = np.random.rand()
+                # if (CoinToss < 0.5):
+                #    self.blist.append(b)
+                #    self.reslist.append(res)
+                #    self.reslist_flat.append(
+                #            np.reshape(res,(1,-1), order='C').squeeze(0)
+                #        )
+                #
                 # check orthogonality of 3 solutions that met training set
                 # critera
-                if len(self.blist) == 3:
-                    resMat        = np.asarray(self.reslist_flat)
-                    resMat_square = resMat**2
-                    row_sums      = resMat_square.sum(axis=1, keepdims=True)
-                    resMat        = resMat/np.sqrt(row_sums)
-                    InnerProd     = np.dot(resMat, resMat.T)
-
-                    #TODO: Do we need np.asarray here?
-                    self.preconditioner.add(
-                            np.asarray(self.blist)[0],
-                            np.asarray(self.reslist)[0]
-                        )
-
-                    cutoff=0.8
-                    # Picking out sufficiently orthogonal subset of 3 solutions
-                    # gathered
-                    if np.abs(InnerProd[0,1]) < cutoff \
-                    and np.abs(InnerProd[0,2]) < cutoff:
-                        if np.abs(InnerProd[1,2]) < cutoff:
-
-                            #TODO: Do we need np.asarray here?
-                            self.preconditioner.add(
-                                    np.asarray(self.blist)[1],
-                                    np.asarray(self.reslist)[1]
-                                )
-
-                            #TODO: Do we need np.asarray here?
-                            self.preconditioner.add(
-                                    np.asarray(self.blist)[2],
-                                    np.asarray(self.reslist)[2]
-                                )
-
-                        elif np.abs(InnerProd[1,2]) >= cutoff:
-                            #TODO: Do we need np.asarray here?
-                            self.preconditioner.add(
-                                    np.asarray(self.blist)[1],
-                                    np.asarray(self.reslist)[1]
-                                )
-
-                    elif np.abs(InnerProd[0,1]) < cutoff :
-                        #TODO: Do we need np.asarray here?
-                        self.preconditioner.add(
-                                np.asarray(self.blist)[1],
-                                np.asarray(self.reslist)[1]
-                            )
-
-                    elif np.abs(InnerProd[0,2]) < cutoff :
-                        #TODO: Do we need np.asarray here?
-                        self.preconditioner.add(
-                                np.asarray(self.blist)[2],
-                                np.asarray(self.reslist)[2]
-                            )
-
-                    # Train if enough data has been collected
-                    if self.preconditioner.counter >= self.retrain_freq:
-                        # if self.debug:
-                        #     print("retraining")
-                        #     print(self.preconditioner.counter)
-                        timeLoop = self.preconditioner.retrain_timed()
-                        # trainTime=float(timeLoop[-1])
-                        # TODO: we need a data retention policy for things
-                        # like the train time history
-                        self.trainTime.append(timeLoop[-1])
-                        self.blist        = []
-                        self.reslist      = []
-                        self.reslist_flat = []
+                # if len(self.blist) == 3:
+                #    resMat        = np.asarray(self.reslist_flat)
+                #    resMat_square = resMat**2
+                #    row_sums      = resMat_square.sum(axis=1, keepdims=True)
+                #    resMat        = resMat/np.sqrt(row_sums)
+                #    InnerProd     = np.dot(resMat, resMat.T)
+                #
+                #    #TODO: Do we need np.asarray here?
+                #    self.preconditioner.add(
+                #            np.asarray(self.blist)[0],
+                #            np.asarray(self.reslist)[0]
+                #        )
+                #
+                #    cutoff=0.8
+                #    # Picking out sufficiently orthogonal subset of 3 solutions
+                #    # gathered
+                #    if np.abs(InnerProd[0,1]) < cutoff \
+                #    and np.abs(InnerProd[0,2]) < cutoff:
+                #        if np.abs(InnerProd[1,2]) < cutoff:
+                #
+                #            #TODO: Do we need np.asarray here?
+                #             self.preconditioner.add(
+                #                     np.asarray(self.blist)[1],
+                #                     np.asarray(self.reslist)[1]
+                #                 )
+                #
+                #             #TODO: Do we need np.asarray here?
+                #             self.preconditioner.add(
+                #                     np.asarray(self.blist)[2],
+                #                     np.asarray(self.reslist)[2]
+                #                 )
+                #
+                #         elif np.abs(InnerProd[1,2]) >= cutoff:
+                #             #TODO: Do we need np.asarray here?
+                #             self.preconditioner.add(
+                #                     np.asarray(self.blist)[1],
+                #                     np.asarray(self.reslist)[1]
+                #                 )
+                #
+                #     elif np.abs(InnerProd[0,1]) < cutoff :
+                #         #TODO: Do we need np.asarray here?
+                #         self.preconditioner.add(
+                #                 np.asarray(self.blist)[1],
+                #                 np.asarray(self.reslist)[1]
+                #             )
+                #
+                #     elif np.abs(InnerProd[0,2]) < cutoff :
+                #         #TODO: Do we need np.asarray here?
+                #         self.preconditioner.add(
+                #                 np.asarray(self.blist)[2],
+                #                 np.asarray(self.reslist)[2]
+                #             )
+                #
+                #     # Train if enough data has been collected
+                #     if self.preconditioner.counter >= self.retrain_freq:
+                #         # if self.debug:
+                #         #     print("retraining")
+                #         #     print(self.preconditioner.counter)
+                #         timeLoop = self.preconditioner.retrain_timed()
+                #         # trainTime=float(timeLoop[-1])
+                #         # TODO: we need a data retention policy for things
+                #         # like the train time history
+                #         self.trainTime.append(timeLoop[-1])
+                #         self.blist        = []
+                #         self.reslist      = []
+                #         self.reslist_flat = []
 
 
     def write_diagnostics(self, iter_time, A, target, b):
