@@ -4,13 +4,9 @@ from .util  import resid, cidx, midx, mrange, matmul_a, mat_to_a, timer, \
                    Gauss_pdf, Gauss_pdf_2D, moving_average, OverwriteLast, \
                    StatusPrinter, prob_norm
 
-from .linop import laplace_1d, mk_laplace_1d, mk_laplace_2d, \
-                   laplace_2d_dirichlet, laplace_2d_extrap, laplace_2d_constextrap, \
-                   mk_laplace_2d_Tensor, mk_Advect_2d_RHS, mk_Heat_2d
+from .linop import mk_laplace_2d_Tensor, mk_Advect_2d_RHS, mk_Heat_2d
 
-from .gmres import GMRES, GMRES_R, GMRES_numba
-
-from .benchmarking         import *
+from .benchmarking import *
 
 from .cnn_predictorOnline2D  import cnn_preconditionerOnline_timed_2D, \
                                     CNNPredictorOnline_2D, PreconditionerTrainer

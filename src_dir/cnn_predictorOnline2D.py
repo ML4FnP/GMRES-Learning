@@ -17,7 +17,7 @@ from torch.nn       import Linear, ReLU, CrossEntropyLoss, \
                            Module, Softmax, BatchNorm2d, Dropout
 from torch.optim    import Adam, SGD
 
-from src_dir import prob_norm, resid, timer, moving_average, GMRES
+from src_dir import prob_norm, resid, timer, moving_average
 
 from src_dir import StatusPrinter
 
