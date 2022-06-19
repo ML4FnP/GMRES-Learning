@@ -103,9 +103,13 @@ class CNNPredictorOnline_2D(object):
         self.loss_val = list()  # clear loss val history
         self.loss_val.append(10.0)
 
-        batch_size = 16
-        numEpochs  = 1000
-        e1         = 1e-15
+        # batch_size = 16
+        # numEpochs  = 1000
+        # e1         = 1e-15
+        # epoch      = 0
+        batch_size = 1024
+        numEpochs  = 100
+        e1         = 1e-3
         epoch      = 0
 
         while self.loss_val[-1] > e1 and epoch < numEpochs - 1:

@@ -11,4 +11,6 @@ from .benchmarking import *
 from .cnn_predictorOnline2D  import cnn_preconditionerOnline_timed_2D, \
                                     CNNPredictorOnline_2D, PreconditionerTrainer
 
-from .cnn_collectionOnline2D import FluidNet2D10, FluidNet2D20, FluidNet2D30,CNN_30,SingleDenseLayer
+from .cnn_collectionOnline2D import FluidNet2D10, FluidNet2D20, \
+                                    FluidNet2D30, FluidNet2DN, \
+                                    CNN_30, SingleDenseLayer

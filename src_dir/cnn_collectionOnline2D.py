@@ -9,7 +9,10 @@ from torch.nn       import Linear, ReLU, CrossEntropyLoss, \
                            Module, Softmax, BatchNorm2d, Dropout
 from torch.optim    import Adam, SGD
 
-#TODO: is the import needed
+from math import floor, log2
+
+
+#TODO: is the import needed?
 import torch.nn.init as I
 
 
@@ -204,18 +207,21 @@ class FluidNet2D20(torch.nn.Module):
 
         self.FDpad = torch.nn.ZeroPad2d(1)
 
-        self.Aweights = torch.tensor([[0.25, 0.5, 0.25],
-                        [0.5, -3., 0.5],
-                        [0.25,  0.5, 0.25]])
-        self.Aweights = self.Aweights.view(1,1,3 ,3)
+        self.Aweights = torch.tensor(
+            [[0.25, 0.5, 0.25],
+             [0.5, -3., 0.5],
+             [0.25,  0.5, 0.25]]
+        )
+        self.Aweights = self.Aweights.view(1, 1, 3 ,3)
         self.Aweights = self.Aweights.to(device)
 
-        self.Blur = (1/16)*torch.tensor([[1., 2., 1.],
-                        [2., 4., 2.],
-                        [1.,  2., 1.]])
-        self.Blur = self.Blur.view(1,1,3 ,3)
+        self.Blur = (1/16)*torch.tensor(
+            [[1., 2., 1.],
+             [2., 4., 2.],
+             [1.,  2., 1.]]
+        )
+        self.Blur = self.Blur.view(1, 1, 3 ,3)
         self.Blur = self.Blur.to(device)
-
 
 
     def forward(self, x, DataSetSize, Factor):
@@ -687,6 +693,118 @@ class FluidNet2D30(torch.nn.Module):
             z = self.ConvOut(z)
             return z.squeeze(1)
 
+
+def const_shape_pad(conv):
+    pad = tuple(
+        int((k + (k-1)*(d-1) - 1)/2)
+        for k, d in zip(conv.kernel_size, conv.dilation)
+    )
+    return torch.nn.ZeroPad2d((pad[0], pad[0], pad[1], pad[1]))
+
+
+class Conv2dSame(torch.nn.Conv2d):
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.pad = const_shape_pad(self)
+    
+    def __call__(self, *args, **kwargs):
+        return super().__call__(self.pad(*args, **kwargs))
+
+
+class FluidNet2DN(torch.nn.Module):
+
+
+    def __init__(self, D_in, D_out, N):
+        """
+        FluidNet 2D optimized for N-dim resolution.
+        """
+
+        super().__init__()
+
+        self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+
+        self.AVG = torch.nn.AvgPool2d(2, stride=2)
+        self.Upsample = torch.nn.Upsample(mode='bilinear', size=(D_in, D_in))
+
+        self.ConvInit1 = Conv2dSame(
+            in_channels=1, out_channels=2, kernel_size=7, dilation=3, bias=False
+        )
+        self.ConvInit2 = Conv2dSame(
+            in_channels=2, out_channels=8, kernel_size=5, dilation=3, bias=False
+        )
+
+        self.n_conv_layers = floor(log2(N))
+        self.conv = list()
+        for i in range(self.n_conv_layers):
+            dilation    = self.n_conv_layers - i
+            kernel_size = min(3, 2 + dilation)
+            self.conv.append(
+                Conv2dSame(
+                    in_channels=8, out_channels=8,
+                    kernel_size=kernel_size, dilation=dilation, bias=False
+                )
+            )
+
+        self.conv_post = Conv2dSame(
+            in_channels=8, out_channels=8,
+            kernel_size=min(3, 2 + self.n_conv_layers),
+            dilation=self.n_conv_layers,
+            bias=False
+        )
+
+        self.Conv4 = Conv2dSame(
+            in_channels=8, out_channels=8, kernel_size=1, bias=False
+        )
+        self.Conv5 = Conv2dSame(
+            in_channels=8, out_channels=1, kernel_size=1, bias=False
+        )
+
+        self.ConvOut = Conv2dSame(
+            in_channels=1, out_channels=1, kernel_size=1, bias=False
+        )
+
+        self.relu = torch.nn.LeakyReLU()
+
+
+    def forward(self, x, DataSetSize, Factor):
+        x2 = x.unsqueeze(1)  # Add channel dimension (C) to input
+        # Current_batchsize = int(x.shape[0])  # N in pytorch docs
+
+        zn = list()
+
+        z = self.ConvInit1(x2)
+        z1 = self.relu(self.ConvInit2(z))
+        zn.append(z1)
+        zp = z1
+
+        for i in range(self.n_conv_layers):
+            zp = self.AVG(zp)
+            zn.append(zp)
+
+        for i in range(self.n_conv_layers):
+            zp = zn[i]
+            zp = self.relu(self.conv[i](zp))
+            zp = self.Upsample(zp)
+            zn[i] = zp
+
+        z = zn[0]
+        for i in range(1, self.n_conv_layers):
+            z = z + zn[i]
+
+        n_resnet = floor(DataSetSize / Factor)
+        for i in range(n_resnet):
+            y = self.relu(z)
+            y = self.relu(self.conv_post(z))
+            y = self.conv_post(y)
+            z = z + y
+            z = self.relu(z)
+
+        z = self.relu(self.Conv4(z))
+        z = self.relu(self.Conv5(z))
+        z = self.ConvOut(z)
+
+        return z.squeeze(1)
 
 
 class CNN_30(torch.nn.Module):
